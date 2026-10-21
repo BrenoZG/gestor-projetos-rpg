@@ -1,26 +1,109 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* ==========================================================================
+   TOKENS EM TRÊS CAMADAS (herdados do Portfolio, tema escuro)
+   1. PRIMITIVO (--vinho-700)   valor bruto, nunca usado em componente
+   2. SEMÂNTICO (--cor-acento)  significado
+   3. UTILITÁRIO (bg-acento)    o que o componente consome
+   O sistema é só escuro na v1: brilho e aura do tema RPG dependem de
+   fundo escuro. Tema claro está no backlog.
+   ========================================================================== */
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-fundo: var(--cor-fundo);
+  --color-superficie: var(--cor-superficie);
+  --color-superficie-alta: var(--cor-superficie-alta);
+  --color-borda: var(--cor-borda);
+  --color-borda-forte: var(--cor-borda-forte);
+  --color-borda-campo: var(--cor-borda-campo);
+  --color-texto: var(--cor-texto);
+  --color-texto-suave: var(--cor-texto-suave);
+  --color-texto-tenue: var(--cor-texto-tenue);
+  --color-acento: var(--cor-acento);
+  --color-acento-titulo: var(--cor-acento-titulo);
+  --color-acento-solido: var(--cor-acento-solido);
+  --color-acento-forte: var(--cor-acento-forte);
+  --color-acento-suave: var(--cor-acento-suave);
+  --color-acento-contraste: var(--cor-acento-contraste);
+  --color-positivo: var(--cor-positivo);
+  --color-atencao: var(--cor-atencao);
+  --color-negativo: var(--cor-negativo);
+
+  --color-vinho-50: #fbf3f5;
+  --color-vinho-100: #f6e4e9;
+  --color-vinho-200: #eec9d3;
+  --color-vinho-300: #dd9dae;
+  --color-vinho-400: #c66c86;
+  --color-vinho-500: #a94263;
+  --color-vinho-600: #8b2f4d;
+  --color-vinho-700: #6b1e35;
+  --color-vinho-800: #54182a;
+  --color-vinho-900: #3c1120;
+  --color-vinho-950: #240a13;
+
+  --font-display: var(--fonte-display), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--fonte-corpo), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--fonte-mono), ui-monospace, 'Cascadia Code', monospace;
+
+  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-suave: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+:root {
+  color-scheme: dark;
+
+  --cor-fundo: #0f0e0e;
+  --cor-superficie: #161514;
+  --cor-superficie-alta: #1e1c1b;
+  --cor-borda: #2b2927;
+  --cor-borda-forte: #3d3a37;
+  --cor-borda-campo: #686560;
+  --cor-texto: #f4f4f2;
+  --cor-texto-suave: #a8a5a0;
+  --cor-texto-tenue: #858279;
+  --cor-acento: #c56680;
+  --cor-acento-titulo: #a94263;
+  --cor-acento-solido: #6b1e35;
+  --cor-acento-forte: #8b2f4d;
+  --cor-acento-suave: #240f16;
+  --cor-acento-contraste: #ffffff;
+  --cor-positivo: #348733;
+  --cor-atencao: #967035;
+  --cor-negativo: #dc3838;
+}
+
+/* ==========================================================================
+   EXCEÇÃO METÁLICA — restrita a medalhas e emblemas de Rank.
+   Fora desses componentes, nenhuma cor nova entra na interface.
+   Cada material: 0 = brilho, 1 = base, 2 = sombra, 3 = profundidade.
+   ========================================================================== */
+:root {
+  --metal-ferro-0: #e4e1dc; --metal-ferro-1: #9a958f; --metal-ferro-2: #56514c; --metal-ferro-3: #2a2724;
+  --metal-bronze-0: #ffd9b0; --metal-bronze-1: #d08a4c; --metal-bronze-2: #8a4f22; --metal-bronze-3: #4a2810;
+  --metal-prata-0: #ffffff; --metal-prata-1: #d5dbe1; --metal-prata-2: #8a939c; --metal-prata-3: #3f454b;
+  --metal-ouro-0: #fff4c2; --metal-ouro-1: #f2c14e; --metal-ouro-2: #b07a12; --metal-ouro-3: #5c3a05;
+  --metal-platina-0: #ffffff; --metal-platina-1: #e3e8f2; --metal-platina-2: #9aa4ba; --metal-platina-3: #4a5268;
+  --metal-esmeralda-0: #d9ffe9; --metal-esmeralda-1: #4fd08f; --metal-esmeralda-2: #168257; --metal-esmeralda-3: #063d27;
+  --metal-safira-0: #dfe9ff; --metal-safira-1: #5b8cf0; --metal-safira-2: #1d48a8; --metal-safira-3: #0a1f52;
+  --metal-rubi-0: #ffd6de; --metal-rubi-1: #f0506f; --metal-rubi-2: #a3143a; --metal-rubi-3: #4a0617;
+  --metal-diamante-0: #ffffff; --metal-diamante-1: #d8f6ff; --metal-diamante-2: #7cc4dd; --metal-diamante-3: #2f6f86;
+  --metal-mitica-0: #f3e6ff; --metal-mitica-1: #b47cff; --metal-mitica-2: #6a2fd0; --metal-mitica-3: #2a0d5c;
+  --metal-lendaria-0: #fffbe0; --metal-lendaria-1: #ffd257; --metal-lendaria-2: #e0791c; --metal-lendaria-3: #7a2a08;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+}
+
+/* Rede de segurança global: componentes animados também tratam reduced-motion
+   individualmente, com o estado final como base. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
