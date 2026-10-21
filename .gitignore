@@ -1,0 +1,34 @@
+# Dependências e build
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Segredos — nunca versionar
+.env
+.env.*
+!.env.example
+
+# Supabase local
+supabase/.branches/
+supabase/.temp/
+
+# Ferramentas de IA (fora do repositório)
+CLAUDE.md
+AGENTS.md
+.claude/
+
+# Sistema e editor
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Logs e testes
+npm-debug.log*
+playwright-report/
+test-results/
+.vercel
