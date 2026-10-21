@@ -10,12 +10,16 @@ import { z } from 'zod';
  */
 const esquemaAmbiente = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
+  // Publishable key (`sb_publishable_...`): formato atual do Supabase, que
+  // substitui a anon key em JWT. É pública por natureza; a proteção é o RLS.
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(20),
   ALLOWLIST_GITHUB_IDS: z
     .string()
     .regex(/^\d+(,\d+)*$/)
     .transform((valor) => valor.split(',')),
-  CRON_SECRET: z.string().min(32).optional(),
+  // `CRON_SECRET=` sem valor (copiado do .env.example) chega como string vazia;
+  // vazio significa "não configurado", não "segredo inválido".
+  CRON_SECRET: z.preprocess((valor) => (valor === '' ? undefined : valor), z.string().min(32).optional()),
 });
 
 export type Ambiente = z.infer<typeof esquemaAmbiente>;
