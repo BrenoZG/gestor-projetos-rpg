@@ -97,6 +97,12 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 - **Menor privilégio:** a aplicação não usa a `service_role`; toda consulta roda com a sessão do usuário.
 - **Segredos:** apenas em variáveis de ambiente, validadas na inicialização (`src/lib/ambiente.ts`), com mensagem de erro que lista nomes de campos, nunca valores.
 - **Repositório público:** `gitleaks` no CI, push protection do GitHub, dados fictícios no seed.
+- **Cadeia de suprimentos:** Actions fixadas por SHA de commit; Dependabot semanal para npm e Actions; o CI bloqueia vulnerabilidade `high` ou maior em dependência de **produção**.
+
+### Riscos aceitos
+| Data | Risco | Por que é aceito | Revisão |
+|---|---|---|---|
+| 2026-10-21 | [GHSA-vfj7-8cjw-p6xm](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm): `braces` ≤ 3.0.3 (DoS por padrão de glob aninhado), via `eslint-config-next` → `fast-glob` → `micromatch`. Sem versão corrigida publicada. | Dependência só de desenvolvimento. Os padrões de glob vêm da configuração do ESLint do próprio projeto, nunca de entrada externa. O audit de produção está limpo. | Fechar quando o Dependabot propuser a versão corrigida. |
 
 ## 7. Notas de framework
 
