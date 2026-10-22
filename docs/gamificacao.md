@@ -1,0 +1,109 @@
+# Gamificação — regras e fórmulas
+
+> Fonte da verdade numérica das RN-06 a RN-13 de [`requisitos.md`](requisitos.md). Os valores vivem num **único módulo de configuração** do domínio (`src/dominio/gamificacao/`, a partir do M3). Os números desta página foram calculados pela mesma fórmula, não digitados à mão.
+
+## 1. Rank de Missão (Projeto)
+
+```
+pontos = dificuldade × 10 + min(stacks, 10) × 2
+```
+
+| Rank | Pontos |
+|---|---|
+| E | < 20 |
+| D | 20–29 |
+| C | 30–39 |
+| B | 40–49 |
+| A | 50–59 |
+| S | ≥ 60 |
+
+Só as 10 primeiras stacks pontuam: sem teto, cadastrar 40 tags viraria atalho de Rank.
+
+| Exemplo | Pontos | Rank |
+|---|---|---|
+| Dificuldade 1, 1 stack | 12 | E |
+| Dificuldade 2, 3 stacks | 26 | D |
+| Dificuldade 3, 5 stacks | 40 | B |
+| Dificuldade 4, 10 stacks | 60 | S |
+| Dificuldade 5, 5 stacks | 60 | S |
+
+## 2. XP por evento
+
+| Evento | XP | Observação |
+|---|---|---|
+| Criar Projeto | 10 | Revogado se o Projeto for excluído sem XP de conclusão |
+| Criar Atualização | 5 | Revogado se a Atualização for excluída sem XP de conclusão |
+| Concluir Atualização | E 15 · D 20 · C 25 · B 30 · A 35 · S 40 | Pelo Rank do Projeto no momento da conclusão |
+| Concluir Projeto | `base × (1 + 0,03 × min(atualizações concluídas, 20))` | Exige 24 h em Desenvolvimento (RN-06d) |
+
+Base por Rank: **E 40 · D 60 · C 90 · B 130 · A 180 · S 250**. Resultado arredondado ao inteiro mais próximo (RN-13).
+
+| Exemplo de conclusão de Projeto | XP |
+|---|---|
+| Rank E, 0 atualizações | 40 |
+| Rank C, 5 atualizações | 103 |
+| Rank B, 7 atualizações | 157 |
+| Rank S, 20 ou mais atualizações (teto) | 400 |
+
+### Permanência (ledger)
+- Cada par `(item, tipo de evento)` gera **no máximo um** evento.
+- XP de conclusão nunca é removido: excluir ou reabrir o item não o afeta.
+- XP de criação é removido na exclusão **somente** se o item não tem evento de conclusão.
+- Consequência aceita (ADR-0002): mudar uma fórmula afeta apenas eventos futuros.
+
+## 3. Nível do personagem
+
+```
+limiar(n) = arredondar(20 × (n − 1)^1,5)
+nível = maior n em 1..100 tal que XP total ≥ limiar(n)
+```
+
+| Nível | XP total | Medalha | Título |
+|---|---|---|---|
+| 1 | 0 | — | Estagiário |
+| 2 · 3 · 4 · 5 | 20 · 57 · 104 · 160 | — | Estagiário |
+| 10 | 540 | I · Bronze | Desenvolvedor Iniciante |
+| 20 | 1.656 | II · Prata | Desenvolvedor Aprendiz |
+| 30 | 3.123 | III · Ouro | Desenvolvedor Júnior |
+| 40 | 4.871 | IV · Platina | Desenvolvedor Júnior Avançado |
+| 50 | 6.860 | V · Esmeralda | Desenvolvedor Pleno |
+| 60 | 9.064 | VI · Safira | Desenvolvedor Pleno Avançado |
+| 70 | 11.463 | VII · Rubi | Especialista |
+| 80 | 14.043 | VIII · Diamante | Arquiteto |
+| 90 | 16.792 | IX · Mítica | Mestre |
+| 100 | 19.701 | X · Lendária | Desenvolvedor Sênior (máximo) |
+
+O título vale do nível da medalha até o nível anterior à próxima. Medalhas são permanentes (RN-08).
+
+**Calibração:** com ritmo estimado de ~1,5 Projeto e ~10 Atualizações concluídos por mês, o Nv 100 chega em cerca de 3 anos. A curva é côncava: o começo é rápido para motivar, e o fim é mais conquistado.
+
+## 4. Rank do Caçador
+
+| Rank | Níveis | Títulos dentro da faixa |
+|---|---|---|
+| E | 1–19 | Estagiário · Iniciante |
+| D | 20–29 | Aprendiz |
+| C | 30–49 | Júnior · Júnior Avançado |
+| B | 50–69 | Pleno · Pleno Avançado |
+| A | 70–89 | Especialista · Arquiteto |
+| S | 90–100 | Mestre · Sênior |
+
+## 5. Maestria por stack
+
+```
+XP da stack = soma do XP de conclusão de Projetos cujo snapshot de stacks contém a stack
+nível da stack = mesma curva da seção 3, com máximo 50
+```
+
+| XP da stack | Nível |
+|---|---|
+| 150 (1 projeto) | 4 |
+| 1.500 (~10 projetos) | 18 |
+| 3.750 (~25 projetos) | 33 |
+| 6.860 ou mais (~45 projetos) | 50 (máximo) |
+
+> **Grão:** o XP de um Projeto conta **integralmente para cada uma** das stacks dele. Por isso a soma da Maestria de todas as stacks é maior que o XP do personagem. Isso é intencional, não é contagem duplicada por erro: a pergunta respondida é "quanto progresso houve usando esta stack", não "como o XP se divide entre stacks".
+
+## 6. Classe
+
+A Classe é identidade visual e não entra em nenhuma fórmula desta página (RN-11).
