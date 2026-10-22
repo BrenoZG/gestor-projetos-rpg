@@ -47,7 +47,8 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | Script | O que faz |
 |---|---|
 | `npm run dev` | Servidor de desenvolvimento |
-| `npm run verificar` | Typecheck + lint + testes + build (o mesmo que o CI) |
+| `npm run verificar` | Typecheck + lint + formatação + testes + build (o mesmo que o CI) |
+| `npm run format` | Formata o código com Prettier |
 | `npm run typecheck` | Gera os tipos de rota do Next e roda o `tsc` |
 | `npm test` | Testes unitários |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
