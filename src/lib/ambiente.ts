@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+/** Abaixo disso, o valor não é uma chave real do Supabase (provável placeholder). */
+export const TAMANHO_MINIMO_CHAVE_PUBLICA = 20;
+
+/** 32 caracteres = 128 bits em hex: mínimo aceitável para um segredo compartilhado. */
+export const TAMANHO_MINIMO_CRON_SECRET = 32;
+
 /**
  * Contrato das variáveis de ambiente, validado na fronteira.
  *
@@ -12,14 +18,17 @@ const esquemaAmbiente = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   // Publishable key (`sb_publishable_...`): formato atual do Supabase, que
   // substitui a anon key em JWT. É pública por natureza; a proteção é o RLS.
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(20),
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(TAMANHO_MINIMO_CHAVE_PUBLICA),
   ALLOWLIST_GITHUB_IDS: z
     .string()
     .regex(/^\d+(,\d+)*$/)
     .transform((valor) => valor.split(',')),
   // `CRON_SECRET=` sem valor (copiado do .env.example) chega como string vazia;
   // vazio significa "não configurado", não "segredo inválido".
-  CRON_SECRET: z.preprocess((valor) => (valor === '' ? undefined : valor), z.string().min(32).optional()),
+  CRON_SECRET: z.preprocess(
+    (valor) => (valor === '' ? undefined : valor),
+    z.string().min(TAMANHO_MINIMO_CRON_SECRET).optional(),
+  ),
 });
 
 export type Ambiente = z.infer<typeof esquemaAmbiente>;
