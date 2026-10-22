@@ -43,7 +43,11 @@ export default function LayoutRaiz({ children }: LayoutProps<'/'>) {
         >
           Pular para o conteúdo
         </a>
-        <main id="conteudo-principal">{children}</main>
+        {/* tabIndex -1: torna o alvo do link de salto focável por script/âncora
+            sem incluí-lo na ordem de Tab, para o foco acompanhar o salto. */}
+        <main id="conteudo-principal" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
       </body>
     </html>
   );

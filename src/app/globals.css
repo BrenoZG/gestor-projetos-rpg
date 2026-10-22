@@ -60,7 +60,9 @@
   --cor-borda-campo: #686560;
   --cor-texto: #f4f4f2;
   --cor-texto-suave: #a8a5a0;
-  --cor-texto-tenue: #858279;
+  /* Calibrado no PIOR par (sobre --cor-superficie-alta): 4,73:1. O valor do
+     Portfolio (#858279) rendia 4,42:1 ali e reprovava em WCAG AA. */
+  --cor-texto-tenue: #8a877f;
   --cor-acento: #c56680;
   --cor-acento-titulo: #a94263;
   --cor-acento-solido: #6b1e35;

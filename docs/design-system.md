@@ -18,7 +18,7 @@ Nenhum componente carrega hexadecimal, com uma única exceção: a camada metál
 | `--cor-fundo` | `#0f0e0e` | Fundo da página |
 | `--cor-superficie` / `-alta` | `#161514` / `#1e1c1b` | Cartões e painéis |
 | `--cor-borda` / `-forte` / `-campo` | `#2b2927` / `#3d3a37` / `#686560` | Separadores · bordas de destaque · borda de campo (3:1, WCAG 1.4.11) |
-| `--cor-texto` / `-suave` / `-tenue` | `#f4f4f2` / `#a8a5a0` / `#858279` | Texto principal · secundário · terciário |
+| `--cor-texto` / `-suave` / `-tenue` | `#f4f4f2` / `#a8a5a0` / `#8a877f` | Texto principal · secundário · terciário (o `-tenue` foi recalibrado para passar AA também sobre `--cor-superficie-alta`) |
 | `--cor-acento` | `#c56680` | Texto de destaque (4,5:1 sobre o fundo) |
 | `--cor-acento-solido` | `#6b1e35` | Área preenchida (botões); o texto por cima é que contrasta |
 
