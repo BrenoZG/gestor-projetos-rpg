@@ -8,9 +8,24 @@ import './globals.css';
  * (sem requisição a terceiros em produção). `swap` evita texto invisível
  * enquanto a fonte carrega.
  */
-const fonteDisplay = Syne({ subsets: ['latin'], weight: ['600', '700', '800'], variable: '--fonte-display', display: 'swap' });
-const fonteCorpo = DM_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--fonte-corpo', display: 'swap' });
-const fonteMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500'], variable: '--fonte-mono', display: 'swap' });
+const fonteDisplay = Syne({
+  subsets: ['latin'],
+  weight: ['600', '700', '800'],
+  variable: '--fonte-display',
+  display: 'swap',
+});
+const fonteCorpo = DM_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
+  variable: '--fonte-corpo',
+  display: 'swap',
+});
+const fonteMono = JetBrains_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  variable: '--fonte-mono',
+  display: 'swap',
+});
 
 /** Sistema privado: a URL de produção não deve ser indexada por buscadores. */
 export const metadata: Metadata = {

@@ -80,17 +80,50 @@
    Cada material: 0 = brilho, 1 = base, 2 = sombra, 3 = profundidade.
    ========================================================================== */
 :root {
-  --metal-ferro-0: #e4e1dc; --metal-ferro-1: #9a958f; --metal-ferro-2: #56514c; --metal-ferro-3: #2a2724;
-  --metal-bronze-0: #ffd9b0; --metal-bronze-1: #d08a4c; --metal-bronze-2: #8a4f22; --metal-bronze-3: #4a2810;
-  --metal-prata-0: #ffffff; --metal-prata-1: #d5dbe1; --metal-prata-2: #8a939c; --metal-prata-3: #3f454b;
-  --metal-ouro-0: #fff4c2; --metal-ouro-1: #f2c14e; --metal-ouro-2: #b07a12; --metal-ouro-3: #5c3a05;
-  --metal-platina-0: #ffffff; --metal-platina-1: #e3e8f2; --metal-platina-2: #9aa4ba; --metal-platina-3: #4a5268;
-  --metal-esmeralda-0: #d9ffe9; --metal-esmeralda-1: #4fd08f; --metal-esmeralda-2: #168257; --metal-esmeralda-3: #063d27;
-  --metal-safira-0: #dfe9ff; --metal-safira-1: #5b8cf0; --metal-safira-2: #1d48a8; --metal-safira-3: #0a1f52;
-  --metal-rubi-0: #ffd6de; --metal-rubi-1: #f0506f; --metal-rubi-2: #a3143a; --metal-rubi-3: #4a0617;
-  --metal-diamante-0: #ffffff; --metal-diamante-1: #d8f6ff; --metal-diamante-2: #7cc4dd; --metal-diamante-3: #2f6f86;
-  --metal-mitica-0: #f3e6ff; --metal-mitica-1: #b47cff; --metal-mitica-2: #6a2fd0; --metal-mitica-3: #2a0d5c;
-  --metal-lendaria-0: #fffbe0; --metal-lendaria-1: #ffd257; --metal-lendaria-2: #e0791c; --metal-lendaria-3: #7a2a08;
+  --metal-ferro-0: #e4e1dc;
+  --metal-ferro-1: #9a958f;
+  --metal-ferro-2: #56514c;
+  --metal-ferro-3: #2a2724;
+  --metal-bronze-0: #ffd9b0;
+  --metal-bronze-1: #d08a4c;
+  --metal-bronze-2: #8a4f22;
+  --metal-bronze-3: #4a2810;
+  --metal-prata-0: #ffffff;
+  --metal-prata-1: #d5dbe1;
+  --metal-prata-2: #8a939c;
+  --metal-prata-3: #3f454b;
+  --metal-ouro-0: #fff4c2;
+  --metal-ouro-1: #f2c14e;
+  --metal-ouro-2: #b07a12;
+  --metal-ouro-3: #5c3a05;
+  --metal-platina-0: #ffffff;
+  --metal-platina-1: #e3e8f2;
+  --metal-platina-2: #9aa4ba;
+  --metal-platina-3: #4a5268;
+  --metal-esmeralda-0: #d9ffe9;
+  --metal-esmeralda-1: #4fd08f;
+  --metal-esmeralda-2: #168257;
+  --metal-esmeralda-3: #063d27;
+  --metal-safira-0: #dfe9ff;
+  --metal-safira-1: #5b8cf0;
+  --metal-safira-2: #1d48a8;
+  --metal-safira-3: #0a1f52;
+  --metal-rubi-0: #ffd6de;
+  --metal-rubi-1: #f0506f;
+  --metal-rubi-2: #a3143a;
+  --metal-rubi-3: #4a0617;
+  --metal-diamante-0: #ffffff;
+  --metal-diamante-1: #d8f6ff;
+  --metal-diamante-2: #7cc4dd;
+  --metal-diamante-3: #2f6f86;
+  --metal-mitica-0: #f3e6ff;
+  --metal-mitica-1: #b47cff;
+  --metal-mitica-2: #6a2fd0;
+  --metal-mitica-3: #2a0d5c;
+  --metal-lendaria-0: #fffbe0;
+  --metal-lendaria-1: #ffd257;
+  --metal-lendaria-2: #e0791c;
+  --metal-lendaria-3: #7a2a08;
 }
 
 body {

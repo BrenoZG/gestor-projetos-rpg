@@ -1,0 +1,14 @@
+# Gerados ou de terceiros
+.next/
+node_modules/
+coverage/
+package-lock.json
+next-env.d.ts
+supabase/.temp/
+supabase/.branches/
+
+# Markdown fica fora: o Prettier realinharia todas as tabelas dos docs sem ganho real.
+*.md
+
+# Configuração gerada pela CLI do Supabase (mantida no formato original para facilitar upgrades)
+supabase/config.toml
