@@ -1,0 +1,5 @@
+# Commits de formatação em massa, ignorados pelo git blame (o GitHub lê este arquivo automaticamente).
+# Uso local: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# style: adota Prettier e formata o código existente
+17da53d1276cd52fa53b529dafee697e987a6a74
