@@ -81,6 +81,8 @@ erDiagram
 | `medalha_vista` | `smallint` | 0–10; última medalha cuja animação já tocou |
 | `criado_em` | `timestamptz` | `default now()` |
 
+**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: quem grava esse campo é a função de XP do M3, e assim ninguém sobe o próprio nível pela API. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
+
 ### `projetos` — grão: 1 linha por Projeto
 | Coluna | Tipo | Regra |
 |---|---|---|
@@ -136,7 +138,8 @@ PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. Limi
 
 - RLS habilitado em **todas** as tabelas, com política `user_id = auth.uid()` para cada operação permitida.
 - A aplicação usa a sessão do usuário (publishable key + JWT), nunca a `service_role`.
-- Testes de integração provam que um usuário B não lê nem altera dados de um usuário A.
+- Privilégios explícitos e por coluna (`GRANT`), porque a Data API não expõe tabelas novas automaticamente e o RLS filtra linhas, não colunas.
+- Testes de banco em pgTAP (`supabase/tests/database/`, `npm run db:test`) provam que um usuário B não lê nem altera dados de um usuário A.
 
 ## 4. Consultas derivadas e grão
 

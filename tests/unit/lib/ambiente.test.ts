@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { lerAmbiente } from '@/lib/ambiente';
+import { lerAmbiente, lerAmbientePublico } from '@/lib/ambiente';
 
 const ambienteValido = {
   NEXT_PUBLIC_SUPABASE_URL: 'http://127.0.0.1:54321',
@@ -46,5 +46,26 @@ describe('lerAmbiente', () => {
 
   it('trata CRON_SECRET vazio como ausente (linha "CRON_SECRET=" copiada do .env.example)', () => {
     expect(lerAmbiente({ ...ambienteValido, CRON_SECRET: '' }).CRON_SECRET).toBeUndefined();
+  });
+});
+
+describe('lerAmbientePublico', () => {
+  const ambientePublico = {
+    NEXT_PUBLIC_SUPABASE_URL: ambienteValido.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ambienteValido.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  };
+
+  it('aceita só as variáveis públicas, sem exigir a allowlist', () => {
+    expect(lerAmbientePublico(ambientePublico)).toEqual(ambientePublico);
+  });
+
+  it('descarta variáveis privadas presentes na fonte', () => {
+    expect(lerAmbientePublico(ambienteValido)).not.toHaveProperty('ALLOWLIST_GITHUB_IDS');
+  });
+
+  it('rejeita URL inválida citando o nome do campo', () => {
+    expect(() => lerAmbientePublico({ ...ambientePublico, NEXT_PUBLIC_SUPABASE_URL: 'nao-e-url' })).toThrow(
+      /NEXT_PUBLIC_SUPABASE_URL/,
+    );
   });
 });

@@ -3,17 +3,10 @@ import type { NextConfig } from 'next';
 /**
  * Cabeçalhos de segurança aplicados a todas as rotas.
  *
- * A CSP aqui cobre só diretivas que não dependem de origem de script
- * (`frame-ancestors`, `base-uri`, `form-action`, `object-src`). A política de
- * `script-src` com nonce entra no M1, junto com as origens do Supabase: o Next
- * injeta scripts inline, e uma `script-src` escrita antes disso ou quebraria o
- * app ou seria permissiva a ponto de não proteger nada.
+ * A Content-Security-Policy não fica aqui: ela usa um nonce novo a cada
+ * requisição, então é montada no `src/proxy.ts`.
  */
 const cabecalhosSeguranca = [
-  {
-    key: 'Content-Security-Policy',
-    value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'",
-  },
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
