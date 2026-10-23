@@ -98,7 +98,7 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 - **Segredos:** apenas em variáveis de ambiente, validadas na inicialização (`src/lib/ambiente.ts`), com mensagem de erro que lista nomes de campos, nunca valores.
 - **Repositório público:** `gitleaks` no CI, push protection do GitHub, dados fictícios no seed.
 - **Cabeçalhos HTTP** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS e CSP parcial (`frame-ancestors`, `base-uri`, `form-action`, `object-src`). **Pendente para o M1:** `script-src` com nonce e `connect-src` com as origens do Supabase.
-- **Cadeia de suprimentos:** Actions fixadas por SHA de commit; Dependabot semanal para npm e Actions; o CI bloqueia vulnerabilidade `high` ou maior em dependência de **produção**.
+- **Cadeia de suprimentos:** Actions fixadas por SHA de commit; Dependabot semanal para npm e Actions; o CI bloqueia vulnerabilidade `high` ou maior em dependência de **produção**. O gitleaks roda pela CLI com versão fixada e checksum SHA-256 conferido no próprio workflow; essa versão **não** é atualizada pelo Dependabot e deve ser revisada a cada release.
 
 ### Riscos aceitos
 | Data | Risco | Por que é aceito | Revisão |
