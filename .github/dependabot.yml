@@ -10,6 +10,10 @@ updates:
       # publicada. Major só muda junto com o .nvmrc, por decisão explícita.
       - dependency-name: '@types/node'
         update-types: ['version-update:semver-major']
+      # eslint 10: eslint-plugin-react, -jsx-a11y e -import (via eslint-config-next)
+      # ainda declaram peer até ^9. Remover esta regra quando os três aceitarem ^10.
+      - dependency-name: 'eslint'
+        update-types: ['version-update:semver-major']
     # Uma dependência entra no PRIMEIRO grupo que a aceita: os grupos de pacotes
     # acoplados vêm antes do grupo genérico.
     groups:
