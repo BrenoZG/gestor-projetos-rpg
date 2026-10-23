@@ -52,6 +52,7 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `npm run typecheck` | Gera os tipos de rota do Next e roda o `tsc` |
 | `npm test` | Testes unitários |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
+| `npm run db:test` | Testes do banco em pgTAP (RLS, privilégios e restrições), em `supabase/tests/` |
 
 ## Variáveis de ambiente
 
