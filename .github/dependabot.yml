@@ -5,9 +5,25 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # Os tipos acompanham o Node que roda o projeto (.nvmrc), não a última versão
+      # publicada. Major só muda junto com o .nvmrc, por decisão explícita.
+      - dependency-name: '@types/node'
+        update-types: ['version-update:semver-major']
+    # Uma dependência entra no PRIMEIRO grupo que a aceita: os grupos de pacotes
+    # acoplados vêm antes do grupo genérico.
     groups:
+      # Precisam estar sempre na mesma versão; atualizar só um quebra o app.
+      react:
+        patterns: ['react', 'react-dom', '@types/react', '@types/react-dom']
+      # eslint-config-next é versionado junto com o next.
+      next:
+        patterns: ['next', 'eslint-config-next', '@next/*']
+      # Só minor e patch: cada major chega em PR próprio, porque é uma decisão
+      # separada e um pacote incompatível não deve travar os demais.
       dependencias-dev:
         dependency-type: development
+        update-types: ['minor', 'patch']
   - package-ecosystem: github-actions
     directory: /
     schedule:
