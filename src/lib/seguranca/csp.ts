@@ -5,6 +5,19 @@
  */
 const FORMATO_NONCE = /^[A-Za-z0-9+/_-]+={0,2}$/;
 
+/** 16 bytes = 128 bits, o mínimo que a especificação CSP Level 3 (W3C) recomenda. */
+const BYTES_NONCE = 16;
+
+/**
+ * Gera o nonce de uma requisição com o gerador criptográfico da Web Crypto API
+ * (nunca `Math.random`, que é previsível).
+ *
+ * @returns 128 bits aleatórios em base64 (24 caracteres).
+ */
+export function gerarNonce(): string {
+  return Buffer.from(crypto.getRandomValues(new Uint8Array(BYTES_NONCE))).toString('base64');
+}
+
 export type OpcoesCsp = {
   /** Valor aleatório e único por requisição, gerado no proxy. */
   readonly nonce: string;

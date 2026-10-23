@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { montarCsp } from '@/lib/seguranca/csp';
+import { gerarNonce, montarCsp } from '@/lib/seguranca/csp';
 
 const NONCE = 'bm9uY2UtZGUtdGVzdGU=';
 const URL_SUPABASE = 'https://exemplo.supabase.co';
@@ -78,4 +78,22 @@ describe('montarCsp', () => {
       ).toThrow(/nonce/);
     },
   );
+});
+
+describe('gerarNonce', () => {
+  it('gera um nonce aceito pela montagem da CSP', () => {
+    const nonce = gerarNonce();
+    expect(montarCsp({ nonce, desenvolvimento: false, urlSupabase: URL_SUPABASE })).toContain(
+      `'nonce-${nonce}'`,
+    );
+  });
+
+  it('carrega 128 bits aleatórios (24 caracteres em base64)', () => {
+    expect(gerarNonce()).toHaveLength(24);
+  });
+
+  it('não repete o valor entre chamadas', () => {
+    const nonces = new Set(Array.from({ length: 1000 }, gerarNonce));
+    expect(nonces.size).toBe(1000);
+  });
 });
