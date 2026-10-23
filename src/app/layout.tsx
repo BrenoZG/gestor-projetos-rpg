@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
+import { connection } from 'next/server';
 
 import './globals.css';
 
@@ -35,6 +36,15 @@ const fonteMono = localFont({
   display: 'swap',
 });
 
+/**
+ * App inteiro renderizado por requisição (ADR-0007). A CSP usa um nonce novo a
+ * cada requisição, e o Next só consegue aplicá-lo a scripts gerados no render;
+ * HTML pré-gerado no build sairia sem nonce e seria bloqueado pelo navegador.
+ * `false` no layout raiz desliga a exigência de "casca estática" do Cache
+ * Components; num sistema privado, toda página depende do usuário logado.
+ */
+export const instant = false;
+
 /** Sistema privado: a URL de produção não deve ser indexada por buscadores. */
 export const metadata: Metadata = {
   title: { default: 'Gestor de Projetos', template: '%s · Gestor de Projetos' },
@@ -55,7 +65,9 @@ export const viewport: Viewport = {
  * @param props - Conteúdo da rota ativa.
  * @returns Documento HTML completo.
  */
-export default function LayoutRaiz({ children }: LayoutProps<'/'>) {
+export default async function LayoutRaiz({ children }: LayoutProps<'/'>) {
+  // Marca o render como dependente da requisição (ver `instant` acima).
+  await connection();
   return (
     <html lang="pt-BR" className={`${fonteDisplay.variable} ${fonteCorpo.variable} ${fonteMono.variable}`}>
       <body className="min-h-dvh font-sans antialiased">
