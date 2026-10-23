@@ -37,7 +37,7 @@ A cor nunca é o único sinal: as medalhas evoluem também em forma e camadas.
 | Corpo | DM Sans 400–600 | Texto corrido e formulários (base 16 px) |
 | Mono | JetBrains Mono 400–500 | Números, XP, rótulos `[ SISTEMA ]`, stacks |
 
-Servidas pelo `next/font`, do próprio domínio, sem requisição ao Google em produção.
+Arquivos variáveis (subset latin, que cobre o português) dos pacotes `@fontsource-variable/*` (licença OFL), carregados com `next/font/local`: servidos do próprio domínio, com fallback ajustado contra deslocamento de layout. O build não acessa o Google Fonts; a integridade dos arquivos vem do hash no `package-lock.json`.
 
 ## 3. Linguagem visual: "Janelas do Sistema"
 

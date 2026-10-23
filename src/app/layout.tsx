@@ -1,28 +1,36 @@
 import type { Metadata, Viewport } from 'next';
-import { DM_Sans, JetBrains_Mono, Syne } from 'next/font/google';
+import localFont from 'next/font/local';
 
 import './globals.css';
 
 /**
- * Fontes herdadas do Portfolio, servidas do próprio domínio pelo `next/font`
- * (sem requisição a terceiros em produção). `swap` evita texto invisível
- * enquanto a fonte carrega.
+ * Fontes herdadas do Portfolio, em arquivos variáveis (subset latin, que cobre
+ * o português) instalados pelos pacotes `@fontsource-variable/*` (licença OFL).
+ *
+ * Por que local e não `next/font/google`: o loader do Google baixa as fontes a
+ * cada build, e uma resposta instável do Google já derrubou o CI sem nenhuma
+ * mudança de código. Com os arquivos no `node_modules`, o build não depende de
+ * rede além do registro do npm, e a integridade vem do hash no lockfile.
+ *
+ * O `next/font` continua servindo as fontes do próprio domínio e gerando o
+ * fallback ajustado (`size-adjust`), que evita deslocamento de layout na troca.
+ * `swap` evita texto invisível enquanto a fonte carrega.
  */
-const fonteDisplay = Syne({
-  subsets: ['latin'],
-  weight: ['600', '700', '800'],
+const fonteDisplay = localFont({
+  src: '../../node_modules/@fontsource-variable/syne/files/syne-latin-wght-normal.woff2',
+  weight: '400 800',
   variable: '--fonte-display',
   display: 'swap',
 });
-const fonteCorpo = DM_Sans({
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+const fonteCorpo = localFont({
+  src: '../../node_modules/@fontsource-variable/dm-sans/files/dm-sans-latin-wght-normal.woff2',
+  weight: '100 1000',
   variable: '--fonte-corpo',
   display: 'swap',
 });
-const fonteMono = JetBrains_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
+const fonteMono = localFont({
+  src: '../../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2',
+  weight: '100 800',
   variable: '--fonte-mono',
   display: 'swap',
 });
