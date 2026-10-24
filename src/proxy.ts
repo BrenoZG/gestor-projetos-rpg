@@ -1,19 +1,24 @@
 import type { NextRequest, NextResponse } from 'next/server';
 
+import { decidirRedirecionamento } from '@/dominio/acesso/rotas';
 import { lerAmbientePublico } from '@/lib/ambiente';
 import { gerarNonce, montarCsp } from '@/lib/seguranca/csp';
-import { atualizarSessao } from '@/lib/supabase/sessao-proxy';
+import { atualizarSessao, redirecionarComSessao } from '@/lib/supabase/sessao-proxy';
 
 const CABECALHO_CSP = 'Content-Security-Policy';
 
 /**
- * Roda antes de cada página: aplica a CSP com um nonce novo e renova a sessão.
+ * Roda antes de cada página: aplica a CSP com um nonce novo, renova a sessão e
+ * manda quem não está logado para `/entrar`.
  *
  * A CSP vai na requisição (o Next lê o nonce dela e o aplica aos próprios
  * scripts durante o render) e na resposta (é a que o navegador obedece).
  *
+ * Este é o primeiro portão, não o único: cada Server Action e Route Handler
+ * confere a sessão de novo, e o RLS protege os dados no banco.
+ *
  * @param request - Requisição recebida.
- * @returns Resposta com a CSP e os cookies de sessão renovados.
+ * @returns Resposta com a CSP e os cookies de sessão renovados, ou um redirecionamento.
  */
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const csp = montarCsp({
@@ -23,7 +28,13 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   });
   request.headers.set(CABECALHO_CSP, csp);
 
-  const resposta = await atualizarSessao(request);
+  const { resposta, logado } = await atualizarSessao(request);
+
+  const destino = decidirRedirecionamento({ caminho: request.nextUrl.pathname, logado });
+  if (destino) {
+    return redirecionarComSessao(new URL(destino, request.url), resposta);
+  }
+
   resposta.headers.set(CABECALHO_CSP, csp);
   return resposta;
 }

@@ -40,6 +40,13 @@ Copy-Item .env.example .env.local
 npm run dev                 # http://localhost:3000
 ```
 
+**Login local com GitHub:**
+1. Crie um OAuth App de **desenvolvimento** em GitHub → Settings → Developer settings → OAuth Apps, com Homepage `http://localhost:3000` e callback `http://127.0.0.1:54321/auth/v1/callback`.
+2. `Copy-Item supabase/.env.example supabase/.env` e preencha com o Client ID e um Client Secret desse app.
+3. `npm run db:stop; npm run db:start` para a CLI ler os valores.
+
+Só a conta cujo ID está em `ALLOWLIST_GITHUB_IDS` entra; as demais veem "Acesso recusado". O login por e-mail fica desligado.
+
 Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar: `npm run db:stop`.
 
 ## Scripts
@@ -64,6 +71,8 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `CRON_SECRET` | só no deploy | Segredo do keepalive (32+ caracteres) |
 
 Contrato validado na inicialização por [`src/lib/ambiente.ts`](src/lib/ambiente.ts). Nunca versione `.env.local`.
+
+As credenciais do OAuth App local (`SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID` e `_SECRET`) ficam em `supabase/.env`, lido só pela CLI do Supabase (modelo em [`supabase/.env.example`](supabase/.env.example)).
 
 ## Documentação
 

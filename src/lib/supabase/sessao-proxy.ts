@@ -3,6 +3,16 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { lerAmbientePublico } from '@/lib/ambiente';
 
+/** Cabeçalhos anti-cache que o `@supabase/ssr` envia junto dos cookies de sessão. */
+const CABECALHOS_ANTI_CACHE = ['cache-control', 'expires', 'pragma'] as const;
+
+export type SessaoProxy = {
+  /** Resposta que carrega os cookies renovados. */
+  resposta: NextResponse;
+  /** Há sessão com JWT de assinatura válida. */
+  logado: boolean;
+};
+
 /**
  * Renova a sessão do Supabase Auth a cada requisição.
  *
@@ -18,9 +28,9 @@ import { lerAmbientePublico } from '@/lib/ambiente';
  * Cabeçalhos já definidos em `request.headers` (como a CSP) seguem para o render.
  *
  * @param request - Requisição recebida pelo proxy.
- * @returns A resposta que carrega os cookies renovados; deve ser a devolvida pelo proxy.
+ * @returns A resposta com os cookies renovados e se há usuário logado.
  */
-export async function atualizarSessao(request: NextRequest): Promise<NextResponse> {
+export async function atualizarSessao(request: NextRequest): Promise<SessaoProxy> {
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY } = lerAmbientePublico();
   let resposta = NextResponse.next({ request });
 
@@ -43,7 +53,26 @@ export async function atualizarSessao(request: NextRequest): Promise<NextRespons
   // Nada entre criar o cliente e o getClaims(): é ele que dispara a renovação.
   // getClaims() valida a assinatura do JWT; getSession() confiaria no cookie,
   // que qualquer um pode forjar.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
 
-  return resposta;
+  return { resposta, logado: Boolean(data?.claims) };
+}
+
+/**
+ * Cria um redirecionamento que preserva os cookies renovados e os cabeçalhos
+ * anti-cache da sessão. Sem a cópia, o navegador ficaria com o token antigo e
+ * o usuário seria deslogado na requisição seguinte.
+ *
+ * @param destino - URL absoluta de destino.
+ * @param sessao - Resposta devolvida por `atualizarSessao`.
+ * @returns Resposta de redirecionamento (307).
+ */
+export function redirecionarComSessao(destino: URL, sessao: NextResponse): NextResponse {
+  const redirecionamento = NextResponse.redirect(destino);
+  sessao.cookies.getAll().forEach((cookie) => redirecionamento.cookies.set(cookie));
+  for (const nome of CABECALHOS_ANTI_CACHE) {
+    const valor = sessao.headers.get(nome);
+    if (valor) redirecionamento.headers.set(nome, valor);
+  }
+  return redirecionamento;
 }

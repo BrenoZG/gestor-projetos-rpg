@@ -93,7 +93,10 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 ## 6. Segurança
 
 - **Autenticação:** GitHub OAuth via Supabase Auth, com cadastro público desativado (ADR-0004).
-- **Autorização em três camadas:** cadastro fechado no provedor → allowlist de IDs do GitHub no middleware → RLS `user_id = auth.uid()` no banco.
+- **Autorização em três camadas:** cadastro fechado no provedor → allowlist de IDs do GitHub no retorno do OAuth (`/auth/callback`, a partir do `provider_id` da identidade, nunca do `user_metadata`) → RLS `user_id = auth.uid()` no banco. Fora da allowlist, a sessão recém-criada é encerrada antes de qualquer página.
+- **Proxy como primeiro portão:** sem sessão válida (`getClaims()`), toda rota redireciona para `/entrar`; rota nova nasce protegida (`src/dominio/acesso/rotas.ts`). Server Actions e Route Handlers conferem a sessão de novo, e o RLS protege os dados mesmo se o proxy falhar.
+- **Login por e-mail desligado** (`[auth.email] enable_signup = false` desliga o provedor inteiro); só o GitHub autentica.
+- **Logs** em JSON (`src/lib/log.ts`), só com valores primitivos e sem dado pessoal: registram a causa técnica de uma recusa, nunca e-mail, nome ou ID.
 - **Menor privilégio:** a aplicação não usa a `service_role`; toda consulta roda com a sessão do usuário.
 - **Segredos:** apenas em variáveis de ambiente, validadas na inicialização (`src/lib/ambiente.ts`), com mensagem de erro que lista nomes de campos, nunca valores.
 - **Repositório público:** `gitleaks` no CI, push protection do GitHub, dados fictícios no seed.
