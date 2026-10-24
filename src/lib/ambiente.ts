@@ -60,10 +60,9 @@ export function lerAmbiente(fonte: FonteAmbiente = process.env): Ambiente {
 }
 
 /**
- * Lê só as variáveis públicas (`NEXT_PUBLIC_*`), as únicas que o proxy e o
- * navegador precisam. No navegador, o Next só embute uma variável quando ela é
- * lida pelo nome literal (`process.env.NEXT_PUBLIC_...`), então quem chama de lá
- * deve montar a `fonte` com essas leituras em vez de passar `process.env`.
+ * Lê só as variáveis públicas (`NEXT_PUBLIC_*`), as únicas de que o proxy
+ * precisa. Uso no servidor: no navegador, importar este módulo levaria o Zod
+ * para o bundle (ver `lib/supabase/navegador.ts`).
  *
  * @param fonte - Origem dos valores; `process.env` por padrão.
  * @returns URL e publishable key validadas; demais variáveis são descartadas.
