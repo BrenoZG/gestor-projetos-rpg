@@ -1,6 +1,6 @@
 import type { NextRequest, NextResponse } from 'next/server';
 
-import { decidirRedirecionamento } from '@/dominio/acesso/rotas';
+import { decidirRedirecionamento, ROTA_ENTRAR } from '@/dominio/acesso/rotas';
 import { lerAmbientePublico } from '@/lib/ambiente';
 import { gerarNonce, montarCsp } from '@/lib/seguranca/csp';
 import { atualizarSessao, redirecionarComSessao } from '@/lib/supabase/sessao-proxy';
@@ -28,11 +28,14 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   });
   request.headers.set(CABECALHO_CSP, csp);
 
-  const { resposta, logado } = await atualizarSessao(request);
+  const { resposta, logado, expirou } = await atualizarSessao(request);
 
   const destino = decidirRedirecionamento({ caminho: request.nextUrl.pathname, logado });
   if (destino) {
-    return redirecionarComSessao(new URL(destino, request.url), resposta);
+    const url = new URL(destino, request.url);
+    // Avisa na tela de entrada por que a sessão acabou.
+    if (expirou && destino === ROTA_ENTRAR) url.searchParams.set('erro', 'sessao-expirada');
+    return redirecionarComSessao(url, resposta);
   }
 
   resposta.headers.set(CABECALHO_CSP, csp);

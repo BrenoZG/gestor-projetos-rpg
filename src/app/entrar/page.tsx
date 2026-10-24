@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import type { MotivoRecusa } from '@/dominio/acesso/retorno-oauth';
+import { VALIDADE_MAXIMA_SESSAO_SEGUNDOS } from '@/dominio/acesso/sessao';
 
 import { AvisoErro } from '@/componentes/aviso-erro';
 import { ConteudoPrincipal } from '@/componentes/conteudo-principal';
@@ -14,8 +15,17 @@ export const metadata: Metadata = { title: 'Entrar' };
 
 type Mensagem = { titulo: string; texto: string };
 
+/** Motivos que chegam em `?erro=`: recusas do login e o fim da validade da sessão. */
+type MotivoAviso = MotivoRecusa | 'sessao-expirada';
+
+const HORAS_DE_VALIDADE = VALIDADE_MAXIMA_SESSAO_SEGUNDOS / 3600;
+
 /** Mensagens por motivo. O parâmetro da URL só escolhe uma delas; nunca é exibido. */
-const MENSAGENS_RECUSA: Readonly<Record<MotivoRecusa, Mensagem>> = {
+const MENSAGENS_RECUSA: Readonly<Record<MotivoAviso, Mensagem>> = {
+  'sessao-expirada': {
+    titulo: 'Sessão encerrada.',
+    texto: `Por segurança, cada login vale por ${HORAS_DE_VALIDADE} horas. Entre de novo para continuar.`,
+  },
   'acesso-negado': {
     titulo: 'Acesso recusado.',
     texto: 'Esta conta do GitHub não tem acesso a este sistema.',
@@ -39,7 +49,7 @@ const ATRASOS_CASCATA = [
 
 function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
   return typeof erro === 'string' && Object.hasOwn(MENSAGENS_RECUSA, erro)
-    ? MENSAGENS_RECUSA[erro as MotivoRecusa]
+    ? MENSAGENS_RECUSA[erro as MotivoAviso]
     : null;
 }
 

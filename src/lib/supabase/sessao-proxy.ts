@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
+import { sessaoExpirada } from '@/dominio/acesso/sessao';
 import { lerAmbientePublico } from '@/lib/ambiente';
+import { registrarEvento } from '@/lib/log';
 
 /** Cabeçalhos anti-cache que o `@supabase/ssr` envia junto dos cookies de sessão. */
 const CABECALHOS_ANTI_CACHE = ['cache-control', 'expires', 'pragma'] as const;
@@ -11,6 +13,8 @@ export type SessaoProxy = {
   resposta: NextResponse;
   /** Há sessão com JWT de assinatura válida. */
   logado: boolean;
+  /** A sessão passou da validade máxima e acabou de ser encerrada. */
+  expirou: boolean;
 };
 
 /**
@@ -27,8 +31,11 @@ export type SessaoProxy = {
  *
  * Cabeçalhos já definidos em `request.headers` (como a CSP) seguem para o render.
  *
+ * Sessão além da validade máxima (dominio/acesso/sessao.ts) é encerrada aqui:
+ * o refresh token é revogado no Supabase e os cookies são apagados.
+ *
  * @param request - Requisição recebida pelo proxy.
- * @returns A resposta com os cookies renovados e se há usuário logado.
+ * @returns A resposta com os cookies renovados, se há usuário logado e se a sessão expirou.
  */
 export async function atualizarSessao(request: NextRequest): Promise<SessaoProxy> {
   const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY } = lerAmbientePublico();
@@ -54,8 +61,22 @@ export async function atualizarSessao(request: NextRequest): Promise<SessaoProxy
   // getClaims() valida a assinatura do JWT; getSession() confiaria no cookie,
   // que qualquer um pode forjar.
   const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
-  return { resposta, logado: Boolean(data?.claims) };
+  if (claims && sessaoExpirada(claims, Math.floor(Date.now() / 1000))) {
+    // scope 'local': encerra só esta sessão (este navegador), não as de outros aparelhos.
+    const { error } = await supabase.auth.signOut({ scope: 'local' });
+    if (error) {
+      registrarEvento('erro', 'supabase_falhou', {
+        operacao: 'encerrar_sessao_expirada',
+        codigo: error.code ?? 'desconhecido',
+      });
+    }
+    registrarEvento('info', 'sessao_expirada');
+    return { resposta, logado: false, expirou: true };
+  }
+
+  return { resposta, logado: Boolean(claims), expirou: false };
 }
 
 /**

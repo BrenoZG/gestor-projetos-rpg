@@ -112,6 +112,8 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 ## 7. Notas de framework
 
 - **Next.js 16 com `cacheComponents` ligado e app inteiro dinâmico:** o layout raiz declara `instant = false` e chama `await connection()` ([ADR-0007](adr/0007-csp-nonce-render-por-requisicao.md)). Por isso, ler cookies ou sessão não exige `<Suspense>`. `<Suspense>` continua útil para mostrar o estado de carregamento enquanto um dado lento chega.
+- **Server Components que consultam o Supabase chamam `await connection()` antes:** o `partialPrefetching` pré-renderiza em tempo de execução, com cookies, mas proíbe `Date.now()`, que o supabase-js usa ao ler a sessão. Sem isso, a consulta é abortada nessa passagem e gera um erro falso no log (exemplo: `app/(jogo)/hud.tsx`).
+- **Validade máxima da sessão: 12 horas desde o login** (`dominio/acesso/sessao.ts`), contada pelo `amr[].timestamp` do JWT validado. O proxy encerra a sessão vencida (revoga o refresh token, `scope: local`) e manda para `/entrar?erro=sessao-expirada`. O Supabase só oferece esse limite no plano Pro.
 - **Sessão renovada no proxy:** `src/lib/supabase/sessao-proxy.ts` chama `getClaims()` a cada requisição e devolve os cookies renovados com os cabeçalhos anti-cache do `@supabase/ssr`. Nunca usar `getSession()` no servidor: ele confia no cookie sem validar a assinatura.
 - **Tipos de rota gerados:** `npm run typecheck` executa `next typegen` antes do `tsc`, porque tipos como `LayoutProps` só existem depois da geração.
 
