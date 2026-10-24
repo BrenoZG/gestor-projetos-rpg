@@ -264,6 +264,182 @@ body {
   }
 }
 
+/* ==========================================================================
+   TELA DE TÍTULO (/entrar) — exceção aprovada à regra de "sem loop decorativo":
+   é tratada como cinemática. Só transform e opacity. Com prefers-reduced-motion,
+   a rede de segurança global encerra os loops e tudo fica parado.
+   ========================================================================== */
+@layer components {
+  /* Entrada genérica: sobe e aparece. Base = estado final. */
+  .entrada-suave {
+    animation: surgir 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .titulo-jogo {
+    text-shadow:
+      0 0 24px color-mix(in oklab, var(--cor-acento-forte) 55%, transparent),
+      0 2px 0 var(--cor-acento-solido);
+  }
+
+  /* Anéis do sigilo giram em torno do centro do viewBox. */
+  .anel-runico {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+  }
+
+  .anel-horario {
+    animation: girar 60s linear infinite;
+  }
+
+  .anel-anti-horario {
+    animation: girar 40s linear infinite reverse;
+  }
+
+  .pulso-nucleo {
+    opacity: 0.12;
+    animation: pulsar 3.2s ease-in-out infinite;
+  }
+
+  .cursor-piscante {
+    animation: piscar 1.1s steps(1, end) infinite;
+  }
+
+  .prompt-pulsante {
+    animation: respirar 2.4s ease-in-out infinite;
+  }
+
+  /* Brasas: começam abaixo da tela e sobem. Atrasos negativos fazem a tela
+     já abrir com brasas no meio do caminho. */
+  .particulas > span {
+    position: absolute;
+    bottom: -12px;
+    width: 3px;
+    height: 3px;
+    border-radius: 9999px;
+    background: var(--cor-acento);
+    box-shadow: 0 0 8px 1px color-mix(in oklab, var(--cor-acento) 70%, transparent);
+    opacity: 0;
+    animation-name: subir;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  .particulas > span:nth-child(1) {
+    left: 6%;
+    animation-duration: 11s;
+    animation-delay: -2s;
+  }
+  .particulas > span:nth-child(2) {
+    left: 14%;
+    animation-duration: 14s;
+    animation-delay: -9s;
+  }
+  .particulas > span:nth-child(3) {
+    left: 22%;
+    animation-duration: 9s;
+    animation-delay: -5s;
+  }
+  .particulas > span:nth-child(4) {
+    left: 31%;
+    animation-duration: 13s;
+    animation-delay: -11s;
+  }
+  .particulas > span:nth-child(5) {
+    left: 39%;
+    animation-duration: 10s;
+    animation-delay: -3s;
+  }
+  .particulas > span:nth-child(6) {
+    left: 47%;
+    animation-duration: 15s;
+    animation-delay: -7s;
+  }
+  .particulas > span:nth-child(7) {
+    left: 55%;
+    animation-duration: 12s;
+    animation-delay: -1s;
+  }
+  .particulas > span:nth-child(8) {
+    left: 63%;
+    animation-duration: 9s;
+    animation-delay: -6s;
+  }
+  .particulas > span:nth-child(9) {
+    left: 70%;
+    animation-duration: 14s;
+    animation-delay: -12s;
+  }
+  .particulas > span:nth-child(10) {
+    left: 77%;
+    animation-duration: 11s;
+    animation-delay: -4s;
+  }
+  .particulas > span:nth-child(11) {
+    left: 84%;
+    animation-duration: 13s;
+    animation-delay: -8s;
+  }
+  .particulas > span:nth-child(12) {
+    left: 90%;
+    animation-duration: 10s;
+    animation-delay: -2.5s;
+  }
+  .particulas > span:nth-child(13) {
+    left: 95%;
+    animation-duration: 16s;
+    animation-delay: -10s;
+  }
+  .particulas > span:nth-child(14) {
+    left: 3%;
+    animation-duration: 12s;
+    animation-delay: -13s;
+  }
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulsar {
+  50% {
+    opacity: 0.24;
+  }
+}
+
+@keyframes piscar {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes respirar {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes subir {
+  10% {
+    opacity: 0.85;
+  }
+  80% {
+    opacity: 0.5;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-105dvh);
+  }
+}
+
 @keyframes abrir-janela {
   from {
     opacity: 0;

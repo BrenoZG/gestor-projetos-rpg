@@ -62,6 +62,7 @@ O título que não pode quebrar (ex.: "Identifique-se,") usa tamanho fluido (`cl
 ## 4. Movimento
 
 1. **Causa → efeito:** toda animação responde a uma ação ou conquista. Sem animação decorativa em loop na interface comum.
+   - **Exceção aprovada: a tela de título (`/entrar`)**, tratada como cinemática. Anéis do sigilo girando (60 s e 40 s), núcleo pulsando, brasas subindo, cursor piscando e o aviso "Pressione Enter". Só `transform` e `opacity`; com `prefers-reduced-motion`, nenhuma animação continua rodando (conferido no Chrome).
 2. **No máximo 1–2 elementos animados por tela** fora das cinemáticas.
 3. **Durações:** microinterações 150–300 ms; entrada de janela até 450 ms; cinemática de level up ~5 s, sempre pulável (`Esc`).
 4. **Base = estado final:** o CSS sem animação já mostra o estado final; a animação só parte de um estado inicial. Assim, `prefers-reduced-motion` exibe o resultado sem esforço extra.

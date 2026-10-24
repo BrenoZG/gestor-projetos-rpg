@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 
 import { criarClienteNavegador } from '@/lib/supabase/navegador';
 
@@ -38,6 +38,20 @@ export function BotaoEntrarGithub() {
     if (error) setEstado('erro');
   }
 
+  // "Pressione Enter para começar": só quando nenhum controle tem o foco, para
+  // não sequestrar o Enter de um link ou botão (que já tem o próprio Enter).
+  const aoPressionarTecla = useEffectEvent((evento: KeyboardEvent) => {
+    const semFoco = document.activeElement === document.body || document.activeElement === null;
+    if (evento.key === 'Enter' && !evento.repeat && semFoco && estado !== 'carregando') {
+      void entrar();
+    }
+  });
+
+  useEffect(() => {
+    window.addEventListener('keydown', aoPressionarTecla);
+    return () => window.removeEventListener('keydown', aoPressionarTecla);
+  }, []);
+
   const carregando = estado === 'carregando';
 
   return (
@@ -54,6 +68,13 @@ export function BotaoEntrarGithub() {
         </svg>
         {carregando ? 'Abrindo o GitHub…' : 'Entrar com GitHub'}
       </button>
+      {/* Só com teclado físico (telas grandes); no toque, o botão basta. */}
+      <p
+        aria-hidden="true"
+        className="prompt-pulsante hidden text-center font-mono text-xs tracking-[0.2em] text-texto-suave lg:block"
+      >
+        ▸ PRESSIONE ENTER PARA COMEÇAR ◂
+      </p>
       {estado === 'erro' && (
         <AvisoErro titulo="GitHub indisponível.">
           Não foi possível abrir o GitHub. Confira a conexão e tente de novo.

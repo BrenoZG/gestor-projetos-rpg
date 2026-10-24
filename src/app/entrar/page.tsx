@@ -4,6 +4,8 @@ import type { MotivoRecusa } from '@/dominio/acesso/retorno-oauth';
 
 import { AvisoErro } from './aviso-erro';
 import { BotaoEntrarGithub } from './botao-entrar-github';
+import { Particulas } from './particulas';
+import { SigiloRunico } from './sigilo-runico';
 
 export const metadata: Metadata = { title: 'Entrar' };
 
@@ -21,38 +23,26 @@ const MENSAGENS_RECUSA: Readonly<Record<MotivoRecusa, Mensagem>> = {
   },
 };
 
+/** O que espera o aventureiro do outro lado do portão (gamificacao.md). */
+const DESTAQUES = ['Missões Rank E → S', 'XP até o Nível 100', 'Medalhas I → X', '8 Classes'] as const;
+
+/** Atraso de entrada de cada destaque: entram em cascata depois do título. */
+const ATRASOS_CASCATA = [
+  '[animation-delay:360ms]',
+  '[animation-delay:420ms]',
+  '[animation-delay:480ms]',
+  '[animation-delay:540ms]',
+] as const;
+
 function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
   return typeof erro === 'string' && Object.hasOwn(MENSAGENS_RECUSA, erro)
     ? MENSAGENS_RECUSA[erro as MotivoRecusa]
     : null;
 }
 
-/** Sigilo decorativo do portal: hexágono duplo com o glifo de código. */
-function Sigilo() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 64 64"
-      width="64"
-      height="64"
-      fill="none"
-      className="text-acento brilho-sigilo"
-    >
-      <path d="M32 3 57 17.5v29L32 61 7 46.5v-29Z" stroke="currentColor" strokeWidth="1.5" />
-      <path d="M32 11 50 21.5v21L32 53 14 42.5v-21Z" stroke="currentColor" strokeWidth="1" opacity="0.45" />
-      <path
-        d="m25 25-7 7 7 7M39 25l7 7-7 7M34.5 22l-5 20"
-        stroke="currentColor"
-        strokeWidth="2.25"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 /**
- * Tela de entrada: uma "Janela do Sistema" com a missão de identificação.
+ * Tela de título: à esquerda, o "jogo" (sigilo, nome e destaques); à direita,
+ * a Janela do Sistema com a missão de acesso. No celular, empilha.
  *
  * @param props - `searchParams.erro` traz o motivo de uma recusa anterior.
  * @returns Página de login.
@@ -61,51 +51,87 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
   const mensagem = lerMensagem((await searchParams).erro);
 
   return (
-    <div className="portal-sistema flex min-h-dvh items-center justify-center px-4 py-12">
-      <section aria-labelledby="titulo-entrar" className="flex w-full max-w-lg flex-col items-center gap-6">
-        <Sigilo />
+    <div className="portal-sistema relative min-h-dvh">
+      <Particulas />
 
-        <div className="aura-sistema entrada-janela w-full">
-          <div className="janela-sistema">
-            <div className="janela-sistema-conteudo flex flex-col gap-6 p-5 sm:p-8">
-              <div className="flex items-center justify-between gap-4 border-b border-borda pb-4 font-mono text-xs tracking-[0.14em]">
-                <span className="text-acento">[ SISTEMA ] · ACESSO</span>
-                <span className="text-texto-tenue">RESTRITO</span>
-              </div>
+      <div className="relative mx-auto grid min-h-dvh w-full max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 py-10 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:py-16">
+        <header className="entrada-suave flex flex-col items-start gap-6">
+          <SigiloRunico className="h-24 w-24 sm:h-36 sm:w-36 lg:h-60 lg:w-60" />
 
-              <header className="flex flex-col gap-3">
-                <p className="font-mono text-sm text-texto-suave">› Presença desconhecida detectada.</p>
-                <h1
-                  id="titulo-entrar"
-                  className="font-display text-[clamp(1.25rem,6.4vw,2.375rem)] leading-tight font-extrabold"
-                >
-                  <span className="whitespace-nowrap">Identifique-se,</span>
-                  <span className="block text-acento">Dev Aventureiro</span>
-                </h1>
-                <p className="text-texto-suave">Só aventureiros autorizados acessam o Quadro de Missões.</p>
-              </header>
+          <div className="flex flex-col gap-3">
+            <p className="font-mono text-xs tracking-[0.3em] text-acento sm:text-sm">
+              ◆ O RPG DO DESENVOLVEDOR
+            </p>
+            <h1 className="titulo-jogo font-display text-[clamp(1.75rem,9vw,4rem)] lg:text-[clamp(2.5rem,4.6vw,3.75rem)] leading-[0.95] font-extrabold uppercase">
+              Gestor de
+              <span className="block">Projetos</span>
+            </h1>
+          </div>
 
-              <div className="rounded-md border border-borda bg-fundo/60 p-4">
-                <p className="mb-3 font-mono text-xs tracking-[0.14em] text-acento">◆ MISSÃO DE ACESSO</p>
-                <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-2 text-sm">
-                  <dt className="font-mono text-texto-tenue">Objetivo</dt>
+          <p className="max-w-md text-base leading-relaxed text-texto-suave sm:text-lg">
+            Transforme cada projeto em uma missão. Conclua, ganhe XP, suba de Rank e desbloqueie medalhas.
+          </p>
+
+          <ul className="hidden flex-wrap gap-2 sm:flex" aria-label="O que você encontra lá dentro">
+            {DESTAQUES.map((destaque, indice) => (
+              <li
+                key={destaque}
+                className={`entrada-suave ${ATRASOS_CASCATA[indice]} rounded-full border border-borda-forte bg-superficie/80 px-3 py-1.5 font-mono text-xs text-texto-suave`}
+              >
+                {destaque}
+              </li>
+            ))}
+          </ul>
+        </header>
+
+        <section
+          aria-labelledby="titulo-entrar"
+          className="flex w-full flex-col gap-5 lg:max-w-lg lg:justify-self-end"
+        >
+          <div className="aura-sistema entrada-janela w-full [animation-delay:200ms]">
+            <div className="janela-sistema">
+              <div className="janela-sistema-conteudo flex flex-col gap-7 p-5 sm:p-9">
+                <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-borda pb-4 font-mono text-xs tracking-[0.14em]">
+                  <span className="text-acento">[ SISTEMA ] · NOVA MISSÃO</span>
+                  <span className="rounded-sm border border-borda-forte px-2 py-0.5 text-texto-suave">
+                    RANK ?
+                  </span>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <p className="font-mono text-sm text-texto-suave">
+                    › Presença desconhecida detectada<span className="cursor-piscante">_</span>
+                  </p>
+                  <h2
+                    id="titulo-entrar"
+                    className="font-display text-[clamp(1.25rem,6.6vw,2.25rem)] lg:text-[clamp(1.5rem,2.6vw,2.25rem)] leading-tight font-extrabold"
+                  >
+                    <span className="whitespace-nowrap">Identifique-se,</span>
+                    <span className="block text-acento">Dev Aventureiro</span>
+                  </h2>
+                </div>
+
+                <dl className="grid grid-cols-[auto_1fr] gap-x-5 gap-y-3 border-l-2 border-acento-forte pl-4 text-base leading-snug">
+                  <dt className="font-mono text-sm text-texto-tenue">Objetivo</dt>
                   <dd>Confirmar sua identidade pelo GitHub</dd>
-                  <dt className="font-mono text-texto-tenue">Recompensa</dt>
+                  <dt className="font-mono text-sm text-texto-tenue">Recompensa</dt>
                   <dd>Acesso ao Quadro de Missões</dd>
+                  <dt className="font-mono text-sm text-texto-tenue">Penalidade</dt>
+                  <dd className="text-texto-suave">Acesso negado a quem não é da guilda</dd>
                 </dl>
+
+                {mensagem && <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>}
+
+                <BotaoEntrarGithub />
               </div>
-
-              {mensagem && <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>}
-
-              <BotaoEntrarGithub />
             </div>
           </div>
-        </div>
 
-        <p className="text-center font-mono text-xs text-texto-tenue">
-          Autenticação pelo GitHub · nenhuma senha é guardada aqui
-        </p>
-      </section>
+          <p className="text-center font-mono text-xs leading-relaxed text-texto-tenue">
+            Autenticação pelo GitHub · nenhuma senha é guardada aqui
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
