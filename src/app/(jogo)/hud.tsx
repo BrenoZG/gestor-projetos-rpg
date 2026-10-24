@@ -1,3 +1,5 @@
+import { connection } from 'next/server';
+
 import { sair } from '@/acoes/sessao';
 import { BarraXp } from '@/componentes/barra-xp';
 import { EmblemaRank } from '@/componentes/emblema-rank';
@@ -21,6 +23,11 @@ const XP_TOTAL_ANTES_DO_LEDGER = 0;
  * @throws {Error} Se o personagem não puder ser lido; a tela de erro assume.
  */
 export async function Hud() {
+  // Só na requisição real: o partialPrefetching pré-renderiza em tempo de
+  // execução com os cookies disponíveis, mas proíbe Date.now(), que o
+  // supabase-js usa ao ler a sessão. Sem isto, cada visita gerava uma consulta
+  // abortada e um erro falso no log.
+  await connection();
   const supabase = await criarClienteServidor();
   const [{ data: personagem, error }, efeitos] = await Promise.all([
     supabase.from('personagem').select('classe').maybeSingle(),
