@@ -43,6 +43,22 @@ Arquivos variáveis (subset latin, que cobre o português) dos pacotes `@fontsou
 
 O sistema fala com o usuário como o *Sistema* de um anime de progressão: painéis com cantos chanfrados (`clip-path`), borda vinho com brilho contido, rótulos em mono no formato `[ SISTEMA ] · CONTEXTO`. A inspiração é estética: nenhum nome, logo ou personagem de obra protegida.
 
+### Classes de componente (`globals.css`, `@layer components`)
+| Classe | Uso |
+|---|---|
+| `portal-sistema` | Fundo de tela cheia: brilho vinho no topo e grade tênue |
+| `aura-sistema` | Brilho em volta da janela; vai no **elemento pai**, porque o `clip-path` cortaria a sombra |
+| `janela-sistema` + `janela-sistema-conteudo` | Moldura chanfrada (1px de gradiente) e o miolo; sempre aninhadas |
+| `entrada-janela` | Abertura da janela (420 ms); o estado final é a base, então `prefers-reduced-motion` já mostra a janela pronta |
+| `botao-sistema` | Botão principal com reflexo no hover e no foco |
+| `brilho-sigilo` | Brilho de ícones decorativos |
+
+**Duas restrições técnicas:**
+- **CSS Modules não funcionam neste projeto.** A regra do Turbopack para o Tailwind (`'*.css'` em `next.config.ts`) também captura `*.module.css`, e o objeto de classes chega vazio, **sem erro**. Componentes visuais reutilizáveis ficam em `@layer components`.
+- **Nada de `style={{…}}`.** A CSP com nonce bloqueia atributos `style` inline.
+
+O título que não pode quebrar (ex.: "Identifique-se,") usa tamanho fluido (`clamp`) e é conferido sem transbordar em 320, 360, 768 e 1280 px. O `clip-path` esconde o transbordo, então a falta de rolagem horizontal **não** prova que o texto coube.
+
 ## 4. Movimento
 
 1. **Causa → efeito:** toda animação responde a uma ação ou conquista. Sem animação decorativa em loop na interface comum.
