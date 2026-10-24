@@ -139,7 +139,7 @@ PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. Limi
 - RLS habilitado em **todas** as tabelas, com política `user_id = auth.uid()` para cada operação permitida.
 - A aplicação usa a sessão do usuário (publishable key + JWT), nunca a `service_role`.
 - Privilégios explícitos e por coluna (`GRANT`), porque a Data API não expõe tabelas novas automaticamente e o RLS filtra linhas, não colunas.
-- Testes de banco em pgTAP (`supabase/tests/database/`, `npm run db:test`) provam que um usuário B não lê nem altera dados de um usuário A.
+- Testes de banco em pgTAP (`supabase/tests/database/`, `npm run db:test`) provam que um usuário B não lê nem altera dados de um usuário A. Rodam no CI (job `banco`) a cada PR, junto com os advisors.
 
 ## 4. Consultas derivadas e grão
 

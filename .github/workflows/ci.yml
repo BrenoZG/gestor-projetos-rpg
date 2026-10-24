@@ -33,6 +33,30 @@ jobs:
       - run: npm run build
       - run: npm audit --audit-level=high --omit=dev
 
+  # Banco descartável do zero a cada execução: prova que as migrations aplicam
+  # num banco vazio, roda os testes pgTAP (RLS, GRANT, funções) e os advisors.
+  # A CLI vem do `npm ci`, na versão travada pelo lockfile, igual à local.
+  # Sobem só o banco e o Auth (que aplica as próprias migrations no schema
+  # `auth`, referenciado pelas FKs, deixando-o igual ao da produção); o resto
+  # da stack não é usado aqui e só atrasaria o job.
+  # As variáveis do OAuth do GitHub ficam vazias: nenhum login acontece aqui.
+  # As chaves que o `supabase start` imprime são as de demonstração, públicas
+  # e iguais em toda instalação local; não são segredos.
+  banco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Subir o banco e aplicar as migrations
+        run: npx supabase start -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - run: npm run db:test
+      - run: npm run db:advisors
+
   # CLI do gitleaks chamada diretamente, em vez da gitleaks-action: a action monta
   # o intervalo `<primeiro>^..<último>` e quebra quando o primeiro commit não tem
   # pai, além de baixar uma versão do gitleaks escolhida por ela. Aqui a versão é

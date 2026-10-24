@@ -60,6 +60,7 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `npm test` | Testes unitários |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
 | `npm run db:test` | Testes do banco em pgTAP (RLS, privilégios e restrições), em `supabase/tests/` |
+| `npm run db:advisors` | Advisors de segurança e desempenho do Supabase no banco local; falha em achado `WARN` ou `ERROR` |
 
 ## Variáveis de ambiente
 
