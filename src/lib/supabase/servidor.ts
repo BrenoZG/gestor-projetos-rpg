@@ -12,8 +12,11 @@ import { lerAmbientePublico } from '@/lib/ambiente';
  * @returns Cliente ligado aos cookies da requisição atual.
  */
 export async function criarClienteServidor() {
-  const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY } = lerAmbientePublico();
+  // Cookies antes das variáveis de ambiente: no build, a pré-renderização para
+  // no primeiro dado de requisição e adia o resto para a hora da requisição.
+  // Na ordem inversa, o build leria o ambiente e falharia onde ele não existe (CI).
   const armazemCookies = await cookies();
+  const { NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY } = lerAmbientePublico();
 
   return createServerClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, {
     cookies: {
