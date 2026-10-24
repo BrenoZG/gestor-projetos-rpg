@@ -4,7 +4,7 @@ import { useEffect, useEffectEvent, useState } from 'react';
 
 import { criarClienteNavegador } from '@/lib/supabase/navegador';
 
-import { AvisoErro } from './aviso-erro';
+import { AvisoErro } from '@/componentes/aviso-erro';
 
 type Estado = 'pronto' | 'carregando' | 'erro';
 

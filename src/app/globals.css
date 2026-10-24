@@ -131,12 +131,16 @@ body {
   color: var(--cor-texto);
 }
 
-/* Rede de segurança global: componentes animados também tratam reduced-motion
-   individualmente, com o estado final como base. */
+/* ==========================================================================
+   SISTEMA DE MOVIMENTO (design-system.md §4): 3 camadas + Efeitos visuais.
+   Base = estado final: sem animação, todo conteúdo já aparece pronto.
+   ========================================================================== */
+
+/* Automático (sem cookie): segue o sistema operacional. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
+  :root:not([data-efeitos]) *,
+  :root:not([data-efeitos]) *::before,
+  :root:not([data-efeitos]) *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
@@ -444,5 +448,369 @@ body {
   from {
     opacity: 0;
     transform: translateY(14px) scale(0.98);
+  }
+}
+
+/* Desligado: nenhuma animação nem transição. */
+:root[data-efeitos='desligado'] *,
+:root[data-efeitos='desligado'] *::before,
+:root[data-efeitos='desligado'] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Reduzido: para a camada de ambiente (tudo o que roda em loop); transições e
+   recompensas curtas continuam. Toda animação contínua nova entra nesta lista. */
+:root[data-efeitos='reduzido']
+  :is(
+    .anel-horario,
+    .anel-anti-horario,
+    .pulso-nucleo,
+    .particulas > span,
+    .cursor-piscante,
+    .prompt-pulsante,
+    .brilho-emblema
+  ) {
+  animation: none !important;
+}
+
+/* Pseudo-elementos não podem ficar dentro de :is(); por isso a regra separada. */
+:root[data-efeitos='reduzido'] .trilho-xp::after,
+:root[data-efeitos='reduzido'] .slot-vazio::after {
+  animation: none !important;
+}
+
+/* ==========================================================================
+   HUD E QUADRO (telas do jogo)
+   ========================================================================== */
+@layer components {
+  .hud-sistema {
+    background: color-mix(in oklab, var(--cor-superficie) 82%, transparent);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--cor-borda-forte);
+    box-shadow: 0 1px 0 color-mix(in oklab, var(--cor-acento-forte) 45%, transparent);
+  }
+
+  /* O HUD desce do topo ao abrir a tela (transição). */
+  .entrada-hud {
+    animation: descer-hud 480ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Barra de XP: o preenchimento enche ao carregar (recompensa)... */
+  .preenchimento-xp {
+    transform-box: fill-box;
+    transform-origin: left center;
+    animation: encher-xp 1200ms cubic-bezier(0.16, 1, 0.3, 1) 300ms both;
+  }
+
+  /* ...e um brilho percorre o trilho (ambiente). */
+  .trilho-xp::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      color-mix(in oklab, var(--cor-acento) 35%, transparent),
+      transparent
+    );
+    transform: translateX(-100%);
+    animation: varrer 3.6s ease-in-out 1.2s infinite;
+  }
+
+  .parada-acento {
+    stop-color: var(--cor-acento);
+  }
+
+  .parada-acento-forte {
+    stop-color: var(--cor-acento-forte);
+  }
+
+  /* Espaço vazio do Quadro: um reflexo lento atravessa (ambiente). */
+  .slot-vazio {
+    position: relative;
+    overflow: hidden;
+    background: color-mix(in oklab, var(--cor-fundo) 45%, transparent);
+  }
+
+  .slot-vazio::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 35%,
+      color-mix(in oklab, var(--cor-acento-forte) 14%, transparent) 50%,
+      transparent 65%
+    );
+    transform: translateX(-100%);
+    animation: varrer 6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* Reflexo do emblema de Rank (ambiente), a cada ~7 s. */
+  .brilho-emblema {
+    fill: var(--cor-texto);
+    opacity: 0.35;
+    animation: brilhar-emblema 7s ease-in-out 1s infinite;
+  }
+
+  /* Brasas calmas para telas de trabalho. */
+  .particulas.lentas > span {
+    animation-name: subir-suave;
+    animation-duration: 24s;
+  }
+
+  .parada-ferro-0 {
+    stop-color: var(--metal-ferro-0);
+  }
+  .parada-ferro-1 {
+    stop-color: var(--metal-ferro-1);
+  }
+  .parada-ferro-2 {
+    stop-color: var(--metal-ferro-2);
+  }
+  .parada-ferro-3 {
+    stop-color: var(--metal-ferro-3);
+  }
+  .contorno-ferro {
+    stroke: var(--metal-ferro-0);
+    opacity: 0.55;
+  }
+  .texto-ferro {
+    fill: var(--metal-ferro-3);
+  }
+  .parada-bronze-0 {
+    stop-color: var(--metal-bronze-0);
+  }
+  .parada-bronze-1 {
+    stop-color: var(--metal-bronze-1);
+  }
+  .parada-bronze-2 {
+    stop-color: var(--metal-bronze-2);
+  }
+  .parada-bronze-3 {
+    stop-color: var(--metal-bronze-3);
+  }
+  .contorno-bronze {
+    stroke: var(--metal-bronze-0);
+    opacity: 0.55;
+  }
+  .texto-bronze {
+    fill: var(--metal-bronze-3);
+  }
+  .parada-prata-0 {
+    stop-color: var(--metal-prata-0);
+  }
+  .parada-prata-1 {
+    stop-color: var(--metal-prata-1);
+  }
+  .parada-prata-2 {
+    stop-color: var(--metal-prata-2);
+  }
+  .parada-prata-3 {
+    stop-color: var(--metal-prata-3);
+  }
+  .contorno-prata {
+    stroke: var(--metal-prata-0);
+    opacity: 0.55;
+  }
+  .texto-prata {
+    fill: var(--metal-prata-3);
+  }
+  .parada-ouro-0 {
+    stop-color: var(--metal-ouro-0);
+  }
+  .parada-ouro-1 {
+    stop-color: var(--metal-ouro-1);
+  }
+  .parada-ouro-2 {
+    stop-color: var(--metal-ouro-2);
+  }
+  .parada-ouro-3 {
+    stop-color: var(--metal-ouro-3);
+  }
+  .contorno-ouro {
+    stroke: var(--metal-ouro-0);
+    opacity: 0.55;
+  }
+  .texto-ouro {
+    fill: var(--metal-ouro-3);
+  }
+  .parada-platina-0 {
+    stop-color: var(--metal-platina-0);
+  }
+  .parada-platina-1 {
+    stop-color: var(--metal-platina-1);
+  }
+  .parada-platina-2 {
+    stop-color: var(--metal-platina-2);
+  }
+  .parada-platina-3 {
+    stop-color: var(--metal-platina-3);
+  }
+  .contorno-platina {
+    stroke: var(--metal-platina-0);
+    opacity: 0.55;
+  }
+  .texto-platina {
+    fill: var(--metal-platina-3);
+  }
+  .parada-esmeralda-0 {
+    stop-color: var(--metal-esmeralda-0);
+  }
+  .parada-esmeralda-1 {
+    stop-color: var(--metal-esmeralda-1);
+  }
+  .parada-esmeralda-2 {
+    stop-color: var(--metal-esmeralda-2);
+  }
+  .parada-esmeralda-3 {
+    stop-color: var(--metal-esmeralda-3);
+  }
+  .contorno-esmeralda {
+    stroke: var(--metal-esmeralda-0);
+    opacity: 0.55;
+  }
+  .texto-esmeralda {
+    fill: var(--metal-esmeralda-3);
+  }
+  .parada-safira-0 {
+    stop-color: var(--metal-safira-0);
+  }
+  .parada-safira-1 {
+    stop-color: var(--metal-safira-1);
+  }
+  .parada-safira-2 {
+    stop-color: var(--metal-safira-2);
+  }
+  .parada-safira-3 {
+    stop-color: var(--metal-safira-3);
+  }
+  .contorno-safira {
+    stroke: var(--metal-safira-0);
+    opacity: 0.55;
+  }
+  .texto-safira {
+    fill: var(--metal-safira-3);
+  }
+  .parada-rubi-0 {
+    stop-color: var(--metal-rubi-0);
+  }
+  .parada-rubi-1 {
+    stop-color: var(--metal-rubi-1);
+  }
+  .parada-rubi-2 {
+    stop-color: var(--metal-rubi-2);
+  }
+  .parada-rubi-3 {
+    stop-color: var(--metal-rubi-3);
+  }
+  .contorno-rubi {
+    stroke: var(--metal-rubi-0);
+    opacity: 0.55;
+  }
+  .texto-rubi {
+    fill: var(--metal-rubi-3);
+  }
+  .parada-diamante-0 {
+    stop-color: var(--metal-diamante-0);
+  }
+  .parada-diamante-1 {
+    stop-color: var(--metal-diamante-1);
+  }
+  .parada-diamante-2 {
+    stop-color: var(--metal-diamante-2);
+  }
+  .parada-diamante-3 {
+    stop-color: var(--metal-diamante-3);
+  }
+  .contorno-diamante {
+    stroke: var(--metal-diamante-0);
+    opacity: 0.55;
+  }
+  .texto-diamante {
+    fill: var(--metal-diamante-3);
+  }
+  .parada-mitica-0 {
+    stop-color: var(--metal-mitica-0);
+  }
+  .parada-mitica-1 {
+    stop-color: var(--metal-mitica-1);
+  }
+  .parada-mitica-2 {
+    stop-color: var(--metal-mitica-2);
+  }
+  .parada-mitica-3 {
+    stop-color: var(--metal-mitica-3);
+  }
+  .contorno-mitica {
+    stroke: var(--metal-mitica-0);
+    opacity: 0.55;
+  }
+  .texto-mitica {
+    fill: var(--metal-mitica-3);
+  }
+  .parada-lendaria-0 {
+    stop-color: var(--metal-lendaria-0);
+  }
+  .parada-lendaria-1 {
+    stop-color: var(--metal-lendaria-1);
+  }
+  .parada-lendaria-2 {
+    stop-color: var(--metal-lendaria-2);
+  }
+  .parada-lendaria-3 {
+    stop-color: var(--metal-lendaria-3);
+  }
+  .contorno-lendaria {
+    stroke: var(--metal-lendaria-0);
+    opacity: 0.55;
+  }
+  .texto-lendaria {
+    fill: var(--metal-lendaria-3);
+  }
+}
+
+@keyframes descer-hud {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes encher-xp {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes varrer {
+  60%,
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes brilhar-emblema {
+  0%,
+  70% {
+    transform: rotate(20deg) translateX(0);
+  }
+  to {
+    transform: rotate(20deg) translateX(130px);
+  }
+}
+
+@keyframes subir-suave {
+  15% {
+    opacity: 0.4;
+  }
+  80% {
+    opacity: 0.25;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-105dvh);
   }
 }

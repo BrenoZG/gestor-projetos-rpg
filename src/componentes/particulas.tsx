@@ -2,13 +2,18 @@
 const QUANTIDADE_PARTICULAS = 14;
 
 /**
- * Brasas subindo pela tela de título. Posição, duração e atraso de cada uma
- * vêm do CSS (`nth-child`), porque estilo inline seria bloqueado pela CSP.
- * Decorativo e sem captura de clique.
+ * Brasas subindo pela tela (camada de ambiente). Posição, duração e atraso de
+ * cada uma vêm do CSS (`nth-child`), porque estilo inline seria bloqueado pela
+ * CSP. Decorativo e sem captura de clique.
+ *
+ * @param props - `lentas`: versão mais calma, para telas de trabalho (HUD).
  */
-export function Particulas() {
+export function Particulas({ lentas = false }: { lentas?: boolean }) {
   return (
-    <div aria-hidden="true" className="particulas pointer-events-none absolute inset-0 overflow-hidden">
+    <div
+      aria-hidden="true"
+      className={`particulas ${lentas ? 'lentas' : ''} pointer-events-none fixed inset-0 overflow-hidden`}
+    >
       {Array.from({ length: QUANTIDADE_PARTICULAS }, (_, i) => (
         <span key={i} />
       ))}

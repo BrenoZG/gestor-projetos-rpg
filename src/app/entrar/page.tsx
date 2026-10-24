@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 
 import type { MotivoRecusa } from '@/dominio/acesso/retorno-oauth';
 
-import { AvisoErro } from './aviso-erro';
+import { AvisoErro } from '@/componentes/aviso-erro';
+import { ConteudoPrincipal } from '@/componentes/conteudo-principal';
 import { BotaoEntrarGithub } from './botao-entrar-github';
-import { Particulas } from './particulas';
-import { SigiloRunico } from './sigilo-runico';
+import { Particulas } from '@/componentes/particulas';
+import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
+import { SigiloRunico } from '@/componentes/sigilo-runico';
+import { obterPreferenciaEfeitos } from '@/lib/efeitos-servidor';
 
 export const metadata: Metadata = { title: 'Entrar' };
 
@@ -48,27 +51,35 @@ function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
  * @returns Página de login.
  */
 export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'>) {
-  const mensagem = lerMensagem((await searchParams).erro);
+  const [{ erro }, efeitos] = await Promise.all([searchParams, obterPreferenciaEfeitos()]);
+  const mensagem = lerMensagem(erro);
 
   return (
     <div className="portal-sistema relative min-h-dvh">
       <Particulas />
+      {/* Sigilo gigante de fundo: preenche o lado do título nas telas largas. */}
+      <SigiloRunico className="pointer-events-none absolute top-1/2 -left-48 hidden h-[60rem] w-[60rem] -translate-y-1/2 opacity-[0.06] lg:block" />
 
-      <div className="relative mx-auto grid min-h-dvh w-full max-w-6xl grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 py-10 sm:px-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:py-16">
+      {/* Controle de Efeitos: também é a pausa de movimento exigida pelo WCAG 2.2.2. */}
+      <div className="absolute top-4 right-4 z-40 sm:top-6 sm:right-6">
+        <SeletorEfeitos inicial={efeitos} />
+      </div>
+
+      <ConteudoPrincipal className="relative mx-auto grid min-h-dvh w-full max-w-[110rem] grid-cols-[minmax(0,1fr)] items-center gap-10 px-4 pt-20 pb-10 sm:px-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-16 lg:px-16 lg:py-16 xl:gap-24 xl:px-24">
         <header className="entrada-suave flex flex-col items-start gap-6">
-          <SigiloRunico className="h-24 w-24 sm:h-36 sm:w-36 lg:h-60 lg:w-60" />
+          <SigiloRunico className="h-24 w-24 sm:h-36 sm:w-36 lg:h-60 lg:w-60 xl:h-72 xl:w-72" />
 
           <div className="flex flex-col gap-3">
             <p className="font-mono text-xs tracking-[0.3em] text-acento sm:text-sm">
               ◆ O RPG DO DESENVOLVEDOR
             </p>
-            <h1 className="titulo-jogo font-display text-[clamp(1.75rem,9vw,4rem)] lg:text-[clamp(2.5rem,4.6vw,3.75rem)] leading-[0.95] font-extrabold uppercase">
+            <h1 className="titulo-jogo font-display text-[clamp(1.75rem,9vw,4rem)] lg:text-[clamp(2.5rem,4.6vw,3.75rem)] xl:text-[clamp(3rem,4.2vw,5.125rem)] leading-[0.95] font-extrabold uppercase">
               Gestor de
               <span className="block">Projetos</span>
             </h1>
           </div>
 
-          <p className="max-w-md text-base leading-relaxed text-texto-suave sm:text-lg">
+          <p className="max-w-xl text-base leading-relaxed text-texto-suave sm:text-lg xl:text-xl">
             Transforme cada projeto em uma missão. Conclua, ganhe XP, suba de Rank e desbloqueie medalhas.
           </p>
 
@@ -76,7 +87,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
             {DESTAQUES.map((destaque, indice) => (
               <li
                 key={destaque}
-                className={`entrada-suave ${ATRASOS_CASCATA[indice]} rounded-full border border-borda-forte bg-superficie/80 px-3 py-1.5 font-mono text-xs text-texto-suave`}
+                className={`entrada-suave ${ATRASOS_CASCATA[indice]} rounded-full border border-borda-forte bg-superficie/80 px-3 py-1.5 font-mono text-xs text-texto-suave xl:px-4 xl:py-2 xl:text-sm`}
               >
                 {destaque}
               </li>
@@ -86,7 +97,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
 
         <section
           aria-labelledby="titulo-entrar"
-          className="flex w-full flex-col gap-5 lg:max-w-lg lg:justify-self-end"
+          className="flex w-full flex-col gap-5 lg:max-w-lg lg:justify-self-end xl:max-w-xl"
         >
           <div className="aura-sistema entrada-janela w-full [animation-delay:200ms]">
             <div className="janela-sistema">
@@ -104,7 +115,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
                   </p>
                   <h2
                     id="titulo-entrar"
-                    className="font-display text-[clamp(1.25rem,6.6vw,2.25rem)] lg:text-[clamp(1.5rem,2.6vw,2.25rem)] leading-tight font-extrabold"
+                    className="font-display text-[clamp(1.25rem,6.6vw,2.25rem)] lg:text-[clamp(1.5rem,2.6vw,2.25rem)] xl:text-[clamp(2rem,2.4vw,2.625rem)] leading-tight font-extrabold"
                   >
                     <span className="whitespace-nowrap">Identifique-se,</span>
                     <span className="block text-acento">Dev Aventureiro</span>
@@ -131,7 +142,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
             Autenticação pelo GitHub · nenhuma senha é guardada aqui
           </p>
         </section>
-      </div>
+      </ConteudoPrincipal>
     </div>
   );
 }

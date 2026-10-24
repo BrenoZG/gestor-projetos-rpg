@@ -61,12 +61,33 @@ O título que não pode quebrar (ex.: "Identifique-se,") usa tamanho fluido (`cl
 
 ## 4. Movimento
 
-1. **Causa → efeito:** toda animação responde a uma ação ou conquista. Sem animação decorativa em loop na interface comum.
-   - **Exceção aprovada: a tela de título (`/entrar`)**, tratada como cinemática. Anéis do sigilo girando (60 s e 40 s), núcleo pulsando, brasas subindo, cursor piscando e o aviso "Pressione Enter". Só `transform` e `opacity`; com `prefers-reduced-motion`, nenhuma animação continua rodando (conferido no Chrome).
-2. **No máximo 1–2 elementos animados por tela** fora das cinemáticas.
-3. **Durações:** microinterações 150–300 ms; entrada de janela até 450 ms; cinemática de level up ~5 s, sempre pulável (`Esc`).
-4. **Base = estado final:** o CSS sem animação já mostra o estado final; a animação só parte de um estado inicial. Assim, `prefers-reduced-motion` exibe o resultado sem esforço extra.
-5. **Só `transform` e `opacity`** em animações contínuas (sem custo de layout).
+**Política aprovada: animação em todas as telas, organizada em 3 camadas, com o seletor "Efeitos visuais".** Vale para toda tela nova, inclusive os estados de carregamento, erro e vazio.
+
+| Camada | O que anima | Exemplos atuais |
+|---|---|---|
+| 1. Ambiente | Contínuo e sutil, sem ação do usuário | Brasas (`.particulas`, `.lentas` nas telas de trabalho), anéis e núcleo do sigilo, reflexo do emblema de Rank, brilho no trilho da barra de XP e nos espaços vazios, cursor piscante |
+| 2. Transição | Ao abrir ou navegar | HUD descendo (`.entrada-hud`), janelas abrindo (`.entrada-janela`), conteúdo e cartões em cascata (`.entrada-suave` + `[animation-delay:…]`) |
+| 3. Recompensa | Resposta a ação ou conquista | Barra de XP enchendo (`.preenchimento-xp`), reflexo do botão principal; no futuro, "+XP" flutuando, contadores e level up |
+
+**Efeitos visuais** (`componentes/seletor-efeitos.tsx`, cookie `efeitos`, atributo `data-efeitos` no `<html>`):
+
+| Opção | Comportamento |
+|---|---|
+| Automático (padrão, sem cookie) | Segue o `prefers-reduced-motion` do sistema |
+| Completo | As 3 camadas |
+| Reduzido | Para a camada de ambiente; transições e recompensas curtas continuam |
+| Desligado | Nenhuma animação nem transição |
+
+O seletor é também o **controle de pausa exigido pelo WCAG 2.2.2** (nível A) para movimento automático com mais de 5 s. Por isso aparece no HUD e na tela de entrada.
+
+Regras:
+1. **Toda animação contínua nova entra na lista do modo Reduzido** em `globals.css`. Pseudo-elementos (`::after`) vão numa regra separada, porque não podem ficar dentro de `:is()`.
+2. **Base = estado final:** o CSS sem animação já mostra o estado final; a animação só parte de um estado inicial. Desligar efeitos nunca esconde conteúdo.
+3. **Só `transform` e `opacity`** (sem custo de layout).
+4. **Durações:** microinterações 150–300 ms; entrada de janela até 450 ms; ambiente lento (3–60 s); cinemática de level up ~5 s, sempre pulável (`Esc`).
+5. **Conferência:** no Chrome, `document.getAnimations()` deve dar 0 animações rodando com Desligado e com Reduzido (após as entradas), e também com o sistema pedindo menos movimento no modo Automático.
+
+Comportamento conhecido: ao sair de "Desligado" para outra opção, as animações de entrada tocam uma vez de novo.
 
 ## 5. Inventário de componentes RPG
 

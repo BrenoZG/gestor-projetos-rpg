@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { connection } from 'next/server';
 
+import { obterPreferenciaEfeitos } from '@/lib/efeitos-servidor';
+
 import './globals.css';
 
 /**
@@ -68,8 +70,16 @@ export const viewport: Viewport = {
 export default async function LayoutRaiz({ children }: LayoutProps<'/'>) {
   // Marca o render como dependente da requisição (ver `instant` acima).
   await connection();
+  // Preferência de Efeitos visuais vinda do cookie: o CSS reage a `data-efeitos`.
+  // Sem cookie, o atributo fica ausente e vale o prefers-reduced-motion do sistema.
+  const efeitos = await obterPreferenciaEfeitos();
+
   return (
-    <html lang="pt-BR" className={`${fonteDisplay.variable} ${fonteCorpo.variable} ${fonteMono.variable}`}>
+    <html
+      lang="pt-BR"
+      data-efeitos={efeitos ?? undefined}
+      className={`${fonteDisplay.variable} ${fonteCorpo.variable} ${fonteMono.variable}`}
+    >
       <body className="min-h-dvh font-sans antialiased">
         {/* Link de salto: primeiro elemento focável, visível só ao receber foco. */}
         <a
@@ -78,11 +88,10 @@ export default async function LayoutRaiz({ children }: LayoutProps<'/'>) {
         >
           Pular para o conteúdo
         </a>
-        {/* tabIndex -1: torna o alvo do link de salto focável por script/âncora
-            sem incluí-lo na ordem de Tab, para o foco acompanhar o salto. */}
-        <main id="conteudo-principal" tabIndex={-1} className="outline-none">
-          {children}
-        </main>
+        {/* O <main id="conteudo-principal"> fica com cada layout ou página
+            (ver componentes/conteudo-principal.tsx): o HUD do jogo é cabeçalho
+            e precisa ficar fora dele, para o link de salto pular o HUD. */}
+        {children}
       </body>
     </html>
   );
