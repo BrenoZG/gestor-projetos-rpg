@@ -93,11 +93,15 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 ## 6. Segurança
 
 - **Autenticação:** GitHub OAuth via Supabase Auth, com cadastro público desativado (ADR-0004).
-- **Autorização em três camadas:** cadastro fechado no provedor → allowlist de IDs do GitHub no middleware → RLS `user_id = auth.uid()` no banco.
+- **Autorização em três camadas:** cadastro fechado no provedor → allowlist de IDs do GitHub no retorno do OAuth (`/auth/callback`, a partir do `provider_id` da identidade, nunca do `user_metadata`) → RLS `user_id = auth.uid()` no banco. Fora da allowlist, a sessão recém-criada é encerrada antes de qualquer página.
+- **Proxy como primeiro portão:** sem sessão válida (`getClaims()`), toda rota redireciona para `/entrar`; rota nova nasce protegida (`src/dominio/acesso/rotas.ts`). Server Actions e Route Handlers conferem a sessão de novo, e o RLS protege os dados mesmo se o proxy falhar.
+- **Login por e-mail desligado** (`[auth.email] enable_signup = false` desliga o provedor inteiro); só o GitHub autentica.
+- **Logs** em JSON (`src/lib/log.ts`), só com valores primitivos e sem dado pessoal: registram a causa técnica de uma recusa, nunca e-mail, nome ou ID.
 - **Menor privilégio:** a aplicação não usa a `service_role`; toda consulta roda com a sessão do usuário.
 - **Segredos:** apenas em variáveis de ambiente, validadas na inicialização (`src/lib/ambiente.ts`), com mensagem de erro que lista nomes de campos, nunca valores.
 - **Repositório público:** `gitleaks` no CI, push protection do GitHub, dados fictícios no seed.
-- **Cabeçalhos HTTP** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy`, HSTS e CSP parcial (`frame-ancestors`, `base-uri`, `form-action`, `object-src`). **Pendente para o M1:** `script-src` com nonce e `connect-src` com as origens do Supabase.
+- **Cabeçalhos HTTP** (`next.config.ts`): `X-Frame-Options: DENY`, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` e HSTS.
+- **CSP com nonce** (`src/proxy.ts` + `src/lib/seguranca/csp.ts`): nonce de 128 bits novo a cada requisição, `script-src` com `'strict-dynamic'`, `connect-src` restrito à origem do Supabase, sem `'unsafe-inline'` em scripts. Exige render por requisição ([ADR-0007](adr/0007-csp-nonce-render-por-requisicao.md)).
 - **Cadeia de suprimentos:** Actions fixadas por SHA de commit; Dependabot semanal para npm e Actions; o CI bloqueia vulnerabilidade `high` ou maior em dependência de **produção**. O gitleaks roda pela CLI com versão fixada e checksum SHA-256 conferido no próprio workflow; essa versão **não** é atualizada pelo Dependabot e deve ser revisada a cada release.
 
 ### Riscos aceitos
@@ -107,7 +111,8 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 
 ## 7. Notas de framework
 
-- **Next.js 16 com `cacheComponents` ligado:** leituras dinâmicas (cookies da sessão) precisam ficar dentro de `<Suspense>`. Impacta as rotas autenticadas a partir do M1.
+- **Next.js 16 com `cacheComponents` ligado e app inteiro dinâmico:** o layout raiz declara `instant = false` e chama `await connection()` ([ADR-0007](adr/0007-csp-nonce-render-por-requisicao.md)). Por isso, ler cookies ou sessão não exige `<Suspense>`. `<Suspense>` continua útil para mostrar o estado de carregamento enquanto um dado lento chega.
+- **Sessão renovada no proxy:** `src/lib/supabase/sessao-proxy.ts` chama `getClaims()` a cada requisição e devolve os cookies renovados com os cabeçalhos anti-cache do `@supabase/ssr`. Nunca usar `getSession()` no servidor: ele confia no cookie sem validar a assinatura.
 - **Tipos de rota gerados:** `npm run typecheck` executa `next typegen` antes do `tsc`, porque tipos como `LayoutProps` só existem depois da geração.
 
 ## 8. Observabilidade

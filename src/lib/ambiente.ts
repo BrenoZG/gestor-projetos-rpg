@@ -14,11 +14,14 @@ export const TAMANHO_MINIMO_CRON_SECRET = 32;
  * lista apenas NOMES de campos, nunca valores: um segredo inválido
  * não pode vazar para log.
  */
-const esquemaAmbiente = z.object({
+const esquemaAmbientePublico = z.object({
   NEXT_PUBLIC_SUPABASE_URL: z.url(),
   // Publishable key (`sb_publishable_...`): formato atual do Supabase, que
   // substitui a anon key em JWT. É pública por natureza; a proteção é o RLS.
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: z.string().min(TAMANHO_MINIMO_CHAVE_PUBLICA),
+});
+
+const esquemaAmbiente = esquemaAmbientePublico.extend({
   ALLOWLIST_GITHUB_IDS: z
     .string()
     .regex(/^\d+(,\d+)*$/)
@@ -32,19 +35,40 @@ const esquemaAmbiente = z.object({
 });
 
 export type Ambiente = z.infer<typeof esquemaAmbiente>;
+export type AmbientePublico = z.infer<typeof esquemaAmbientePublico>;
 
-/**
- * Lê e valida as variáveis de ambiente.
- *
- * @param fonte - Origem dos valores; `process.env` por padrão, injetável em teste.
- * @returns Ambiente tipado e normalizado.
- * @throws Error com a lista de campos inválidos (sem valores).
- */
-export function lerAmbiente(fonte: Record<string, string | undefined> = process.env): Ambiente {
-  const resultado = esquemaAmbiente.safeParse(fonte);
+type FonteAmbiente = Record<string, string | undefined>;
+
+function validar<Esquema extends z.ZodType>(esquema: Esquema, fonte: FonteAmbiente): z.infer<Esquema> {
+  const resultado = esquema.safeParse(fonte);
   if (!resultado.success) {
     const campos = [...new Set(resultado.error.issues.map((issue) => issue.path.join('.')))];
     throw new Error(`Variáveis de ambiente inválidas: ${campos.join(', ')}`);
   }
   return resultado.data;
+}
+
+/**
+ * Lê e valida todas as variáveis de ambiente (uso exclusivo do servidor).
+ *
+ * @param fonte - Origem dos valores; `process.env` por padrão, injetável em teste.
+ * @returns Ambiente tipado e normalizado.
+ * @throws Error com a lista de campos inválidos (sem valores).
+ */
+export function lerAmbiente(fonte: FonteAmbiente = process.env): Ambiente {
+  return validar(esquemaAmbiente, fonte);
+}
+
+/**
+ * Lê só as variáveis públicas (`NEXT_PUBLIC_*`), as únicas que o proxy e o
+ * navegador precisam. No navegador, o Next só embute uma variável quando ela é
+ * lida pelo nome literal (`process.env.NEXT_PUBLIC_...`), então quem chama de lá
+ * deve montar a `fonte` com essas leituras em vez de passar `process.env`.
+ *
+ * @param fonte - Origem dos valores; `process.env` por padrão.
+ * @returns URL e publishable key validadas; demais variáveis são descartadas.
+ * @throws Error com a lista de campos inválidos (sem valores).
+ */
+export function lerAmbientePublico(fonte: FonteAmbiente = process.env): AmbientePublico {
+  return validar(esquemaAmbientePublico, fonte);
 }
