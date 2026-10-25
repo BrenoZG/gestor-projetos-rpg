@@ -71,9 +71,10 @@ Com o cadastro desligado, nem o dono consegue nascer num banco de produção vaz
 1. Supabase → Authentication → Sign In / Providers → **User Signups** → ligue *Allow new users to sign up* → **Save changes**.
 2. Entre no app com o GitHub. O GitHub pede para autorizar "Gestor de Projetos (produção)": confira o nome. Esperado: o Quadro, com Rank E e Nível 1.
 3. **Logo em seguida**, desligue *Allow new users to sign up* → **Save changes**.
-4. Confira o fechamento sem depender do painel:
+4. Confira o fechamento sem depender do painel. A publishable key fica em Vercel → projeto → Settings → Environment Variables → `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (é pública, mas não fica escrita no repositório):
    ```powershell
-   curl.exe -s https://eottldzokamtjcwqasey.supabase.co/auth/v1/settings -H "apikey: sb_publishable_KAUfaBCe3zVmDlWmvuLHIw_qAchUBTo" | Select-String '"disable_signup":true'
+   $chave = Read-Host "Publishable key"
+   curl.exe -s https://eottldzokamtjcwqasey.supabase.co/auth/v1/settings -H "apikey: $chave" | Select-String '"disable_signup":true'
    ```
    Sem resultado = cadastro ainda aberto.
 5. Em Authentication → Users deve haver só o seu usuário, com o provedor GitHub. Outro usuário criado durante a janela já foi barrado pela allowlist (a sessão dele foi encerrada no callback); apague-o na mesma tela.

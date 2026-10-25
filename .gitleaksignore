@@ -1,0 +1,8 @@
+# Falsos positivos verificados. Cada linha é a impressão digital exata de um
+# achado (commit:arquivo:regra:linha); um achado novo, mesmo no mesmo arquivo,
+# continua reprovando o CI.
+
+# Publishable key do Supabase num exemplo de curl da documentação. A chave é
+# pública por natureza (vai no JavaScript que todo navegador recebe; a proteção
+# dos dados é o RLS). O exemplo foi reescrito sem a chave no commit seguinte.
+092a27e6e44888178728d2aba99f1a0450ee0261:docs/operacao.md:curl-auth-header:76
