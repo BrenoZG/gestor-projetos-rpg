@@ -2,7 +2,6 @@
 
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { z } from 'zod';
 
 import type { EstadoFormularioMissao } from '@/acoes/missoes-estado';
 import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-validacao';
@@ -10,6 +9,7 @@ import { apagarMissao, ErroDeMissao, salvarMissao } from '@/dados/missoes';
 import { ROTA_ENTRAR, ROTA_INICIAL } from '@/dominio/acesso/rotas';
 import { registrarEvento } from '@/lib/log';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
+import { ehUuid } from '@/lib/uuid';
 
 /**
  * Server Actions das Missões. Cada uma é alcançável por um POST direto, então
@@ -31,8 +31,9 @@ async function clienteComSessao(): Promise<ClienteSupabase> {
   return supabase;
 }
 
-function ehIdValido(id: string): boolean {
-  return z.uuid().safeParse(id).success;
+/** O id chega pelo `.bind` e pode ser forjado num POST direto: qualquer tipo, qualquer texto. */
+function ehIdValido(id: unknown): id is string {
+  return typeof id === 'string' && ehUuid(id);
 }
 
 function lerFormulario(formulario: FormData): Record<string, unknown> {

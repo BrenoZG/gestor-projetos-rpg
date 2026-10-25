@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
-import { chaveDeComparacao, deduplicarStacks } from '@/dominio/missoes/normalizacao';
+import { chaveDeComparacao, deduplicarStacks, separarStacksDigitadas } from '@/dominio/missoes/normalizacao';
+
+describe('separarStacksDigitadas', () => {
+  it('separa por vírgula e tira espaços e pedaços vazios', () => {
+    expect(separarStacksDigitadas(' Next.js, Supabase,,  ')).toEqual(['Next.js', 'Supabase']);
+  });
+
+  it('não deixa a vírgula final virar parte do nome', () => {
+    expect(separarStacksDigitadas('Supabase,')).toEqual(['Supabase']);
+  });
+
+  it('devolve lista vazia para texto em branco', () => {
+    expect(separarStacksDigitadas('   ')).toEqual([]);
+  });
+});
 
 describe('chaveDeComparacao', () => {
   it('ignora espaços nas pontas e maiúsculas (RN-05 e unicidade do nome)', () => {

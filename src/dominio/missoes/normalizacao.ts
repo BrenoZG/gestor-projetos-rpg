@@ -14,6 +14,19 @@ export function chaveDeComparacao(texto: string): string {
 }
 
 /**
+ * Separa o texto digitado no campo de stacks: a vírgula é separador, nunca parte do nome.
+ *
+ * @param texto - Texto como digitado (ex.: "Next.js, Supabase,").
+ * @returns Stacks sem espaços nas pontas e sem pedaços vazios.
+ */
+export function separarStacksDigitadas(texto: string): string[] {
+  return texto
+    .split(',')
+    .map((parte) => parte.trim())
+    .filter(Boolean);
+}
+
+/**
  * Remove stacks repetidas ou vazias, mantendo a primeira grafia de cada uma e a ordem de entrada.
  *
  * @param stacks - Stacks como digitadas.
