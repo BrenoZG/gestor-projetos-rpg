@@ -10,6 +10,7 @@ import { BotaoEntrarGithub } from './botao-entrar-github';
 import { Particulas } from '@/componentes/particulas';
 import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
 import { SigiloRunico } from '@/componentes/sigilo-runico';
+import { TrazerParaVista } from '@/componentes/trazer-para-vista';
 import { obterPreferenciaEfeitos } from '@/lib/efeitos-servidor';
 
 export const metadata: Metadata = { title: 'Entrar' };
@@ -57,10 +58,17 @@ function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
 /**
  * Aviso escolhido pelo `?erro=` da URL. Fica atrás de um `<Suspense>`: o resto
  * da tela não depende da URL e é o mesmo para todo link que leva a `/entrar`.
+ * No celular, ele fica abaixo da dobra; `TrazerParaVista` rola até ele.
  */
 async function AvisoDaUrl({ searchParams }: Pick<PageProps<'/entrar'>, 'searchParams'>) {
   const mensagem = lerMensagem((await searchParams).erro);
-  return mensagem && <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>;
+  return (
+    mensagem && (
+      <TrazerParaVista>
+        <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>
+      </TrazerParaVista>
+    )
+  );
 }
 
 /**
