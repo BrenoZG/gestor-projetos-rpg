@@ -69,22 +69,27 @@ jobs:
           SUPABASE_DB_URL: postgresql://postgres.${{ vars.SUPABASE_PROJECT_REF }}:${{ secrets.SUPABASE_DB_PASSWORD }}@${{ vars.SUPABASE_POOLER_HOST }}:5432/postgres
         run: npx supabase db push --db-url "$SUPABASE_DB_URL" --yes
 
-      # Publica sem trocar o domínio: a versão no ar só muda na promoção.
+      # Publica sem trocar o domínio: a versão no ar só muda na promoção. Guarda
+      # também a versão que está no ar agora, alvo de um eventual rollback.
       - name: Publicar a nova versão
         id: publicar
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
+          # Atribuições separadas: dentro de um `echo "$(…)"`, uma falha passaria em silêncio.
           url=$(npx --yes "$VERCEL_CLI" deploy --prebuilt --prod --skip-domain --token="$VERCEL_TOKEN")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
+          id=$(.github/scripts/producao-vercel.sh id "$url")
+          anterior=$(.github/scripts/producao-vercel.sh atual)
+          echo "id=$id" >> "$GITHUB_OUTPUT"
+          echo "anterior=$anterior" >> "$GITHUB_OUTPUT"
 
       # A promoção explícita também reativa a atribuição automática do domínio,
       # que a Vercel desliga depois de um rollback.
       - name: Promover para o domínio de produção
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          URL_DEPLOY: ${{ steps.publicar.outputs.url }}
-        run: npx --yes "$VERCEL_CLI" promote "$URL_DEPLOY" --yes --timeout=5m --token="$VERCEL_TOKEN"
+          ID_DEPLOY: ${{ steps.publicar.outputs.id }}
+        run: .github/scripts/producao-vercel.sh promover "$ID_DEPLOY"
 
       - name: Smoke test
         id: smoke
@@ -98,4 +103,10 @@ jobs:
         if: failure() && steps.smoke.outcome == 'failure'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: npx --yes "$VERCEL_CLI" rollback --yes --timeout=5m --token="$VERCEL_TOKEN"
+          ID_ANTERIOR: ${{ steps.publicar.outputs.anterior }}
+        run: |
+          if [[ -z "$ID_ANTERIOR" ]]; then
+            echo "::error::primeiro deploy: não há versão anterior para voltar"
+            exit 1
+          fi
+          .github/scripts/producao-vercel.sh reverter "$ID_ANTERIOR"

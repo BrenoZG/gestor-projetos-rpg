@@ -14,9 +14,11 @@ Um deploy deste sistema tem duas partes que precisam acontecer em ordem: as migr
   3. `vercel pull` e `vercel build --prod`. **O build vem antes das migrations:** se ele quebrar, o banco não é tocado;
   4. `supabase db push --db-url`, pelo pooler (IPv4), com a senha do banco montada a partir de um secret do ambiente;
   5. `vercel deploy --prebuilt --prod --skip-domain`, que publica sem trocar o que está no ar;
-  6. `vercel promote`, que troca o domínio explicitamente e reativa a atribuição automática do domínio, desligada pela Vercel depois de qualquer rollback;
+  6. promoção, que troca o domínio explicitamente e reativa a atribuição automática do domínio, desligada pela Vercel depois de qualquer rollback;
   7. smoke test (`curl -f` em `/api/saude`);
-  8. `vercel rollback` se o smoke test falhar.
+  8. rollback para a versão que estava no ar, se o smoke test falhar.
+- A promoção e o rollback chamam a API REST da Vercel (`.github/scripts/producao-vercel.sh`), e não a CLI. Os comandos `vercel promote` e `vercel rollback` consultam a conta pessoal (`/v2/user`), que um token restrito à equipe não acessa; os endpoints de projeto aceitam o token restrito. O script espera o projeto apontar a produção para o deploy pedido antes de seguir.
+- A Deployment Protection fica no modo padrão: previews e URLs geradas exigem login na Vercel, e o domínio de produção é público. A proteção do app é o próprio login (cadastro fechado, allowlist e RLS).
 - Os segredos entram só nos passos que os usam. O `npm ci`, que executa scripts de dependências de terceiros, nunca os recebe.
 - As credenciais são restritas: a senha do banco vale para este projeto, e o token da Vercel é limitado à equipe e expira em 90 dias. O token de conta do Supabase (`SUPABASE_ACCESS_TOKEN`), que daria acesso a todos os projetos, não é usado.
 - A função roda em `gru1` (São Paulo), ao lado do banco em `sa-east-1`.
@@ -25,6 +27,8 @@ Um deploy deste sistema tem duas partes que precisam acontecer em ordem: as migr
 - **Integração Git da Vercel com `ignoreCommand`:** publica sozinha e não sabe da migration; a ordem entre banco e código não seria garantida.
 - **`supabase db push --linked` com `SUPABASE_ACCESS_TOKEN`:** o token pessoal vale para a conta inteira. A URL do banco vale só para este projeto (menor privilégio).
 - **`vercel deploy --prod` direto:** depois de um rollback, a Vercel deixa de atribuir o domínio aos deploys novos. O deploy seguinte iria ao ar sem domínio, e o smoke test testaria a versão antiga.
+- **Token "Full Account" para a CLI conseguir promover:** daria ao pipeline acesso a toda a conta da Vercel, só para contornar a consulta à conta pessoal.
+- **Vercel Authentication também na produção:** seria uma camada a mais, ao custo de dois logins para usar o app e de um segredo extra (Protection Bypass) para o smoke test e o keepalive.
 
 ## Consequências
 - O rollback reverte só o app. **As migrations precisam ser compatíveis com a versão anterior do app** (expandir antes, contrair depois); o procedimento está em `docs/operacao.md`.
