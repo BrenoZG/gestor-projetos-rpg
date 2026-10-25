@@ -9,6 +9,15 @@ const FORMATO_NONCE = /^[A-Za-z0-9+/_-]+={0,2}$/;
 const BYTES_NONCE = 16;
 
 /**
+ * sha256 de `display:none`. Ao transmitir em streaming um trecho que fica dentro
+ * de um `<svg>`, o React o envia num `<svg style="display:none">` (um `<div>`
+ * não é válido ali) e o move para o lugar em seguida. Sem esta exceção, a CSP
+ * bloqueia o atributo e acusa uma violação por trecho. Só este valor exato é
+ * liberado: no pior caso, um atributo injetado esconderia um elemento.
+ */
+const HASH_ESTILO_STREAMING_SVG = "'sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='";
+
+/**
  * Gera o nonce de uma requisição com o gerador criptográfico da Web Crypto API
  * (nunca `Math.random`, que é previsível).
  *
@@ -60,6 +69,7 @@ export function montarCsp({ nonce, desenvolvimento, urlSupabase }: OpcoesCsp): s
     "frame-ancestors 'none'",
   ];
   if (!desenvolvimento) {
+    diretivas.push(`style-src-attr 'unsafe-hashes' ${HASH_ESTILO_STREAMING_SVG}`);
     diretivas.push('upgrade-insecure-requests');
   }
   return diretivas.join('; ');

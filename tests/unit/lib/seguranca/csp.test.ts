@@ -39,6 +39,18 @@ describe('montarCsp', () => {
     expect(desenvolvimento.get('style-src')).toEqual(["'self'", "'unsafe-inline'"]);
   });
 
+  it('em produção, libera como atributo de estilo só o "display:none" do streaming do React', () => {
+    // sha256("display:none"): o contêiner que o React usa ao transmitir trechos de SVG.
+    expect(montar(false).get('style-src-attr')).toEqual([
+      "'unsafe-hashes'",
+      "'sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='",
+    ]);
+  });
+
+  it('em desenvolvimento, não restringe atributos de estilo (vale o unsafe-inline do overlay)', () => {
+    expect(montar(true).has('style-src-attr')).toBe(false);
+  });
+
   it('nunca libera script inline sem nonce', () => {
     expect(montar(false).get('script-src')).not.toContain("'unsafe-inline'");
     expect(montar(true).get('script-src')).not.toContain("'unsafe-inline'");

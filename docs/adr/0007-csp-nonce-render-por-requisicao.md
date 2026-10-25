@@ -36,3 +36,10 @@ Medido em produção depois do primeiro deploy:
 - Sem sessão, `/` responde 307 para `/entrar`, sem cache e sem nenhum dado do HUD, inclusive em navegação interna (`RSC: 1`), mesmo logo depois de um login em produção.
 
 A decisão não muda: a CSP com nonce funciona, e nada que dependa da requisição vai para o cache compartilhado. Ao mudar o layout raiz ou a forma de render, repita essas três verificações em produção.
+
+## Atualização (2026-10-25, M1b): atributo de estilo do streaming de SVG
+Com o Quadro carregando as Missões dentro de um `<Suspense>`, parte das respostas acusava violações de CSP (`style-src-attr`). Quando o trecho transmitido em streaming fica dentro de um `<svg>` (os sigilos das colunas vazias), o React o envia num `<svg aria-hidden="true" style="display:none">`, porque um `<div>` não é válido ali, e o move para o lugar em seguida. O defeito é intermitente: depende de quando os dados chegam em relação à casca da página.
+
+- **Decisão:** em produção, `style-src-attr 'unsafe-hashes' 'sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='`, o hash exato de `display:none`. Qualquer outro atributo `style` continua bloqueado; no pior caso, um atributo injetado com esse valor só esconderia um elemento, sem executar nada.
+- **Descartado:** `'unsafe-inline'` em estilos (libera tudo); tirar o `<Suspense>` do Quadro (o `loading.tsx` da rota também cria um, e o problema volta).
+- **Evidência:** o HTML do Quadro trouxe 59 desses contêineres em 3 de 4 respostas; com a exceção, 0 violações no navegador em 3 visitas e no roteiro completo das Missões, rodado 3 vezes.
