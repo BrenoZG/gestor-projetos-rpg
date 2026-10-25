@@ -1,17 +1,19 @@
 name: CI
 
+# Na main, o CI roda como primeira etapa do Deploy (workflow_call), que só
+# publica se ele passar; não há um segundo disparo por push.
 on:
   pull_request:
-  push:
-    branches: [main]
+  workflow_call:
 
 # Menor privilégio: o pipeline só lê o código.
 permissions:
   contents: read
 
+# Num PR, um push novo cancela o CI antigo. Chamado pelo Deploy, nunca cancela.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Actions fixadas por SHA de commit (tag é mutável e pode ser sequestrada).
 # O comentário indica a versão; o Dependabot atualiza os dois.

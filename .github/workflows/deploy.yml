@@ -1,0 +1,101 @@
+name: Deploy
+
+# Produção só sai daqui: o projeto na Vercel não tem integração com o Git
+# (ADR-0008). Ordem: CI → aprovação → build → migrations → publicação sem
+# domínio → promoção → smoke test → rollback se o smoke test falhar.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Um deploy por vez, na ordem dos pushes. Nunca cancela um deploy em andamento:
+# uma migration interrompida deixaria o banco num estado intermediário.
+concurrency:
+  group: deploy-producao
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    uses: ./.github/workflows/ci.yml
+
+  producao:
+    needs: ci
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # O ambiente exige a sua aprovação e só libera os segredos para a main.
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    env:
+      # Versão fixa da CLI da Vercel. O Dependabot não a atualiza: revisar
+      # junto com as demais dependências.
+      VERCEL_CLI: vercel@63.1.2
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+    # Os segredos entram só nos passos que os usam: o `npm ci`, que executa
+    # scripts de dependências de terceiros, nunca os recebe.
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Baixar a configuração de produção da Vercel
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes "$VERCEL_CLI" pull --yes --environment=production --token="$VERCEL_TOKEN"
+
+      # O build vem antes das migrations: se ele quebrar, o banco nem é tocado.
+      - name: Build de produção
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes "$VERCEL_CLI" build --prod --token="$VERCEL_TOKEN"
+
+      # Pelo pooler (IPv4): a conexão direta do plano Free só existe em IPv6,
+      # que o runner não tem. A senha é alfanumérica, sem escape na URL.
+      - name: Migrations pendentes
+        env:
+          SUPABASE_DB_URL: postgresql://postgres.${{ vars.SUPABASE_PROJECT_REF }}:${{ secrets.SUPABASE_DB_PASSWORD }}@${{ vars.SUPABASE_POOLER_HOST }}:5432/postgres
+        run: npx supabase db push --db-url "$SUPABASE_DB_URL" --dry-run
+
+      - name: Aplicar migrations
+        env:
+          SUPABASE_DB_URL: postgresql://postgres.${{ vars.SUPABASE_PROJECT_REF }}:${{ secrets.SUPABASE_DB_PASSWORD }}@${{ vars.SUPABASE_POOLER_HOST }}:5432/postgres
+        run: npx supabase db push --db-url "$SUPABASE_DB_URL" --yes
+
+      # Publica sem trocar o domínio: a versão no ar só muda na promoção.
+      - name: Publicar a nova versão
+        id: publicar
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          url=$(npx --yes "$VERCEL_CLI" deploy --prebuilt --prod --skip-domain --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      # A promoção explícita também reativa a atribuição automática do domínio,
+      # que a Vercel desliga depois de um rollback.
+      - name: Promover para o domínio de produção
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          URL_DEPLOY: ${{ steps.publicar.outputs.url }}
+        run: npx --yes "$VERCEL_CLI" promote "$URL_DEPLOY" --yes --timeout=5m --token="$VERCEL_TOKEN"
+
+      - name: Smoke test
+        id: smoke
+        env:
+          APP_URL: ${{ vars.APP_URL }}
+        run: curl -fsS --retry 6 --retry-delay 5 --retry-all-errors --max-time 10 "$APP_URL/api/saude"
+
+      # As migrations não são revertidas: precisam ser compatíveis com a versão
+      # anterior do app (ver docs/operacao.md).
+      - name: Rollback do app
+        if: failure() && steps.smoke.outcome == 'failure'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: npx --yes "$VERCEL_CLI" rollback --yes --timeout=5m --token="$VERCEL_TOKEN"

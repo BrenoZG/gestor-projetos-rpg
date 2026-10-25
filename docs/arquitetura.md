@@ -97,7 +97,8 @@ Vale para Projetos. Atualizações seguem o mesmo ciclo, sem a trava de 24 h.
 - **Proxy como primeiro portão:** sem sessão válida (`getClaims()`), toda rota redireciona para `/entrar`; rota nova nasce protegida (`src/dominio/acesso/rotas.ts`). Server Actions e Route Handlers conferem a sessão de novo, e o RLS protege os dados mesmo se o proxy falhar.
 - **Login por e-mail desligado** (`[auth.email] enable_signup = false` desliga o provedor inteiro); só o GitHub autentica.
 - **Logs** em JSON (`src/lib/log.ts`), só com valores primitivos e sem dado pessoal: registram a causa técnica de uma recusa, nunca e-mail, nome ou ID.
-- **Menor privilégio:** a aplicação não usa a `service_role`; toda consulta roda com a sessão do usuário.
+- **Menor privilégio:** a aplicação não usa a `service_role`; toda consulta roda com a sessão do usuário. Objetos novos no schema `public` nascem sem privilégio para `anon`, `authenticated` e `service_role` (migration `revogar_exposicao_padrao`); cada migration concede o necessário.
+- **Deploy só pelo GitHub Actions** ([ADR-0008](adr/0008-deploy-pelo-github-actions.md)): aprovação obrigatória no ambiente `production`, segredos restritos ao projeto e entregues só aos passos que os usam, smoke test e rollback. Operação em [`operacao.md`](operacao.md).
 - **Segredos:** apenas em variáveis de ambiente, validadas na inicialização (`src/lib/ambiente.ts`), com mensagem de erro que lista nomes de campos, nunca valores.
 - **Repositório público:** `gitleaks` no CI, push protection do GitHub, dados fictícios no seed.
 - **Banco testado no CI** (job `banco`): a cada PR, um Supabase descartável aplica as migrations do zero, roda os testes pgTAP e os advisors (`npm run db:advisors`), que falham em achado `WARN` ou `ERROR`. Achados `INFO` aparecem no log sem reprovar: num banco recém-criado, todo índice é acusado como "não usado" (falso positivo).
