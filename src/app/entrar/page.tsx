@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 
 import type { MotivoRecusa } from '@/dominio/acesso/retorno-oauth';
 import { VALIDADE_MAXIMA_SESSAO_SEGUNDOS } from '@/dominio/acesso/sessao';
@@ -54,6 +55,15 @@ function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
 }
 
 /**
+ * Aviso escolhido pelo `?erro=` da URL. Fica atrás de um `<Suspense>`: o resto
+ * da tela não depende da URL e é o mesmo para todo link que leva a `/entrar`.
+ */
+async function AvisoDaUrl({ searchParams }: Pick<PageProps<'/entrar'>, 'searchParams'>) {
+  const mensagem = lerMensagem((await searchParams).erro);
+  return mensagem && <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>;
+}
+
+/**
  * Tela de título: à esquerda, o "jogo" (sigilo, nome e destaques); à direita,
  * a Janela do Sistema com a missão de acesso. No celular, empilha.
  *
@@ -61,8 +71,7 @@ function lerMensagem(erro: string | string[] | undefined): Mensagem | null {
  * @returns Página de login.
  */
 export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'>) {
-  const [{ erro }, efeitos] = await Promise.all([searchParams, obterPreferenciaEfeitos()]);
-  const mensagem = lerMensagem(erro);
+  const efeitos = await obterPreferenciaEfeitos();
 
   return (
     <div className="portal-sistema relative min-h-dvh">
@@ -141,7 +150,9 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
                   <dd className="text-texto-suave">Acesso negado a quem não é da guilda</dd>
                 </dl>
 
-                {mensagem && <AvisoErro titulo={mensagem.titulo}>{mensagem.texto}</AvisoErro>}
+                <Suspense fallback={null}>
+                  <AvisoDaUrl searchParams={searchParams} />
+                </Suspense>
 
                 <BotaoEntrarGithub />
               </div>
