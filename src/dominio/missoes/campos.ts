@@ -24,6 +24,16 @@ export const ROTULOS_STATUS: Readonly<Record<StatusMissao, string>> = {
   concluido: 'Concluído',
 };
 
+/** Campos de uma Missão já validados e limpos, prontos para gravar. */
+export type DadosMissao = {
+  nome: string;
+  descricao: string;
+  arquitetura: string | null;
+  dificuldade: number;
+  status: StatusMissao;
+  stacks: string[];
+};
+
 export type Dificuldade = 1 | 2 | 3 | 4 | 5;
 
 /** Os extremos vêm do glossário; os intermediários são só rótulos de tela. */
