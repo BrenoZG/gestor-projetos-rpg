@@ -77,6 +77,8 @@ As credenciais do OAuth App local (`SUPABASE_AUTH_EXTERNAL_GITHUB_CLIENT_ID` e `
 
 ## Deploy
 
+**Produção:** https://gestor-projetos-rpg.vercel.app
+
 Produção só sai pelo workflow **Deploy** (GitHub Actions), a cada merge na `main`: CI → sua aprovação no ambiente `production` → build → migrations → publicação → smoke test em `/api/saude` → rollback automático se o smoke test falhar. App na Vercel (`gru1`), banco no Supabase (`sa-east-1`). Passo a passo, rollback manual e troca de credenciais em [`docs/operacao.md`](docs/operacao.md).
 
 ## Documentação

@@ -12,6 +12,9 @@
 | Configuração do deploy | Mesmo ambiente, aba *Variables* | `APP_URL`, `SUPABASE_PROJECT_REF`, `SUPABASE_POOLER_HOST`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` |
 | Variáveis do app | Vercel → projeto → Settings → Environment Variables (Production) | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `ALLOWLIST_GITHUB_IDS` |
 | Login com GitHub | OAuth App "Gestor de Projetos (produção)" no GitHub; Client ID e Secret no Supabase (Auth → Providers) | Separado do app de desenvolvimento |
+| URLs do Auth | Supabase → Authentication → URL Configuration | Site URL `https://gestor-projetos-rpg.vercel.app`; Redirect URL `https://gestor-projetos-rpg.vercel.app/auth/callback` |
+| Provedores e cadastro | Supabase → Authentication → Sign In / Providers | Só GitHub ligado; Email desligado; *Allow new users to sign up* desligado |
+| Deployment Protection | Vercel → projeto → Settings → Deployment Protection | Padrão: previews e URLs geradas exigem login na Vercel; o domínio de produção é público |
 
 ## 2. Publicar
 1. Faça o merge do PR na `main`. O workflow **Deploy** começa sozinho.
@@ -62,3 +65,26 @@ Faça a troca a cada vencimento ou na suspeita de vazamento. Um segredo nunca pa
 4. Limpe a área de transferência: `Set-Clipboard -Value ' '`.
 
 **Client Secret do GitHub (login):** na página do OAuth App de produção, **Generate a new client secret** → cole no Supabase (Auth → Providers → GitHub → Save) → apague o secret antigo no GitHub.
+
+## 6. Primeiro login (bootstrap) e conta nova
+Com o cadastro desligado, nem o dono consegue nascer num banco de produção vazio. Para criar o primeiro usuário (ou recriá-lo depois de apagar o projeto):
+1. Supabase → Authentication → Sign In / Providers → **User Signups** → ligue *Allow new users to sign up* → **Save changes**.
+2. Entre no app com o GitHub. O GitHub pede para autorizar "Gestor de Projetos (produção)": confira o nome. Esperado: o Quadro, com Rank E e Nível 1.
+3. **Logo em seguida**, desligue *Allow new users to sign up* → **Save changes**.
+4. Confira o fechamento sem depender do painel:
+   ```powershell
+   curl.exe -s https://eottldzokamtjcwqasey.supabase.co/auth/v1/settings -H "apikey: sb_publishable_KAUfaBCe3zVmDlWmvuLHIw_qAchUBTo" | Select-String '"disable_signup":true'
+   ```
+   Sem resultado = cadastro ainda aberto.
+5. Em Authentication → Users deve haver só o seu usuário, com o provedor GitHub. Outro usuário criado durante a janela já foi barrado pela allowlist (a sessão dele foi encerrada no callback); apague-o na mesma tela.
+
+Enquanto a janela está aberta, a allowlist continua recusando qualquer conta que não seja a sua. O risco da janela é só o registro de um usuário recusado, por isso ela dura o tempo de um login.
+
+## 7. Verificações depois de mudar render, cache ou segurança
+Rode em produção depois de mexer no layout raiz, na CSP, no proxy ou nas configurações da Vercel (contexto na [ADR-0007](adr/0007-csp-nonce-render-por-requisicao.md)):
+```powershell
+$u = "https://gestor-projetos-rpg.vercel.app"
+curl.exe -s "$u/api/saude"                                     # {"status":"ok"}
+curl.exe -sI "$u/" | Select-String "HTTP|location"               # 307 → /entrar, sem sessão
+curl.exe -sI "$u/entrar" | Select-String "content-security"      # nonce novo a cada chamada, sem unsafe-inline em script-src
+```

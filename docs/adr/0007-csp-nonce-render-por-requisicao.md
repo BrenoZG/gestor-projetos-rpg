@@ -24,7 +24,15 @@ Teste feito em 2026-10-22 com `next build` + `next start`:
 - **SRI (hashes no build):** permite páginas estáticas com CSP estrita, mas é experimental no Next 16.
 
 ## Consequências
-- Nenhuma página é servida de cache de CDN. Para um sistema privado, em que toda página depende do usuário logado, quase nada seria cacheável de qualquer forma.
-- As respostas saem com `Cache-Control: private, no-store`.
+- Todo conteúdo das páginas é renderizado por requisição. Para um sistema privado, em que toda página depende do usuário logado, quase nada seria cacheável de qualquer forma.
+- Com `next start`, as respostas saem com `Cache-Control: private, no-store`. Na Vercel, veja a atualização abaixo.
 - `'unsafe-eval'` (scripts) e `'unsafe-inline'` (estilos) entram só em `next dev`, exigidos pelo React e pelo overlay de erros.
 - Uma rota que precise ser estática no futuro (uma página pública, por exemplo) precisará de outra estratégia de CSP: hashes ou SRI.
+
+## Atualização (2026-10-25): comportamento na Vercel
+Medido em produção depois do primeiro deploy:
+- `/entrar` sai com `x-vercel-cache: HIT`, `x-nextjs-prerender: 1` e `Cache-Control: public, max-age=0, must-revalidate`. A Vercel serve da CDN a **casca estática** da rota, que é praticamente vazia, porque o layout raiz chama `connection()` antes de qualquer conteúdo.
+- O conteúdo continua sendo gerado por requisição: o nonce muda a cada resposta e é o mesmo no cabeçalho da CSP e nos 15 scripts do HTML; o cookie de Efeitos muda o `data-efeitos`; o `?erro=` escolhe a mensagem.
+- Sem sessão, `/` responde 307 para `/entrar`, sem cache e sem nenhum dado do HUD, inclusive em navegação interna (`RSC: 1`), mesmo logo depois de um login em produção.
+
+A decisão não muda: a CSP com nonce funciona, e nada que dependa da requisição vai para o cache compartilhado. Ao mudar o layout raiz ou a forma de render, repita essas três verificações em produção.
