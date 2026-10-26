@@ -58,6 +58,7 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `npm run format` | Formata o código com Prettier |
 | `npm run typecheck` | Gera os tipos de rota do Next e roda o `tsc` |
 | `npm test` | Testes unitários |
+| `npm run test:e2e` | Testes de ponta a ponta (Playwright + axe) contra o build de produção e o Supabase local; rode `npm run build` antes |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
 | `npm run db:test` | Testes do banco em pgTAP (RLS, privilégios e restrições), em `supabase/tests/` |
 | `npm run db:advisors` | Advisors de segurança e desempenho do Supabase no banco local; falha em achado `WARN` ou `ERROR` |

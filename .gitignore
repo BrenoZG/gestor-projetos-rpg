@@ -31,4 +31,6 @@ Thumbs.db
 npm-debug.log*
 playwright-report/
 test-results/
+# Sessão do usuário de teste local, gerada a cada execução do E2E
+tests/e2e/.auth/
 .vercel

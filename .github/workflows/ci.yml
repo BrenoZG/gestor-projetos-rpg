@@ -59,6 +59,45 @@ jobs:
       - run: npm run db:test
       - run: npm run db:advisors
 
+  # E2E (Playwright + axe) contra o build de produção e um Supabase local
+  # descartável. Além do banco e do Auth, sobem a API (PostgREST) e o gateway
+  # (Kong), que o app usa. O usuário de teste e a sessão vêm da API admin LOCAL
+  # (chaves de demonstração); o setup se recusa a rodar contra outro endereço.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Subir o Supabase local (banco, Auth, API e gateway)
+        run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Apontar o app para o Supabase local
+        run: |
+          npx supabase status -o json | node -e "
+            const s = JSON.parse(require('fs').readFileSync(0, 'utf8'));
+            require('fs').appendFileSync(process.env.GITHUB_ENV, [
+              'NEXT_PUBLIC_SUPABASE_URL=' + s.API_URL,
+              'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=' + s.PUBLISHABLE_KEY,
+              'ALLOWLIST_GITHUB_IDS=1',
+              '',
+            ].join('\n'));"
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      # Relatório e traces só quando algo falha, para investigar sem reproduzir.
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: relatorio-e2e
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   # CLI do gitleaks chamada diretamente, em vez da gitleaks-action: a action monta
   # o intervalo `<primeiro>^..<último>` e quebra quando o primeiro commit não tem
   # pai, além de baixar uma versão do gitleaks escolhida por ela. Aqui a versão é
