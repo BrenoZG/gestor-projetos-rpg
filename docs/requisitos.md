@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.0 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.1 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.1 (M1b, 2026-10-26):** nome de stack limitado a 40 caracteres; rótulos das dificuldades intermediárias; RN-02 (status) e o keepalive (RNF-07) antecipados para o M1b.
 
 ## 1. Objetivo
 
@@ -16,7 +18,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | **Missão** | Sinônimo de **Projeto** na interface. |
 | **Atualização** | Melhoria, correção ou implementação nova dentro de um Projeto existente. Sempre vinculada a um Projeto. |
 | **Ideia** | Não é entidade: uma ideia é um Projeto (ou Atualização) em status `Backlog`. |
-| **Dificuldade** | Valor declarado de 1 (Trivial) a 5 (Extremo) no cadastro do Projeto. |
+| **Dificuldade** | Valor declarado no cadastro do Projeto: 1 (Trivial), 2 (Fácil), 3 (Média), 4 (Difícil) ou 5 (Extremo). |
 | **Rank de Missão** | Letra E–S calculada a partir da dificuldade e da quantidade de stacks do Projeto. |
 | **Rank do Caçador** | Letra E–S do personagem, derivada do nível. Independe do Rank de Missão. |
 | **XP** | Pontos de experiência. Concedidos por eventos registrados no ledger. |
@@ -33,7 +35,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | Nome | Obrigatório, 3–80 caracteres, **único por usuário** sem diferenciar maiúscula/minúscula e ignorando espaços nas pontas. |
 | Descrição | Obrigatória, 1–2.000 caracteres. |
 | Estrutura / arquitetura | Opcional, Markdown, até 20.000 caracteres. |
-| Stacks | 1 a 20 tags. |
+| Stacks | 1 a 20 tags, cada uma com 1 a 40 caracteres. Na digitação, a vírgula separa as tags. |
 | Dificuldade | Obrigatória, inteiro de 1 a 5. |
 | Status | `Backlog` · `Desenvolvimento` · `Concluído`. Padrão: `Backlog`. |
 | Datas (automáticas) | Criação · última edição · ingresso mais recente em `Desenvolvimento` · conclusão. |
@@ -164,10 +166,12 @@ Nenhuma no fechamento da baseline 1.0.
 
 | Requisito | Marco | Verificação |
 |---|---|---|
-| RF-01..04, RF-13, RN-04, RN-05 | M1 | E2E + integração (RLS) |
-| RF-05..11, RN-01..03 | M2 | E2E |
+| RF-13 | M1a | E2E do retorno do OAuth + allowlist |
+| RF-01..04, RN-02, RN-04 (sem Atualizações), RN-05 | M1b | E2E (Playwright + axe) + pgTAP (RLS, trigger, função) |
+| RF-05..11, RN-01, RN-03, RN-04 (contagem de Atualizações) | M2 | E2E |
 | RF-12, RN-06, RN-07, RN-09, RN-10, RN-13 | M3 | Unitário (domínio) + integração (função atômica) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
-| RF-14, RNF-07 | M6 | Integração |
+| RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
+| RF-14, RNF-07 (export) | M6 | Integração |
 | RNF-01..06 | Todos | CI + revisão |

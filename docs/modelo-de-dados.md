@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** desenho aprovado, a implementar por migrations versionadas em `supabase/migrations/` (M1: `personagem`, `projetos`, `stacks`, `projeto_stacks` · M2: `atualizacoes` · M3: `eventos_xp` e função `concluir_item`).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, a função `salvar_missao` e o trigger de datas (M1b). A implementar: `atualizacoes` (M2), `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -98,6 +98,10 @@ erDiagram
 | `concluido_em` | `timestamptz` | preenchido só em `concluido` (`CHECK` de coerência) |
 | `criado_em`, `atualizado_em` | `timestamptz` | automáticos |
 
+**Datas de status (RN-02):** um trigger `BEFORE INSERT OR UPDATE` grava `inicio_desenvolvimento_em` ao entrar em Desenvolvimento, `concluido_em` ao entrar em Concluído (e o apaga ao sair) e `atualizado_em` em toda edição. Essas colunas ficam fora dos `GRANT`s de escrita: só o trigger as grava.
+
+**Privilégios** (migration `criar_missoes`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `nome`, `descricao`, `arquitetura`, `dificuldade` e `status`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
+
 O Rank de Missão **não é coluna**: é derivado de `dificuldade` e da contagem de stacks pelo domínio. Guardá-lo criaria duas fontes da verdade.
 
 ### `stacks` — grão: 1 linha por stack distinta do usuário
@@ -105,13 +109,16 @@ O Rank de Missão **não é coluna**: é derivado de `dificuldade` e da contagem
 |---|---|---|
 | `id` | `uuid` PK | |
 | `user_id` | `uuid` FK | |
-| `nome` | `text` | primeira grafia cadastrada (RN-05) |
+| `nome` | `text` | primeira grafia cadastrada (RN-05); 1–40 caracteres |
 | `nome_normalizado` | `text` | `UNIQUE (user_id, nome_normalizado)` |
 
 Tabela própria, e não array no projeto: permite autocompletar (evita "Next.js" e "NextJS" coexistirem) e contar uso por stack.
 
 ### `projeto_stacks` — grão: 1 linha por par (Projeto, stack)
-PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. Limite de 20 stacks por Projeto validado na aplicação.
+PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. O RLS só aceita ligar uma Missão do usuário a uma stack do mesmo usuário.
+
+### Função `salvar_missao`
+Cria (`p_id` nulo) ou altera uma Missão, insere as stacks novas (`on conflict do nothing`, mantendo a primeira grafia) e substitui os vínculos, **numa transação** (ADR-0003). `SECURITY INVOKER`: roda com a sessão de quem chama, sob o RLS. Valida 1 a 20 stacks distintas. Erros: `23505` nome repetido · `23514` campo fora da regra · `22023` quantidade de stacks · `P0002` Missão inexistente ou de outro usuário.
 
 ### `atualizacoes` — grão: 1 linha por Atualização
 | Coluna | Tipo | Regra |
