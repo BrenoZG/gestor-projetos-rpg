@@ -70,7 +70,6 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `NEXT_PUBLIC_SUPABASE_URL` | sim | URL da API do Supabase |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | sim | Chave pública (`sb_publishable_...`); a proteção dos dados é o RLS |
 | `ALLOWLIST_GITHUB_IDS` | sim | IDs numéricos do GitHub autorizados, separados por vírgula |
-| `CRON_SECRET` | só no deploy | Segredo do keepalive (32+ caracteres) |
 
 Contrato validado na inicialização por [`src/lib/ambiente.ts`](src/lib/ambiente.ts). Nunca versione `.env.local`.
 

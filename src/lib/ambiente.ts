@@ -3,9 +3,6 @@ import { z } from 'zod';
 /** Abaixo disso, o valor não é uma chave real do Supabase (provável placeholder). */
 export const TAMANHO_MINIMO_CHAVE_PUBLICA = 20;
 
-/** 32 caracteres = 128 bits em hex: mínimo aceitável para um segredo compartilhado. */
-export const TAMANHO_MINIMO_CRON_SECRET = 32;
-
 /**
  * Contrato das variáveis de ambiente, validado na fronteira.
  *
@@ -26,12 +23,6 @@ const esquemaAmbiente = esquemaAmbientePublico.extend({
     .string()
     .regex(/^\d+(,\d+)*$/)
     .transform((valor) => valor.split(',')),
-  // `CRON_SECRET=` sem valor (copiado do .env.example) chega como string vazia;
-  // vazio significa "não configurado", não "segredo inválido".
-  CRON_SECRET: z.preprocess(
-    (valor) => (valor === '' ? undefined : valor),
-    z.string().min(TAMANHO_MINIMO_CRON_SECRET).optional(),
-  ),
 });
 
 export type Ambiente = z.infer<typeof esquemaAmbiente>;

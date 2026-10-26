@@ -33,19 +33,17 @@ describe('lerAmbiente', () => {
   it('nunca expõe o valor de um segredo na mensagem de erro', () => {
     const segredo = 'curto';
     try {
-      lerAmbiente({ ...ambienteValido, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: segredo, CRON_SECRET: segredo });
+      lerAmbiente({ ...ambienteValido, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: segredo });
       expect.unreachable();
     } catch (erro) {
       expect(String(erro)).not.toContain(segredo);
     }
   });
 
-  it('aceita CRON_SECRET ausente (só é exigido no deploy)', () => {
-    expect(lerAmbiente(ambienteValido).CRON_SECRET).toBeUndefined();
-  });
-
-  it('trata CRON_SECRET vazio como ausente (linha "CRON_SECRET=" copiada do .env.example)', () => {
-    expect(lerAmbiente({ ...ambienteValido, CRON_SECRET: '' }).CRON_SECRET).toBeUndefined();
+  it('não lê CRON_SECRET: o keepalive usa o /api/saude, público (ADR-0006)', () => {
+    expect(Object.keys(lerAmbiente({ ...ambienteValido, CRON_SECRET: 'x'.repeat(40) }))).not.toContain(
+      'CRON_SECRET',
+    );
   });
 });
 
