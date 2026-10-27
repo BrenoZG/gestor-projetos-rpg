@@ -2,7 +2,7 @@
 
 > Versão 1.2 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
 >
-> **1.2 (M1c, 2026-10-27):** a dificuldade declarada sai; o Rank de Missão passa a ser calculado pelo estilo arquitetural, pelas capacidades e pelas stacks (RN-14); a estrutura/arquitetura vira obrigatória. Origem: teste do dono em produção, em 26/10.
+> **1.2 (M1c, 2026-10-27):** a dificuldade declarada sai; o Rank de Missão passa a ser calculado pelo estilo arquitetural, pelas capacidades e pelas stacks (RN-14); a estrutura/arquitetura vira obrigatória; mover Missões arrastando ou pelo botão (RF-20), filtros (RF-21) e visão Lista (RF-22) entram no escopo, e o "Kanban com arrastar" sai do fora de escopo. Origem: teste do dono em produção, em 26/10.
 >
 > **1.1 (M1b, 2026-10-26):** nome de stack limitado a 40 caracteres; rótulos das dificuldades intermediárias; RN-02 (status) e o keepalive (RNF-07) antecipados para o M1b.
 
@@ -83,6 +83,9 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Missões. | Must |
 | RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela Ficha do Personagem. | Should |
 | RF-19 | O sistema deve exibir a Ficha do Personagem, acessível pelo menu e pela tecla `C`, conforme RN-12. | Must |
+| RF-20 | O sistema deve permitir mover um Projeto entre as colunas do Quadro sem abrir a edição: arrastando o cartão (mouse ou toque) ou pelo botão "Mover", que funciona só com o teclado (WCAG 2.5.7), conforme RN-02. | Must |
+| RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank de Missão, com todos os filtros combinados; os filtros ficam na URL. | Should |
+| RF-22 | O sistema deve oferecer a visão Lista: uma tabela com todos os Projetos (nome, status, Rank, pontos, stacks e última edição), ordenada pela última edição, mais recente primeiro, com os mesmos filtros do RF-21. | Should |
 
 ## 5. Regras de negócio
 
@@ -150,6 +153,31 @@ Cenário: arquitetura em branco
   E nada é gravado
 ```
 
+### RF-20 a RF-22 (Quadro)
+
+```gherkin
+Cenário: arrastar muda o status sem abrir a edição
+  Dado um Projeto no Backlog
+  Quando o usuário arrasta o cartão para "Em desenvolvimento" (mouse ou toque longo)
+  Então o cartão aparece na coluna nova na hora e continua lá ao recarregar
+  E a data de ingresso em Desenvolvimento é gravada (RN-02)
+
+Cenário: mover só com o teclado
+  Dado o foco no botão "Mover" de um cartão
+  Quando o usuário escolhe "Para Concluídas"
+  Então o cartão vai para Concluídas, a mudança é anunciada e o foco fica no botão do cartão
+
+Cenário: servidor recusa ou rede cai
+  Quando a gravação do movimento falha
+  Então o cartão volta à coluna de origem e um alerta explica que a Missão não foi movida
+
+Cenário: filtro na URL
+  Dado o filtro de texto "gestor"
+  Quando o usuário recarrega a página
+  Então o filtro continua aplicado
+  E, sem nenhum resultado, aparece "Nenhuma missão com esses filtros." com "Limpar filtros"
+```
+
 ### RN-06 (XP)
 
 ```gherkin
@@ -183,7 +211,7 @@ Cenário: concluir antes da trava não concede XP
 
 ## 9. Fora de escopo (v1)
 
-Ideia como entidade própria · multiusuário e compartilhamento · Kanban com arrastar · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe.
+Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe.
 
 ## 10. Questões em aberto
 
@@ -201,5 +229,6 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
 | RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v2`) + E2E |
+| RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
 | RF-14, RNF-07 (export) | M6 | Integração |
 | RNF-01..06 | Todos | CI + revisão |

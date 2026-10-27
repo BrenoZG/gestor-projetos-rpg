@@ -7,6 +7,7 @@ Gestão de projetos pessoais e de suas atualizações, com progressão estilo RP
 ## O que faz
 
 - **Missões (Projetos):** nome, descrição, arquitetura em Markdown, estilo arquitetural, capacidades, stacks e status (Backlog → Desenvolvimento → Concluído). O Rank de Missão é calculado pelo sistema (estilo + capacidades + stacks).
+- **Quadro:** mover as Missões entre as colunas arrastando (mouse ou dedo) ou pelo botão "Mover", filtros por texto, stack e Rank (guardados na URL) e a visão Lista.
 - **Atualizações:** melhorias e implementações registradas dentro de um projeto, com linha do tempo.
 - **Progressão:** XP por criação e conclusão, 100 níveis, 10 medalhas com títulos, Rank de Missão e Rank do Caçador (E → S), Maestria por stack e 8 classes que misturam RPG e áreas de desenvolvimento.
 
