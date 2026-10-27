@@ -2,30 +2,45 @@
 
 > Fonte da verdade numérica das RN-06 a RN-13 de [`requisitos.md`](requisitos.md). Os valores vivem num **único módulo de configuração** do domínio (`src/dominio/gamificacao/`, a partir do M3). Os números desta página foram calculados pela mesma fórmula, não digitados à mão.
 
-## 1. Rank de Missão (Projeto)
+## 1. Rank de Missão (Projeto) — RN-14
+
+O sistema calcula o Rank; o usuário não declara dificuldade (desde o M1c, `src/dominio/missoes/rank.ts`).
 
 ```
-pontos = dificuldade × 10 + min(stacks, 10) × 2
+pontos = estilo + 5 × capacidades distintas + 2 × min(stacks, 10)      (0 a 80)
 ```
+
+| Estilo arquitetural | Pontos |
+|---|---|
+| Script ou automação | 0 |
+| Monolito | 5 |
+| Monolito modular | 10 |
+| Hexagonal / Clean | 12 |
+| Serverless | 12 |
+| Orientado a eventos | 16 |
+| Microsserviços | 20 |
+
+Capacidades, 5 pontos cada (até 8): Autenticação · Banco de dados · Integração com API externa · Tempo real · Filas e processamento assíncrono · IA ou machine learning · CI/CD e deploy · App mobile.
 
 | Rank | Pontos |
 |---|---|
-| E | < 20 |
-| D | 20–29 |
-| C | 30–39 |
-| B | 40–49 |
-| A | 50–59 |
-| S | ≥ 60 |
+| E | < 15 |
+| D | 15–29 |
+| C | 30–44 |
+| B | 45–59 |
+| A | 60–69 |
+| S | ≥ 70 |
 
-Só as 10 primeiras stacks pontuam: sem teto, cadastrar 40 tags viraria atalho de Rank.
+Só as 10 primeiras stacks pontuam: sem teto, cadastrar 40 tags viraria atalho de Rank. Marcar capacidades que o Projeto não tem infla o próprio Rank (e, a partir do M3, o próprio XP): num app de um usuário só, o risco é aceito.
 
 | Exemplo | Pontos | Rank |
 |---|---|---|
-| Dificuldade 1, 1 stack | 12 | E |
-| Dificuldade 2, 3 stacks | 26 | D |
-| Dificuldade 3, 5 stacks | 40 | B |
-| Dificuldade 4, 10 stacks | 60 | S |
-| Dificuldade 5, 5 stacks | 60 | S |
+| Script, nenhuma capacidade, 7 stacks | 14 | E |
+| Script, 1 capacidade, 5 stacks | 15 | D |
+| Monolito, 4 capacidades, 6 stacks | 37 | C |
+| Microsserviços, 3 capacidades, 5 stacks | 45 | B |
+| Microsserviços, 6 capacidades, 5 stacks | 60 | A |
+| Microsserviços, 6 capacidades, 10 stacks | 70 | S |
 
 ## 2. XP por evento
 

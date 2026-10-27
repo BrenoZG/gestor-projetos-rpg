@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, a função `salvar_missao` e o trigger de datas (M1b). A implementar: `atualizacoes` (M2), `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, a função `salvar_missao` e o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c, etapa expandir: `dificuldade` e `salvar_missao` saem no deploy seguinte). A implementar: `atualizacoes` (M2), `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -28,8 +28,10 @@ erDiagram
         text nome
         text nome_normalizado "único por user_id"
         text descricao
-        text arquitetura "Markdown, opcional"
-        smallint dificuldade "1 a 5"
+        text arquitetura "Markdown, obrigatória (RN-14)"
+        text estilo_arquitetural "base do Rank"
+        text_array capacidades "0 a 8"
+        smallint dificuldade "obsoleta, sai no contrair"
         text status
         timestamptz inicio_desenvolvimento_em
         timestamptz concluido_em
@@ -91,8 +93,10 @@ erDiagram
 | `nome` | `text` | 3–80 caracteres |
 | `nome_normalizado` | `text` | `lower(trim(nome))`; `UNIQUE (user_id, nome_normalizado)` |
 | `descricao` | `text` | 1–2.000 |
-| `arquitetura` | `text` | nulo ou até 20.000 |
-| `dificuldade` | `smallint` | `CHECK (dificuldade BETWEEN 1 AND 5)` |
+| `arquitetura` | `text` | até 20.000; não vazia exigida pela `salvar_missao_v2` (vira `NOT NULL` no contrair) |
+| `estilo_arquitetural` | `text` | `NOT NULL DEFAULT 'monolito'`; `CHECK` nos 7 estilos da RN-14 |
+| `capacidades` | `text[]` | `NOT NULL DEFAULT '{}'`; `CHECK` de subconjunto das 8 capacidades e no máximo 8 itens. A repetição não é barrada no `CHECK` (sem subconsulta): a função grava sem repetir e o domínio conta capacidades distintas |
+| `dificuldade` | `smallint` | **obsoleta** (RN-14): aceita nulo e sai na etapa contrair |
 | `status` | `text` | `CHECK (status IN ('backlog','desenvolvimento','concluido'))` |
 | `inicio_desenvolvimento_em` | `timestamptz` | ingresso mais recente em Desenvolvimento (trava de 24 h) |
 | `concluido_em` | `timestamptz` | preenchido só em `concluido` (`CHECK` de coerência) |
@@ -100,9 +104,11 @@ erDiagram
 
 **Datas de status (RN-02):** um trigger `BEFORE INSERT OR UPDATE` grava `inicio_desenvolvimento_em` ao entrar em Desenvolvimento, `concluido_em` ao entrar em Concluído (e o apaga ao sair) e `atualizado_em` em toda edição. Essas colunas ficam fora dos `GRANT`s de escrita: só o trigger as grava.
 
-**Privilégios** (migration `criar_missoes`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `nome`, `descricao`, `arquitetura`, `dificuldade` e `status`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
+**Privilégios** (migration `criar_missoes`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `nome`, `descricao`, `arquitetura`, `dificuldade`, `status` e, desde a migration `rank_por_arquitetura`, `estilo_arquitetural` e `capacidades`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
 
-O Rank de Missão **não é coluna**: é derivado de `dificuldade` e da contagem de stacks pelo domínio. Guardá-lo criaria duas fontes da verdade.
+O Rank de Missão **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14). Guardá-lo criaria duas fontes da verdade.
+
+**Gravação (M1c):** `salvar_missao_v2` faz o mesmo que a `salvar_missao`, trocando a dificuldade por estilo e capacidades e recusando arquitetura vazia (`22023`). As duas convivem durante o deploy: o código anterior, ainda no ar, segue gravando pela antiga.
 
 ### `stacks` — grão: 1 linha por stack distinta do usuário
 | Coluna | Tipo | Regra |
@@ -161,7 +167,7 @@ Cria (`p_id` nulo) ou altera uma Missão, insere as stacks novas (`on conflict d
 
 | Dimensão | Garantia |
 |---|---|
-| Validade | `CHECK` em status, dificuldade, classe, tamanhos e `xp > 0` |
+| Validade | `CHECK` em status, estilo arquitetural, capacidades, classe, tamanhos e `xp > 0` |
 | Unicidade | `UNIQUE` em nome normalizado de Projeto e stack; `UNIQUE (referencia_id, tipo)` no ledger |
 | Completude | `NOT NULL` em todo campo obrigatório |
 | Consistência | `CHECK` de coerência entre `status` e `concluido_em`; função atômica para status + XP |

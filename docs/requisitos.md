@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.1 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.2 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.2 (M1c, 2026-10-27):** a dificuldade declarada sai; o Rank de Missão passa a ser calculado pelo estilo arquitetural, pelas capacidades e pelas stacks (RN-14); a estrutura/arquitetura vira obrigatória. Origem: teste do dono em produção, em 26/10.
 >
 > **1.1 (M1b, 2026-10-26):** nome de stack limitado a 40 caracteres; rótulos das dificuldades intermediárias; RN-02 (status) e o keepalive (RNF-07) antecipados para o M1b.
 
@@ -18,8 +20,9 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | **Missão** | Sinônimo de **Projeto** na interface. |
 | **Atualização** | Melhoria, correção ou implementação nova dentro de um Projeto existente. Sempre vinculada a um Projeto. |
 | **Ideia** | Não é entidade: uma ideia é um Projeto (ou Atualização) em status `Backlog`. |
-| **Dificuldade** | Valor declarado no cadastro do Projeto: 1 (Trivial), 2 (Fácil), 3 (Média), 4 (Difícil) ou 5 (Extremo). |
-| **Rank de Missão** | Letra E–S calculada a partir da dificuldade e da quantidade de stacks do Projeto. |
+| **Estilo arquitetural** | Como o Projeto se organiza: Script ou automação, Monolito, Monolito modular, Hexagonal / Clean, Serverless, Orientado a eventos ou Microsserviços. |
+| **Capacidade** | O que o Projeto entrega além do código de negócio: Autenticação, Banco de dados, Integração com API externa, Tempo real, Filas e processamento assíncrono, IA ou machine learning, CI/CD e deploy, App mobile. |
+| **Rank de Missão** | Letra E–S calculada pelo sistema a partir do estilo arquitetural, das capacidades e da quantidade de stacks do Projeto (RN-14). É a dificuldade do Projeto. |
 | **Rank do Caçador** | Letra E–S do personagem, derivada do nível. Independe do Rank de Missão. |
 | **XP** | Pontos de experiência. Concedidos por eventos registrados no ledger. |
 | **Ledger de XP** | Registro permanente e append-only de cada ganho de XP. |
@@ -34,9 +37,10 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 |---|---|
 | Nome | Obrigatório, 3–80 caracteres, **único por usuário** sem diferenciar maiúscula/minúscula e ignorando espaços nas pontas. |
 | Descrição | Obrigatória, 1–2.000 caracteres. |
-| Estrutura / arquitetura | Opcional, Markdown, até 20.000 caracteres. |
+| Estrutura / arquitetura | Obrigatória, Markdown, 1–20.000 caracteres (só espaços não vale). |
+| Estilo arquitetural | Obrigatório, um da lista do glossário. |
+| Capacidades | 0 a 8, da lista do glossário, sem repetição. |
 | Stacks | 1 a 20 tags, cada uma com 1 a 40 caracteres. Na digitação, a vírgula separa as tags. |
-| Dificuldade | Obrigatória, inteiro de 1 a 5. |
 | Status | `Backlog` · `Desenvolvimento` · `Concluído`. Padrão: `Backlog`. |
 | Datas (automáticas) | Criação · última edição · ingresso mais recente em `Desenvolvimento` · conclusão. |
 
@@ -97,6 +101,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-11 | A Classe é identidade visual. **Não** altera XP, nível, Rank ou Maestria. A troca é livre e sem custo. |
 | RN-12 | O atalho de teclado `C` abre a Ficha e `Esc` fecha. O atalho é ignorado com foco em campo de texto e pode ser desligado pelo usuário (WCAG 2.1.4). |
 | RN-13 | Valores de XP são inteiros, arredondados ao inteiro mais próximo (meio para cima). |
+| RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank de Missão pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. |
 
 ## 6. Classes
 
@@ -123,7 +128,29 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RNF-06 | Privacidade | Nenhum dado pessoal em log. Repositório público contém apenas dados fictícios. |
 | RNF-07 | Disponibilidade | Sem SLA (plano gratuito). Mitigações: keepalive diário contra a pausa por inatividade e export JSON como backup (ADR-0006). |
 
-## 8. Critérios de aceite (RN-06)
+## 8. Critérios de aceite
+
+### RN-14 (Rank de Missão)
+
+```gherkin
+Cenário: o Rank sai da conta, não de uma escolha
+  Dado um Projeto Monolito com Autenticação, Banco de dados, Integração com API externa e CI/CD e 6 stacks
+  Quando o usuário o cadastra
+  Então o Projeto soma 37 pontos (estilo 5, capacidades 20, stacks 12) e é Rank C
+  E a tela mostra a conta de cada fator
+
+Cenário: fronteiras das faixas
+  Dado um Projeto com 14 pontos, outro com 15, outro com 69 e outro com 70
+  Então os Ranks são E, D, A e S, nessa ordem
+
+Cenário: arquitetura em branco
+  Dado o formulário de Projeto com a estrutura/arquitetura só com espaços
+  Quando o usuário envia
+  Então o campo mostra "Descreva a estrutura e a arquitetura da missão."
+  E nada é gravado
+```
+
+### RN-06 (XP)
 
 ```gherkin
 Cenário: concluir projeto após a trava
@@ -173,5 +200,6 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
+| RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v2`) + E2E |
 | RF-14, RNF-07 (export) | M6 | Integração |
 | RNF-01..06 | Todos | CI + revisão |
