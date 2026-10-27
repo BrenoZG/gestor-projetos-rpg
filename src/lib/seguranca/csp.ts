@@ -27,6 +27,17 @@ export function gerarNonce(): string {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(BYTES_NONCE))).toString('base64');
 }
 
+/**
+ * Lê o nonce da CSP que o proxy gravou na requisição, para quem injeta estilos
+ * pelo JavaScript (ex.: a biblioteca de arrasto do Quadro) usar o mesmo valor.
+ *
+ * @param csp - Cabeçalho `Content-Security-Policy` da requisição.
+ * @returns O nonce, ou `undefined` se a CSP não tiver um.
+ */
+export function extrairNonce(csp: string | null): string | undefined {
+  return csp?.match(/'nonce-([A-Za-z0-9+/_-]+={0,2})'/)?.[1];
+}
+
 export type OpcoesCsp = {
   /** Valor aleatório e único por requisição, gerado no proxy. */
   readonly nonce: string;

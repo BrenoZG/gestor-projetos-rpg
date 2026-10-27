@@ -25,8 +25,7 @@ export type Missao = {
   id: string;
   nome: string;
   descricao: string;
-  /** Só Missões gravadas antes da RN-14 podem ter `null` (a etapa contrair remove o caso). */
-  arquitetura: string | null;
+  arquitetura: string;
   estilo: EstiloArquitetural;
   capacidades: Capacidade[];
   status: StatusMissao;
@@ -44,7 +43,7 @@ export type LinhaMissao = {
   id: string;
   nome: string;
   descricao: string;
-  arquitetura: string | null;
+  arquitetura: string;
   estilo_arquitetural: string;
   capacidades: string[];
   status: string;
@@ -176,6 +175,39 @@ export async function salvarMissao(
   });
   if (error) return { ok: false, codigo: error.code };
   return { ok: true, id: data as string };
+}
+
+export type ResultadoMudancaStatus = 'movida' | 'sem_mudanca' | 'inexistente';
+
+/**
+ * Muda só o status de uma Missão do usuário (RF-20). O trigger grava as datas
+ * (RN-02). Mover para o status atual não grava nada, para não mexer na
+ * "última edição": repetir o pedido dá o mesmo resultado (idempotente).
+ *
+ * @returns `movida`, `sem_mudanca` (já estava no status) ou `inexistente` (não existe ou é de outro usuário).
+ * @throws {ErroDeMissao} Se o banco falhar.
+ */
+export async function mudarStatusDaMissao(
+  supabase: ClienteSupabase,
+  id: string,
+  status: StatusMissao,
+): Promise<ResultadoMudancaStatus> {
+  const { data, error } = await supabase
+    .from('projetos')
+    .update({ status })
+    .eq('id', id)
+    .neq('status', status)
+    .select('id');
+  if (error) throw new ErroDeMissao('mover_missao', error.code);
+  if (data.length > 0) return 'movida';
+
+  const { data: existente, error: erroLeitura } = await supabase
+    .from('projetos')
+    .select('id')
+    .eq('id', id)
+    .maybeSingle();
+  if (erroLeitura) throw new ErroDeMissao('mover_missao', erroLeitura.code);
+  return existente ? 'sem_mudanca' : 'inexistente';
 }
 
 /**

@@ -13,3 +13,6 @@ export type ErrosMissao = Partial<Record<CampoMissao, string>>;
 export type EstadoFormularioMissao = { erros: ErrosMissao; mensagem: string | null };
 
 export const ESTADO_INICIAL_FORMULARIO: EstadoFormularioMissao = { erros: {}, mensagem: null };
+
+/** Resposta de mover uma Missão no Quadro; a mensagem já vem pronta para a tela. */
+export type ResultadoMovimento = { ok: true } | { ok: false; mensagem: string };

@@ -1,48 +1,15 @@
+import { headers } from 'next/headers';
 import Link from 'next/link';
 import { connection } from 'next/server';
 import { Suspense } from 'react';
 
-import { CartaoMissao } from '@/componentes/missoes/cartao-missao';
-import { SigiloRunico } from '@/componentes/sigilo-runico';
+import { atraso, COLUNAS } from '@/componentes/missoes/colunas';
+import { QuadroMissoes } from '@/componentes/missoes/quadro-missoes';
 import { CLASSES_ACAO_PRINCIPAL } from '@/componentes/tela-sistema';
 import { ErroDeMissao, listarMissoes, type Missao } from '@/dados/missoes';
-import type { StatusMissao } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
+import { extrairNonce } from '@/lib/seguranca/csp';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
-
-/** As três colunas do Quadro seguem os status da Missão (RN-02). */
-const COLUNAS: ReadonlyArray<{ id: StatusMissao; titulo: string; vazio: string; detalhe: string }> = [
-  {
-    id: 'backlog',
-    titulo: 'Backlog',
-    vazio: 'Nenhuma missão no backlog.',
-    detalhe: 'Registre uma ideia para ela não ficar só na cabeça.',
-  },
-  {
-    id: 'desenvolvimento',
-    titulo: 'Em desenvolvimento',
-    vazio: 'Nenhuma missão em andamento.',
-    detalhe: 'Mude o status de uma missão para Desenvolvimento.',
-  },
-  {
-    id: 'concluido',
-    titulo: 'Concluídas',
-    vazio: 'Nenhuma missão concluída ainda.',
-    detalhe: 'Cada conclusão vai render XP ao personagem.',
-  },
-];
-
-/** Atrasos de entrada em cascata (camada de transição); depois do 6º item, sem atraso. */
-const ATRASOS = [
-  '[animation-delay:80ms]',
-  '[animation-delay:160ms]',
-  '[animation-delay:240ms]',
-  '[animation-delay:320ms]',
-  '[animation-delay:400ms]',
-  '[animation-delay:480ms]',
-];
-
-const atraso = (indice: number) => ATRASOS[indice] ?? '';
 
 async function carregarMissoes(): Promise<Missao[]> {
   await connection();
@@ -56,6 +23,11 @@ async function carregarMissoes(): Promise<Missao[]> {
     });
     throw new Error('Não foi possível carregar as missões.');
   }
+}
+
+/** Nonce da CSP desta requisição (o proxy o grava no cabeçalho da requisição). */
+async function lerNonce(): Promise<string | undefined> {
+  return extrairNonce((await headers()).get('content-security-policy'));
 }
 
 function Estatisticas({ missoes }: { missoes: readonly Missao[] }) {
@@ -84,71 +56,12 @@ function Estatisticas({ missoes }: { missoes: readonly Missao[] }) {
   );
 }
 
-function Coluna({
-  coluna,
-  missoes,
-  indice,
-}: {
-  coluna: (typeof COLUNAS)[number];
-  missoes: readonly Missao[];
-  indice: number;
-}) {
-  return (
-    <section
-      aria-labelledby={`coluna-${coluna.id}`}
-      className={`aura-sistema entrada-janela ${atraso(indice)} flex min-h-80`}
-    >
-      <div className="janela-sistema flex w-full">
-        <div className="janela-sistema-conteudo flex w-full flex-col gap-4 p-5">
-          <header className="flex items-center justify-between gap-3 border-b border-borda pb-3">
-            <h2 id={`coluna-${coluna.id}`} className="flex items-center gap-2 font-display text-lg font-bold">
-              <span aria-hidden="true" className="h-2 w-2 rotate-45 bg-acento" />
-              {coluna.titulo}
-            </h2>
-            <span className="rounded-full border border-borda-forte px-2.5 py-0.5 font-mono text-xs text-texto-suave">
-              {missoes.length}
-              <span className="sr-only"> {missoes.length === 1 ? 'missão' : 'missões'}</span>
-            </span>
-          </header>
-
-          {missoes.length > 0 ? (
-            <ul className="flex flex-col gap-3">
-              {missoes.map((missao, posicao) => (
-                <CartaoMissao
-                  key={missao.id}
-                  missao={missao}
-                  className={`entrada-suave ${atraso(posicao)}`}
-                />
-              ))}
-            </ul>
-          ) : (
-            <div className="slot-vazio flex flex-1 flex-col items-center justify-center gap-4 rounded-md border border-dashed border-borda-campo px-6 py-10 text-center">
-              <SigiloRunico className="h-20 w-20 opacity-60 lg:h-32 lg:w-32" />
-              <p className="font-medium text-texto">{coluna.vazio}</p>
-              <p className="text-sm text-texto-suave">{coluna.detalhe}</p>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 async function ConteudoQuadro() {
-  const missoes = await carregarMissoes();
+  const [missoes, nonce] = await Promise.all([carregarMissoes(), lerNonce()]);
   return (
     <>
       <Estatisticas missoes={missoes} />
-      <div className="grid flex-1 gap-5 lg:grid-cols-3">
-        {COLUNAS.map((coluna, indice) => (
-          <Coluna
-            key={coluna.id}
-            coluna={coluna}
-            missoes={missoes.filter((missao) => missao.status === coluna.id)}
-            indice={indice}
-          />
-        ))}
-      </div>
+      <QuadroMissoes missoes={missoes} nonce={nonce} />
     </>
   );
 }
@@ -167,8 +80,8 @@ function QuadroCarregando() {
 }
 
 /**
- * Quadro de Missões (RF-02): estatísticas e as três colunas de status, com as
- * Missões do usuário; cada cartão leva ao detalhe.
+ * Quadro de Missões (RF-02): estatísticas, filtros, as três colunas de status
+ * com arrasto (ou a visão Lista) e o atalho para cadastrar.
  *
  * @returns Tela inicial do jogo.
  */

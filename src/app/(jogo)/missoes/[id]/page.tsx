@@ -92,13 +92,9 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
         <h3 id="titulo-estrutura" className={CLASSES_ROTULO}>
           Estrutura e arquitetura
         </h3>
-        {missao.arquitetura ? (
-          <pre className="max-h-[32rem] overflow-auto rounded-md border border-borda bg-fundo/70 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap break-words">
-            {missao.arquitetura}
-          </pre>
-        ) : (
-          <p className="text-texto-suave">Nenhuma estrutura registrada.</p>
-        )}
+        <pre className="max-h-[32rem] overflow-auto rounded-md border border-borda bg-fundo/70 p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap break-words">
+          {missao.arquitetura}
+        </pre>
       </section>
 
       <dl className="grid gap-4 border-t border-borda pt-6 sm:grid-cols-2">

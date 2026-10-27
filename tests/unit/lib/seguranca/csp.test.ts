@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { gerarNonce, montarCsp } from '@/lib/seguranca/csp';
+import { extrairNonce, gerarNonce, montarCsp } from '@/lib/seguranca/csp';
 
 const NONCE = 'bm9uY2UtZGUtdGVzdGU=';
 const URL_SUPABASE = 'https://exemplo.supabase.co';
@@ -107,5 +107,16 @@ describe('gerarNonce', () => {
   it('não repete o valor entre chamadas', () => {
     const nonces = new Set(Array.from({ length: 1000 }, gerarNonce));
     expect(nonces.size).toBe(1000);
+  });
+});
+
+describe('extrairNonce', () => {
+  it('devolve o nonce da CSP montada para a requisição', () => {
+    const nonce = gerarNonce();
+    expect(extrairNonce(montarCsp({ nonce, desenvolvimento: false, urlSupabase: URL_SUPABASE }))).toBe(nonce);
+  });
+
+  it.each([null, '', "default-src 'self'"])('sem nonce na CSP (%j), devolve undefined', (csp) => {
+    expect(extrairNonce(csp)).toBeUndefined();
   });
 });

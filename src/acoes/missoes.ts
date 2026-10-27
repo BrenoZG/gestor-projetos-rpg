@@ -3,10 +3,11 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import type { EstadoFormularioMissao } from '@/acoes/missoes-estado';
+import type { EstadoFormularioMissao, ResultadoMovimento } from '@/acoes/missoes-estado';
 import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-validacao';
-import { apagarMissao, ErroDeMissao, salvarMissao } from '@/dados/missoes';
+import { apagarMissao, ErroDeMissao, mudarStatusDaMissao, salvarMissao } from '@/dados/missoes';
 import { ROTA_ENTRAR, ROTA_INICIAL } from '@/dominio/acesso/rotas';
+import { ehStatusMissao } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
 import { ehUuid } from '@/lib/uuid';
@@ -124,4 +125,37 @@ export async function excluirMissao(id: string): Promise<never> {
   }
   revalidatePath(ROTA_INICIAL, 'layout');
   redirect(ROTA_INICIAL);
+}
+
+const MOVIMENTO_INVALIDO: ResultadoMovimento = { ok: false, mensagem: 'Esta missão não existe mais.' };
+const MOVIMENTO_FALHOU: ResultadoMovimento = {
+  ok: false,
+  mensagem: 'Não foi possível mover agora. Tente de novo em instantes.',
+};
+
+/**
+ * Move uma Missão para outra coluna do Quadro (RF-20), sem abrir a edição.
+ * Mover para a coluna em que ela já está não muda nada.
+ *
+ * @param id - Missão a mover (vem do cliente; validado aqui).
+ * @param status - Coluna de destino (vem do cliente; só os 3 status valem).
+ * @returns `ok`, ou a mensagem para a tela; sem sessão, redireciona para a entrada.
+ */
+export async function moverMissao(id: string, status: string): Promise<ResultadoMovimento> {
+  const supabase = await clienteComSessao();
+  if (!ehIdValido(id) || typeof status !== 'string' || !ehStatusMissao(status)) return MOVIMENTO_INVALIDO;
+
+  try {
+    const resultado = await mudarStatusDaMissao(supabase, id, status);
+    if (resultado === 'inexistente') return MOVIMENTO_INVALIDO;
+  } catch (erro) {
+    if (!(erro instanceof ErroDeMissao)) throw erro;
+    registrarEvento('erro', 'supabase_falhou', {
+      operacao: erro.operacao,
+      codigo: erro.codigo ?? 'desconhecido',
+    });
+    return MOVIMENTO_FALHOU;
+  }
+  revalidatePath(ROTA_INICIAL, 'layout');
+  return { ok: true };
 }

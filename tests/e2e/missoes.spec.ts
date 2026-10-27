@@ -45,7 +45,9 @@ test.describe('Missões', () => {
     await expect(page.getByText('Autenticação, Banco de dados, CI/CD e deploy')).toBeVisible();
 
     await page.goto('/');
-    const cartao = coluna(page, 'Backlog').getByRole('link', { name: new RegExp(nome) });
+    const cartao = coluna(page, 'Backlog')
+      .getByRole('listitem')
+      .filter({ has: page.getByRole('link', { name: new RegExp(nome) }) });
     await expect(cartao).toBeVisible();
     await expect(cartao).toContainText('Hexagonal / Clean · 31 pontos');
 

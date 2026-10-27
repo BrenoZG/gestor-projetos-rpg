@@ -39,7 +39,7 @@ async function FormularioEdicao({ params }: { params: Promise<{ id: string }> })
       inicial={{
         nome: missao.nome,
         descricao: missao.descricao,
-        arquitetura: missao.arquitetura ?? '',
+        arquitetura: missao.arquitetura,
         estilo: missao.estilo,
         capacidades: missao.capacidades,
         status: missao.status,

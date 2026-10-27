@@ -4,13 +4,21 @@ import { test as base, expect, type Locator, type Page } from '@playwright/test'
  * `test` com uma verificação automática em todos os testes: nenhum erro de
  * console, nenhuma exceção na página e nenhuma violação de CSP. Uma violação
  * de CSP não quebra a tela na hora, por isso é cobrada aqui, em todo teste.
+ *
+ * `errosEsperados` serve só ao teste que provoca uma falha de propósito (ex.:
+ * derrubar a requisição de uma Server Action): cada padrão precisa ser estreito,
+ * e a CSP nunca entra nele.
  */
-export const test = base.extend<{ problemasNaPagina: string[] }>({
+export const test = base.extend<{ errosEsperados: RegExp[]; problemasNaPagina: string[] }>({
+  errosEsperados: [[], { option: true }],
   problemasNaPagina: [
-    async ({ page }, usar) => {
+    async ({ page, errosEsperados }, usar) => {
       const problemas: string[] = [];
       page.on('console', (mensagem) => {
-        if (mensagem.type() === 'error') problemas.push(mensagem.text());
+        if (mensagem.type() !== 'error') return;
+        const texto = mensagem.text();
+        if (!texto.startsWith('CSP:') && errosEsperados.some((padrao) => padrao.test(texto))) return;
+        problemas.push(texto);
       });
       page.on('pageerror', (erro) => problemas.push(`pageerror: ${erro.message}`));
       await page.addInitScript(() => {
