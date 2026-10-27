@@ -41,7 +41,8 @@ function lerFormulario(formulario: FormData): Record<string, unknown> {
     nome: formulario.get('nome'),
     descricao: formulario.get('descricao'),
     arquitetura: formulario.get('arquitetura'),
-    dificuldade: formulario.get('dificuldade'),
+    estilo: formulario.get('estilo'),
+    capacidades: formulario.getAll('capacidades'),
     status: formulario.get('status'),
     stacks: formulario.getAll('stacks'),
   };

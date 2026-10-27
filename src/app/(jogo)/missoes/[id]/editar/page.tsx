@@ -7,7 +7,6 @@ import { CarregandoMissao } from '@/componentes/missoes/carregando-missao';
 import { FormularioMissao } from '@/componentes/missoes/formulario-missao';
 import { JanelaMissao } from '@/componentes/missoes/janela-missao';
 import { ErroDeMissao, listarNomesDeStacks } from '@/dados/missoes';
-import type { Dificuldade } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
 
@@ -41,7 +40,8 @@ async function FormularioEdicao({ params }: { params: Promise<{ id: string }> })
         nome: missao.nome,
         descricao: missao.descricao,
         arquitetura: missao.arquitetura ?? '',
-        dificuldade: missao.dificuldade as Dificuldade,
+        estilo: missao.estilo,
+        capacidades: missao.capacidades,
         status: missao.status,
         stacks: missao.stacks,
       }}

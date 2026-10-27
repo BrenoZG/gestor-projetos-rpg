@@ -2,7 +2,13 @@ import 'server-only';
 import { z } from 'zod';
 
 import type { CampoMissao, ErrosMissao } from '@/acoes/missoes-estado';
-import { LIMITES_MISSAO, STATUS_MISSAO, type DadosMissao } from '@/dominio/missoes/campos';
+import {
+  CAPACIDADES,
+  ESTILOS_ARQUITETURAIS,
+  LIMITES_MISSAO,
+  STATUS_MISSAO,
+  type DadosMissao,
+} from '@/dominio/missoes/campos';
 import { deduplicarStacks } from '@/dominio/missoes/normalizacao';
 
 /**
@@ -14,14 +20,16 @@ import { deduplicarStacks } from '@/dominio/missoes/normalizacao';
 
 export type ResultadoValidacao = { ok: true; dados: DadosMissao } | { ok: false; erros: ErrosMissao };
 
-const { nome, descricao, arquitetura, stacks, nomeStack, dificuldade } = LIMITES_MISSAO;
+const { nome, descricao, arquitetura, stacks, nomeStack } = LIMITES_MISSAO;
 
 const MENSAGENS = {
   nome: `O nome precisa ter de ${nome.minimo} a ${nome.maximo} caracteres.`,
   descricaoVazia: 'A descrição é obrigatória.',
   descricaoLonga: 'A descrição aceita até 2.000 caracteres.',
-  arquitetura: 'A estrutura aceita até 20.000 caracteres.',
-  dificuldade: 'Escolha uma dificuldade de 1 (Trivial) a 5 (Extremo).',
+  arquiteturaVazia: 'Descreva a estrutura e a arquitetura da missão.',
+  arquiteturaLonga: 'A estrutura aceita até 20.000 caracteres.',
+  estilo: 'Escolha o estilo arquitetural da missão.',
+  capacidades: 'Marque só capacidades da lista.',
   status: 'Escolha Backlog, Desenvolvimento ou Concluído.',
   quantidadeStacks: `Adicione de ${stacks.minimo} a ${stacks.maximo} stacks.`,
 } as const;
@@ -46,16 +54,19 @@ const esquemaMissao = z.object({
   ),
   arquitetura: texto(
     z
-      .string({ error: MENSAGENS.arquitetura })
+      .string({ error: MENSAGENS.arquiteturaVazia })
       .trim()
-      .max(arquitetura.maximo, MENSAGENS.arquitetura)
-      .transform((valor) => valor || null),
+      .min(arquitetura.minimo, MENSAGENS.arquiteturaVazia)
+      .max(arquitetura.maximo, MENSAGENS.arquiteturaLonga),
   ),
-  dificuldade: z.coerce
-    .number({ error: MENSAGENS.dificuldade })
-    .int(MENSAGENS.dificuldade)
-    .min(dificuldade.minimo, MENSAGENS.dificuldade)
-    .max(dificuldade.maximo, MENSAGENS.dificuldade),
+  estilo: texto(z.enum(ESTILOS_ARQUITETURAIS, { error: MENSAGENS.estilo })),
+  // Nenhuma marcada é válido; sem repetição e em ordem alfabética, como o banco grava.
+  capacidades: z
+    .preprocess(
+      (valor) => (typeof valor === 'string' ? [valor] : (valor ?? [])),
+      z.array(z.enum(CAPACIDADES, { error: MENSAGENS.capacidades }), { error: MENSAGENS.capacidades }),
+    )
+    .transform((lista) => [...new Set(lista)].sort()),
   status: z.enum(STATUS_MISSAO, { error: MENSAGENS.status }),
   stacks: z
     .preprocess(

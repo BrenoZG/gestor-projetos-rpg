@@ -5,8 +5,9 @@ import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-
 const VALIDA = {
   nome: '  Gestor de Projetos ',
   descricao: ' Um lugar para todas as ideias. ',
-  arquitetura: '',
-  dificuldade: '3',
+  arquitetura: ' Monolito Next.js com Supabase. ',
+  estilo: 'monolito',
+  capacidades: ['ci_cd', 'autenticacao', 'ci_cd'],
   status: 'backlog',
   stacks: ['Next.js', ' next.js', 'Supabase'],
 };
@@ -27,8 +28,9 @@ describe('validarFormularioMissao', () => {
       dados: {
         nome: 'Gestor de Projetos',
         descricao: 'Um lugar para todas as ideias.',
-        arquitetura: null,
-        dificuldade: 3,
+        arquitetura: 'Monolito Next.js com Supabase.',
+        estilo: 'monolito',
+        capacidades: ['autenticacao', 'ci_cd'],
         status: 'backlog',
         stacks: ['Next.js', 'Supabase'],
       },
@@ -65,8 +67,29 @@ describe('validarFormularioMissao', () => {
     expect(erroDe('arquitetura', 'x'.repeat(20001))).toBe('A estrutura aceita até 20.000 caracteres.');
   });
 
-  it.each(['0', '6', '2.5', 'abc', ''])('recusa a dificuldade %j', (dificuldade) => {
-    expect(erroDe('dificuldade', dificuldade)).toBe('Escolha uma dificuldade de 1 (Trivial) a 5 (Extremo).');
+  it.each(['', '   ', undefined])('recusa a estrutura vazia %j (RN-14)', (arquitetura) => {
+    expect(erroDe('arquitetura', arquitetura)).toBe('Descreva a estrutura e a arquitetura da missão.');
+  });
+
+  it.each(['monolitico', 'Monolito', '', undefined])('recusa o estilo %j', (estilo) => {
+    expect(erroDe('estilo', estilo)).toBe('Escolha o estilo arquitetural da missão.');
+  });
+
+  it.each([[['blockchain']], [['ia', 'IA']]])('recusa as capacidades %j', (capacidades) => {
+    expect(erroDe('capacidades', capacidades)).toBe('Marque só capacidades da lista.');
+  });
+
+  it.each([
+    [undefined, []],
+    [[], []],
+    ['ia', ['ia']],
+    [
+      ['mobile', 'filas', 'mobile'],
+      ['filas', 'mobile'],
+    ],
+  ])('aceita as capacidades %j e devolve %j (sem repetição, em ordem)', (capacidades, esperadas) => {
+    const resultado = comCampo('capacidades', capacidades);
+    expect(resultado.ok && resultado.dados.capacidades).toEqual(esperadas);
   });
 
   it.each(['arquivado', 'Backlog', ''])('recusa o status %j', (status) => {
@@ -100,7 +123,7 @@ describe('validarFormularioMissao', () => {
     const resultado = validarFormularioMissao({});
     expect(resultado.ok).toBe(false);
     expect(Object.keys(resultado.ok ? {} : resultado.erros).sort()).toEqual(
-      ['descricao', 'dificuldade', 'nome', 'stacks', 'status'].sort(),
+      ['arquitetura', 'descricao', 'estilo', 'nome', 'stacks', 'status'].sort(),
     );
   });
 });

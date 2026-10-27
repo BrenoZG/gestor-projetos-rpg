@@ -9,7 +9,8 @@ import { ConfirmarExclusao } from '@/componentes/missoes/confirmar-exclusao';
 import { CLASSES_CHIP, CLASSES_ROTULO } from '@/componentes/missoes/estilos';
 import { JanelaMissao } from '@/componentes/missoes/janela-missao';
 import { CLASSES_ACAO_PRINCIPAL } from '@/componentes/tela-sistema';
-import { ROTULOS_DIFICULDADE, ROTULOS_STATUS, type Dificuldade } from '@/dominio/missoes/campos';
+import { ROTULOS_CAPACIDADE, ROTULOS_ESTILO, ROTULOS_STATUS } from '@/dominio/missoes/campos';
+import { STACKS_QUE_PONTUAM } from '@/dominio/missoes/rank';
 import { formatarDataHora } from '@/lib/datas';
 
 import { carregarMissaoDaUrl } from './carregar-missao';
@@ -39,8 +40,7 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <h2 className="font-display text-2xl font-extrabold break-words">{missao.nome}</h2>
           <p className="font-mono text-sm text-texto-suave">
-            Rank {missao.rank} · {ROTULOS_STATUS[missao.status]} · Dificuldade {missao.dificuldade} (
-            {ROTULOS_DIFICULDADE[missao.dificuldade as Dificuldade]})
+            Rank {missao.rank} · {ROTULOS_STATUS[missao.status]} · {missao.pontuacao.total} pontos
           </p>
         </div>
       </header>
@@ -63,6 +63,29 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section aria-labelledby="titulo-calculo" className="flex flex-col gap-2">
+        <h3 id="titulo-calculo" className={CLASSES_ROTULO}>
+          Cálculo do Rank
+        </h3>
+        <dl className="grid gap-x-4 gap-y-2 text-sm sm:grid-cols-[auto_1fr_auto]">
+          <dt className="text-texto-suave">Estilo</dt>
+          <dd>{ROTULOS_ESTILO[missao.estilo]}</dd>
+          <dd className="font-mono text-texto-suave sm:text-right">+{missao.pontuacao.estilo}</dd>
+          <dt className="text-texto-suave">Capacidades</dt>
+          <dd>
+            {missao.capacidades.length > 0
+              ? missao.capacidades.map((capacidade) => ROTULOS_CAPACIDADE[capacidade]).join(', ')
+              : 'Nenhuma'}
+          </dd>
+          <dd className="font-mono text-texto-suave sm:text-right">+{missao.pontuacao.capacidades}</dd>
+          <dt className="text-texto-suave">Stacks</dt>
+          <dd>
+            {missao.stacks.length} (até {STACKS_QUE_PONTUAM} pontuam)
+          </dd>
+          <dd className="font-mono text-texto-suave sm:text-right">+{missao.pontuacao.stacks}</dd>
+        </dl>
       </section>
 
       <section aria-labelledby="titulo-estrutura" className="flex flex-col gap-2">

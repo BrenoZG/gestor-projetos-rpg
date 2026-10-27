@@ -1,4 +1,12 @@
-import { cadastrarMissao, coluna, excluirMissaoAberta, expect, nomeUnico, test } from './apoio/fixtures';
+import {
+  cadastrarMissao,
+  coluna,
+  excluirMissaoAberta,
+  expect,
+  nomeUnico,
+  opcaoDeEstilo,
+  test,
+} from './apoio/fixtures';
 
 test.describe('Missões', () => {
   test('cadastra, muda o status e exclui uma missão (RF-01 a RF-04)', async ({ page }) => {
@@ -19,17 +27,27 @@ test.describe('Missões', () => {
     await expect(page.getByRole('button', { name: /^Remover / }), 'repetida vira uma só (RN-05)').toHaveCount(
       2,
     );
-    await page.getByText('Média', { exact: true }).click();
-    await expect(page.getByText(/Rank de Missão\s*C/).first()).toBeVisible();
+    await opcaoDeEstilo(page, 'Hexagonal / Clean').check();
+    for (const capacidade of ['Autenticação', 'Banco de dados', 'CI/CD e deploy']) {
+      await page.getByRole('checkbox', { name: capacidade }).check();
+    }
+    await expect(page.getByText(/Rank de Missão\s*C · 31 pontos/), 'prévia do Rank (RN-14)').toBeVisible();
+    await expect(page.getByText('Estilo +12 · Capacidades +15 · Stacks +4 (até 10 pontuam)')).toBeVisible();
+    await page
+      .getByRole('textbox', { name: 'Estrutura e arquitetura' })
+      .fill('Camadas: domínio, dados e telas.');
 
     await page.getByRole('button', { name: 'Registrar missão' }).click();
     await expect(page).toHaveURL(/\/missoes\/[0-9a-f-]{36}$/);
     const urlMissao = page.url();
     await expect(page.getByRole('heading', { level: 2, name: nome })).toBeVisible();
-    await expect(page.getByText('Rank C · Backlog · Dificuldade 3 (Média)')).toBeVisible();
+    await expect(page.getByText('Rank C · Backlog · 31 pontos')).toBeVisible();
+    await expect(page.getByText('Autenticação, Banco de dados, CI/CD e deploy')).toBeVisible();
 
     await page.goto('/');
-    await expect(coluna(page, 'Backlog').getByRole('link', { name: new RegExp(nome) })).toBeVisible();
+    const cartao = coluna(page, 'Backlog').getByRole('link', { name: new RegExp(nome) });
+    await expect(cartao).toBeVisible();
+    await expect(cartao).toContainText('Hexagonal / Clean · 31 pontos');
 
     await page.goto(`${urlMissao}/editar`);
     await expect(page.getByRole('textbox', { name: 'Nome' })).toHaveValue(nome);
@@ -71,7 +89,8 @@ test.describe('Missões', () => {
     for (const mensagem of [
       'A descrição é obrigatória.',
       'Adicione de 1 a 20 stacks.',
-      'Escolha uma dificuldade de 1 (Trivial) a 5 (Extremo).',
+      'Escolha o estilo arquitetural da missão.',
+      'Descreva a estrutura e a arquitetura da missão.',
     ]) {
       await expect(page.getByText(mensagem)).toBeVisible();
     }
@@ -86,7 +105,8 @@ test.describe('Missões', () => {
     await page.getByRole('textbox', { name: 'Nome' }).fill(`  ${nome.toUpperCase()} `);
     await page.getByRole('textbox', { name: 'Descrição' }).fill('Duplicada.');
     await page.getByRole('combobox', { name: 'Stacks' }).fill('Go');
-    await page.getByText('Trivial', { exact: true }).click();
+    await opcaoDeEstilo(page, 'Script ou automação').check();
+    await page.getByRole('textbox', { name: 'Estrutura e arquitetura' }).fill('Um script.');
     await page.getByRole('button', { name: 'Registrar missão' }).click();
 
     await expect(page.getByText('Já existe uma missão com esse nome. Escolha outro.')).toBeVisible();

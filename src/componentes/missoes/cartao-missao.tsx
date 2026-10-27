@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import type { Missao } from '@/dados/missoes';
-import { ROTULOS_DIFICULDADE, type Dificuldade } from '@/dominio/missoes/campos';
+import { ROTULOS_ESTILO } from '@/dominio/missoes/campos';
 
 import { CLASSES_CHIP } from './estilos';
 
@@ -34,7 +34,7 @@ export function CartaoMissao({ missao, className = '' }: { missao: Missao; class
             {missao.nome}
           </h3>
           <p className="font-mono text-xs text-texto-suave">
-            Dificuldade {missao.dificuldade} · {ROTULOS_DIFICULDADE[missao.dificuldade as Dificuldade]}
+            {ROTULOS_ESTILO[missao.estilo]} · {missao.pontuacao.total} pontos
           </p>
           <ul className="flex flex-wrap gap-1.5" aria-label="Stacks">
             {visiveis.map((stack) => (

@@ -12,14 +12,24 @@ import { AvisoErro } from '@/componentes/aviso-erro';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { CLASSES_ACAO_PRINCIPAL, CLASSES_ACAO_SECUNDARIA } from '@/componentes/tela-sistema';
 import {
+  CAPACIDADES,
+  ESTILOS_ARQUITETURAIS,
   LIMITES_MISSAO,
-  ROTULOS_DIFICULDADE,
+  ROTULOS_CAPACIDADE,
+  ROTULOS_ESTILO,
   ROTULOS_STATUS,
   STATUS_MISSAO,
-  type Dificuldade,
+  type Capacidade,
+  type EstiloArquitetural,
   type StatusMissao,
 } from '@/dominio/missoes/campos';
-import { pontosDaMissao, rankDaMissao } from '@/dominio/missoes/rank';
+import {
+  PONTOS_POR_CAPACIDADE,
+  PONTOS_POR_ESTILO,
+  STACKS_QUE_PONTUAM,
+  pontuacaoDaMissao,
+  rankPorPontos,
+} from '@/dominio/missoes/rank';
 
 import { CampoStacks } from './campo-stacks';
 import { CLASSES_AJUDA, CLASSES_CAMPO, CLASSES_ROTULO } from './estilos';
@@ -29,7 +39,8 @@ export type ValoresMissao = {
   nome: string;
   descricao: string;
   arquitetura: string;
-  dificuldade: Dificuldade | null;
+  estilo: EstiloArquitetural | null;
+  capacidades: Capacidade[];
   status: StatusMissao;
   stacks: string[];
 };
@@ -38,7 +49,8 @@ export const VALORES_NOVA_MISSAO: ValoresMissao = {
   nome: '',
   descricao: '',
   arquitetura: '',
-  dificuldade: null,
+  estilo: null,
+  capacidades: [],
   status: 'backlog',
   stacks: [],
 };
@@ -48,12 +60,23 @@ const ORDEM_CAMPOS: readonly CampoMissao[] = [
   'nome',
   'descricao',
   'stacks',
-  'dificuldade',
-  'status',
+  'estilo',
+  'capacidades',
   'arquitetura',
+  'status',
 ];
 
-const DIFICULDADES: readonly Dificuldade[] = [1, 2, 3, 4, 5];
+/** Num grupo de opções, o foco vai para a primeira opção do grupo. */
+const ALVO_DO_FOCO: Partial<Record<CampoMissao, string>> = {
+  estilo: `estilo-${ESTILOS_ARQUITETURAIS[0]}`,
+  capacidades: `capacidade-${CAPACIDADES[0]}`,
+};
+
+/** Opção de escolha (radio ou checkbox) com a borda acesa quando marcada. */
+const CLASSES_OPCAO =
+  'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-borda-campo px-3 py-2 text-sm transition-colors duration-200 hover:border-texto-suave has-checked:border-acento has-checked:bg-acento-suave/40';
+const CLASSES_MARCADOR = 'size-4 shrink-0 cursor-pointer accent-acento';
+const CLASSES_PONTOS = 'ml-auto shrink-0 font-mono text-xs text-texto-suave';
 
 const numero = new Intl.NumberFormat('pt-BR');
 
@@ -92,8 +115,7 @@ export function FormularioMissao({
   useEffect(() => {
     const primeiro = ORDEM_CAMPOS.find((campo) => erros[campo]);
     if (primeiro) {
-      const alvo = primeiro === 'dificuldade' ? `${base}-dificuldade-1` : `${base}-${primeiro}`;
-      document.getElementById(alvo)?.focus();
+      document.getElementById(`${base}-${ALVO_DO_FOCO[primeiro] ?? primeiro}`)?.focus();
     } else if (estado.mensagem) {
       avisoGeral.current?.focus();
     }
@@ -106,7 +128,25 @@ export function FormularioMissao({
   const descricaoDe = (campo: CampoMissao, ajuda?: string) =>
     [ajuda, erros[campo] ? id(`${campo}-erro`) : undefined].filter(Boolean).join(' ') || undefined;
 
-  const rank = valores.dificuldade ? rankDaMissao(valores.dificuldade, valores.stacks.length) : null;
+  function alternarCapacidade(capacidade: Capacidade, marcada: boolean): void {
+    // Mantém a ordem da lista (a mesma da tela), sem repetir.
+    const conjunto = new Set(valores.capacidades);
+    if (marcada) conjunto.add(capacidade);
+    else conjunto.delete(capacidade);
+    mudar(
+      'capacidades',
+      CAPACIDADES.filter((item) => conjunto.has(item)),
+    );
+  }
+
+  const pontuacao = valores.estilo
+    ? pontuacaoDaMissao({
+        estilo: valores.estilo,
+        capacidades: valores.capacidades,
+        quantidadeStacks: valores.stacks.length,
+      })
+    : null;
+  const rank = pontuacao ? rankPorPontos(pontuacao.total) : null;
 
   return (
     <form action={acaoFormulario} noValidate className="flex flex-col gap-7">
@@ -171,46 +211,101 @@ export function FormularioMissao({
 
       <fieldset
         className="flex flex-col gap-3"
-        aria-invalid={erros.dificuldade ? true : undefined}
-        aria-describedby={descricaoDe('dificuldade', id('rank'))}
+        aria-invalid={erros.estilo ? true : undefined}
+        aria-describedby={descricaoDe('estilo', id('estilo-ajuda'))}
       >
-        <legend className={`${CLASSES_ROTULO} mb-2`}>Dificuldade</legend>
-        <div className="grid grid-cols-5 gap-2">
-          {DIFICULDADES.map((nivel) => (
-            <label key={nivel} className="relative">
+        <legend className={`${CLASSES_ROTULO} mb-2`}>Estilo arquitetural</legend>
+        <p id={id('estilo-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
+          Como o sistema se organiza. Escolha o mais próximo; os pontos entram no Rank.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {ESTILOS_ARQUITETURAIS.map((estilo) => (
+            <label key={estilo} className={CLASSES_OPCAO}>
               <input
-                id={id(`dificuldade-${nivel}`)}
+                id={id(`estilo-${estilo}`)}
                 type="radio"
-                name="dificuldade"
-                value={nivel}
-                checked={valores.dificuldade === nivel}
-                onChange={() => mudar('dificuldade', nivel)}
-                className="peer sr-only"
+                name="estilo"
+                value={estilo}
+                checked={valores.estilo === estilo}
+                onChange={() => mudar('estilo', estilo)}
+                className={CLASSES_MARCADOR}
               />
-              <span className="flex min-h-14 cursor-pointer flex-col items-center justify-center gap-0.5 rounded-md border border-borda-campo px-1 py-2 text-center transition-colors duration-200 peer-checked:border-acento peer-checked:bg-acento-suave/40 peer-checked:text-texto peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-acento hover:border-texto-suave">
-                <span className="font-display text-lg font-extrabold">{nivel}</span>
-                <span className="text-[0.6875rem] leading-tight text-texto-suave sm:text-xs">
-                  {ROTULOS_DIFICULDADE[nivel]}
-                </span>
-              </span>
+              <span>{ROTULOS_ESTILO[estilo]}</span>
+              <span className={CLASSES_PONTOS}>+{PONTOS_POR_ESTILO[estilo]}</span>
             </label>
           ))}
         </div>
-        <div id={id('rank')} aria-live="polite" className="flex min-h-14 items-center gap-3">
-          {rank ? (
-            <>
-              <EmblemaRank rank={rank} rotulo={`Rank de Missão ${rank}`} className="h-12 w-11 shrink-0" />
-              <p className="text-sm text-texto-suave">
-                Rank de Missão <strong className="text-texto">{rank}</strong> ·{' '}
-                {pontosDaMissao(valores.dificuldade!, valores.stacks.length)} pontos (dificuldade e stacks)
-              </p>
-            </>
-          ) : (
-            <p className="text-sm text-texto-suave">Escolha a dificuldade para ver o Rank da missão.</p>
-          )}
-        </div>
-        {erros.dificuldade && <MensagemErroCampo id={id('dificuldade-erro')} mensagem={erros.dificuldade} />}
+        {erros.estilo && <MensagemErroCampo id={id('estilo-erro')} mensagem={erros.estilo} />}
       </fieldset>
+
+      <fieldset
+        className="flex flex-col gap-3"
+        aria-invalid={erros.capacidades ? true : undefined}
+        aria-describedby={descricaoDe('capacidades', id('capacidades-ajuda'))}
+      >
+        <legend className={`${CLASSES_ROTULO} mb-2`}>
+          Capacidades <span className="normal-case tracking-normal">(opcional)</span>
+        </legend>
+        <p id={id('capacidades-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
+          O que a missão precisa entregar · +{PONTOS_POR_CAPACIDADE} pontos cada
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {CAPACIDADES.map((capacidade) => (
+            <label key={capacidade} className={CLASSES_OPCAO}>
+              <input
+                id={id(`capacidade-${capacidade}`)}
+                type="checkbox"
+                name="capacidades"
+                value={capacidade}
+                checked={valores.capacidades.includes(capacidade)}
+                onChange={(evento) => alternarCapacidade(capacidade, evento.target.checked)}
+                className={CLASSES_MARCADOR}
+              />
+              <span>{ROTULOS_CAPACIDADE[capacidade]}</span>
+            </label>
+          ))}
+        </div>
+        {erros.capacidades && <MensagemErroCampo id={id('capacidades-erro')} mensagem={erros.capacidades} />}
+      </fieldset>
+
+      <div id={id('rank')} aria-live="polite" className="flex min-h-14 items-center gap-3">
+        {rank && pontuacao ? (
+          <>
+            <EmblemaRank rank={rank} rotulo={`Rank de Missão ${rank}`} className="h-12 w-11 shrink-0" />
+            <p className="text-sm text-texto-suave">
+              Rank de Missão <strong className="text-texto">{rank}</strong> · {pontuacao.total} pontos
+              <span className="block font-mono text-xs">
+                Estilo +{pontuacao.estilo} · Capacidades +{pontuacao.capacidades} · Stacks +{pontuacao.stacks}{' '}
+                (até {STACKS_QUE_PONTUAM} pontuam)
+              </span>
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-texto-suave">Escolha o estilo arquitetural para ver o Rank da missão.</p>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <label htmlFor={id('arquitetura')} className={CLASSES_ROTULO}>
+          Estrutura e arquitetura
+        </label>
+        <textarea
+          id={id('arquitetura')}
+          name="arquitetura"
+          rows={6}
+          value={valores.arquitetura}
+          onChange={(evento) => mudar('arquitetura', evento.target.value)}
+          maxLength={LIMITES_MISSAO.arquitetura.maximo}
+          aria-invalid={erros.arquitetura ? true : undefined}
+          aria-describedby={descricaoDe('arquitetura', id('arquitetura-ajuda'))}
+          className={`${CLASSES_CAMPO} resize-y font-mono text-sm`}
+        />
+        <p id={id('arquitetura-ajuda')} className={CLASSES_AJUDA}>
+          Camadas, módulos e decisões, em Markdown · {numero.format(valores.arquitetura.length)} de{' '}
+          {numero.format(LIMITES_MISSAO.arquitetura.maximo)}
+        </p>
+        {erros.arquitetura && <MensagemErroCampo id={id('arquitetura-erro')} mensagem={erros.arquitetura} />}
+      </div>
 
       <div className="flex flex-col gap-2">
         <label htmlFor={id('status')} className={CLASSES_ROTULO}>
@@ -232,28 +327,6 @@ export function FormularioMissao({
           ))}
         </select>
         {erros.status && <MensagemErroCampo id={id('status-erro')} mensagem={erros.status} />}
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <label htmlFor={id('arquitetura')} className={CLASSES_ROTULO}>
-          Estrutura e arquitetura <span className="normal-case tracking-normal">(opcional)</span>
-        </label>
-        <textarea
-          id={id('arquitetura')}
-          name="arquitetura"
-          rows={6}
-          value={valores.arquitetura}
-          onChange={(evento) => mudar('arquitetura', evento.target.value)}
-          maxLength={LIMITES_MISSAO.arquitetura.maximo}
-          aria-invalid={erros.arquitetura ? true : undefined}
-          aria-describedby={descricaoDe('arquitetura', id('arquitetura-ajuda'))}
-          className={`${CLASSES_CAMPO} resize-y font-mono text-sm`}
-        />
-        <p id={id('arquitetura-ajuda')} className={CLASSES_AJUDA}>
-          Markdown · {numero.format(valores.arquitetura.length)} de{' '}
-          {numero.format(LIMITES_MISSAO.arquitetura.maximo)}
-        </p>
-        {erros.arquitetura && <MensagemErroCampo id={id('arquitetura-erro')} mensagem={erros.arquitetura} />}
       </div>
 
       <div className="flex flex-wrap gap-3 border-t border-borda pt-6">

@@ -37,16 +37,23 @@ export function coluna(pagina: Page, titulo: string): Locator {
   return pagina.locator('section', { has: pagina.getByRole('heading', { level: 2, name: titulo }) });
 }
 
+/** Opção de estilo arquitetural pelo rótulo; o nome acessível termina nos pontos ("Monolito +5"). */
+export function opcaoDeEstilo(pagina: Page, rotulo: string): Locator {
+  const rotuloEscapado = rotulo.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  return pagina.getByRole('radio', { name: new RegExp(`^${rotuloEscapado} \\+\\d+$`) });
+}
+
 /** Preenche e envia o formulário de nova Missão. */
 export async function cadastrarMissao(
   pagina: Page,
-  { nome, stacks, dificuldade = 'Média' }: { nome: string; stacks: string; dificuldade?: string },
+  { nome, stacks, estilo = 'Monolito' }: { nome: string; stacks: string; estilo?: string },
 ): Promise<void> {
   await pagina.goto('/missoes/nova');
   await pagina.getByRole('textbox', { name: 'Nome' }).fill(nome);
   await pagina.getByRole('textbox', { name: 'Descrição' }).fill(`Descrição de ${nome}.`);
   await pagina.getByRole('combobox', { name: 'Stacks' }).fill(stacks);
-  await pagina.getByText(dificuldade, { exact: true }).click();
+  await opcaoDeEstilo(pagina, estilo).check();
+  await pagina.getByRole('textbox', { name: 'Estrutura e arquitetura' }).fill(`Arquitetura de ${nome}.`);
   await pagina.getByRole('button', { name: 'Registrar missão' }).click();
   await pagina.waitForURL(/\/missoes\/[0-9a-f-]{36}$/);
 }

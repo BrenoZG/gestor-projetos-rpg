@@ -4,7 +4,8 @@
  * Zod não entre no bundle do navegador (ele usa `Function`, barrado pela CSP).
  */
 
-export type CampoMissao = 'nome' | 'descricao' | 'arquitetura' | 'dificuldade' | 'status' | 'stacks';
+export type CampoMissao =
+  'nome' | 'descricao' | 'arquitetura' | 'estilo' | 'capacidades' | 'status' | 'stacks';
 
 export type ErrosMissao = Partial<Record<CampoMissao, string>>;
 

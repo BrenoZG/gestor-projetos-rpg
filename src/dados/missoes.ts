@@ -1,5 +1,17 @@
-import { ehStatusMissao, type DadosMissao, type StatusMissao } from '@/dominio/missoes/campos';
-import { rankDaMissao, type RankMissao } from '@/dominio/missoes/rank';
+import {
+  ehEstiloArquitetural,
+  ehStatusMissao,
+  type Capacidade,
+  type DadosMissao,
+  type EstiloArquitetural,
+  type StatusMissao,
+} from '@/dominio/missoes/campos';
+import {
+  pontuacaoDaMissao,
+  rankPorPontos,
+  type PontuacaoMissao,
+  type RankMissao,
+} from '@/dominio/missoes/rank';
 import type { criarClienteServidor } from '@/lib/supabase/servidor';
 
 /**
@@ -13,10 +25,13 @@ export type Missao = {
   id: string;
   nome: string;
   descricao: string;
+  /** Só Missões gravadas antes da RN-14 podem ter `null` (a etapa contrair remove o caso). */
   arquitetura: string | null;
-  dificuldade: number;
+  estilo: EstiloArquitetural;
+  capacidades: Capacidade[];
   status: StatusMissao;
   stacks: string[];
+  pontuacao: PontuacaoMissao;
   rank: RankMissao;
   inicioDesenvolvimentoEm: string | null;
   concluidoEm: string | null;
@@ -30,7 +45,8 @@ export type LinhaMissao = {
   nome: string;
   descricao: string;
   arquitetura: string | null;
-  dificuldade: number;
+  estilo_arquitetural: string;
+  capacidades: string[];
   status: string;
   inicio_desenvolvimento_em: string | null;
   concluido_em: string | null;
@@ -40,33 +56,46 @@ export type LinhaMissao = {
 };
 
 const COLUNAS_MISSAO =
-  'id, nome, descricao, arquitetura, dificuldade, status, inicio_desenvolvimento_em, concluido_em, criado_em, atualizado_em, projeto_stacks(stacks(nome))';
+  'id, nome, descricao, arquitetura, estilo_arquitetural, capacidades, status, inicio_desenvolvimento_em, concluido_em, criado_em, atualizado_em, projeto_stacks(stacks(nome))';
 
 /**
- * Converte a linha do banco no formato das telas, com o Rank derivado.
+ * Converte a linha do banco no formato das telas, com a pontuação e o Rank derivados (RN-14).
  *
  * @param linha - Linha de `projetos` com as stacks embutidas.
  * @returns A Missão, com as stacks em ordem alfabética.
- * @throws {Error} Se o status vindo do banco for desconhecido.
+ * @throws {Error} Se o status ou o estilo vindo do banco for desconhecido.
+ * @throws {RangeError} Se uma capacidade vinda do banco for desconhecida.
  */
 export function mapearMissao(linha: LinhaMissao): Missao {
   if (!ehStatusMissao(linha.status)) {
     throw new Error(`Status de Missão desconhecido: ${linha.status}`);
   }
+  if (!ehEstiloArquitetural(linha.estilo_arquitetural)) {
+    throw new Error(`Estilo arquitetural desconhecido: ${linha.estilo_arquitetural}`);
+  }
   const stacks = linha.projeto_stacks
     .flatMap(({ stacks: stack }) => (stack === null ? [] : Array.isArray(stack) ? stack : [stack]))
     .map(({ nome }) => nome)
     .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  // pontuacaoDaMissao recusa (RangeError) capacidade fora da lista: a conversão de tipo é conferida ali.
+  const capacidades = linha.capacidades as Capacidade[];
+  const pontuacao = pontuacaoDaMissao({
+    estilo: linha.estilo_arquitetural,
+    capacidades,
+    quantidadeStacks: stacks.length,
+  });
 
   return {
     id: linha.id,
     nome: linha.nome,
     descricao: linha.descricao,
     arquitetura: linha.arquitetura,
-    dificuldade: linha.dificuldade,
+    estilo: linha.estilo_arquitetural,
+    capacidades,
     status: linha.status,
     stacks,
-    rank: rankDaMissao(linha.dificuldade, stacks.length),
+    pontuacao,
+    rank: rankPorPontos(pontuacao.total),
     inicioDesenvolvimentoEm: linha.inicio_desenvolvimento_em,
     concluidoEm: linha.concluido_em,
     criadoEm: linha.criado_em,
@@ -125,7 +154,7 @@ export async function listarNomesDeStacks(supabase: ClienteSupabase): Promise<st
 export type ResultadoGravacao = { ok: true; id: string } | { ok: false; codigo: string | undefined };
 
 /**
- * Cria (sem `id`) ou altera uma Missão com as stacks, numa transação (`salvar_missao`).
+ * Cria (sem `id`) ou altera uma Missão com as stacks, numa transação (`salvar_missao_v2`).
  *
  * @param id - Missão a alterar, ou `null` para criar.
  * @returns O id gravado, ou o código do erro do banco para a tela traduzir.
@@ -135,12 +164,13 @@ export async function salvarMissao(
   id: string | null,
   dados: DadosMissao,
 ): Promise<ResultadoGravacao> {
-  const { data, error } = await supabase.rpc('salvar_missao', {
+  const { data, error } = await supabase.rpc('salvar_missao_v2', {
     p_id: id,
     p_nome: dados.nome,
     p_descricao: dados.descricao,
     p_arquitetura: dados.arquitetura,
-    p_dificuldade: dados.dificuldade,
+    p_estilo: dados.estilo,
+    p_capacidades: dados.capacidades,
     p_status: dados.status,
     p_stacks: dados.stacks,
   });
