@@ -1,9 +1,9 @@
 -- Testes da RN-14 no banco (pgTAP): colunas estilo_arquitetural e capacidades,
--- arquitetura obrigatória na função salvar_missao_v2 e a compatibilidade com
--- a função antiga durante o deploy (expandir e depois contrair).
+-- arquitetura obrigatória (função salvar_missao_v2 e NOT NULL) e o estado
+-- depois da etapa contrair (sem dificuldade e sem a salvar_missao antiga).
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
-select plan(20);
+select plan(21);
 
 insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000000a'),
@@ -14,8 +14,10 @@ select col_not_null('public', 'projetos', 'estilo_arquitetural', 'estilo_arquite
 select col_default_is('public', 'projetos', 'estilo_arquitetural', 'monolito',
   'Missões antigas recebem o estilo Monolito');
 select col_not_null('public', 'projetos', 'capacidades', 'capacidades é obrigatório (lista vazia vale)');
-select col_is_null('public', 'projetos', 'dificuldade',
-  'dificuldade deixa de ser obrigatória (sai no deploy seguinte)');
+select hasnt_column('public', 'projetos', 'dificuldade', 'a dificuldade declarada saiu (contrair)');
+select hasnt_function('public', 'salvar_missao', array['uuid', 'text', 'text', 'text', 'smallint', 'text', 'text[]'],
+  'a função antiga saiu (contrair)');
+select col_not_null('public', 'projetos', 'arquitetura', 'a arquitetura é obrigatória no banco');
 select ok(
   has_column_privilege('authenticated', 'public.projetos', 'estilo_arquitetural', 'insert, update')
   and has_column_privilege('authenticated', 'public.projetos', 'capacidades', 'insert, update'),
@@ -46,9 +48,9 @@ select isnt(
   'A cadastra uma Missão pela função nova e recebe o id'
 );
 select results_eq(
-  $$ select estilo_arquitetural, capacidades, arquitetura, dificuldade from public.projetos where nome = 'Gestor' $$,
-  $$ values ('monolito'::text, array['autenticacao', 'ci_cd']::text[], 'Next.js com Supabase.'::text, null::smallint) $$,
-  'grava estilo, capacidades sem repetição e em ordem, arquitetura, e nenhuma dificuldade'
+  $$ select estilo_arquitetural, capacidades, arquitetura from public.projetos where nome = 'Gestor' $$,
+  $$ values ('monolito'::text, array['autenticacao', 'ci_cd']::text[], 'Next.js com Supabase.'::text) $$,
+  'grava estilo, capacidades sem repetição e em ordem, e a arquitetura'
 );
 select results_eq(
   $$ select count(*)::int from public.projeto_stacks ps join public.projetos p on p.id = ps.projeto_id
@@ -110,16 +112,11 @@ select throws_ok(
   'A não altera a Missão de B'
 );
 
--- Compatibilidade: o código anterior (função antiga) segue funcionando até o contrair.
-select isnt(
-  public.salvar_missao(null, 'Antiga', 'Pelo código anterior', null, 3::smallint, 'backlog', array['Go']),
-  null,
-  'a função antiga ainda cadastra'
-);
-select results_eq(
-  $$ select estilo_arquitetural, capacidades, dificuldade from public.projetos where nome = 'Antiga' $$,
-  $$ values ('monolito'::text, '{}'::text[], 3::smallint) $$,
-  'a Missão cadastrada pela função antiga recebe os valores padrão'
+-- O CHECK cobra a arquitetura também de quem grava direto na tabela.
+select throws_ok(
+  $$ update public.projetos set arquitetura = '   ' where nome = 'Gestor' $$,
+  '23514', null,
+  'arquitetura só com espaços é recusada também no update direto'
 );
 
 reset role;
