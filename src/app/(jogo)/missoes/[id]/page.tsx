@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Suspense, type ReactNode } from 'react';
 
 import { excluirMissao } from '@/acoes/missoes';
+import { SecaoAtualizacoes } from '@/componentes/atualizacoes/secao-atualizacoes';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { CarregandoMissao } from '@/componentes/missoes/carregando-missao';
 import { ConfirmarExclusao } from '@/componentes/missoes/confirmar-exclusao';
@@ -13,6 +14,7 @@ import { ROTULOS_CAPACIDADE, ROTULOS_ESTILO, ROTULOS_STATUS } from '@/dominio/mi
 import { STACKS_QUE_PONTUAM } from '@/dominio/missoes/rank';
 import { formatarDataHora } from '@/lib/datas';
 
+import { carregarHistoricoDaMissao } from './carregar-atualizacoes';
 import { carregarMissaoDaUrl } from './carregar-missao';
 
 export const metadata: Metadata = { title: 'Missão' };
@@ -26,8 +28,18 @@ function Dado({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   );
 }
 
+/** RN-04: o que mais sai junto com a Missão, para a confirmação dizer. */
+function detalheDaExclusao(quantidadeAtualizacoes: number): string {
+  const atualizacoes =
+    quantidadeAtualizacoes === 0
+      ? ''
+      : ` e ${quantidadeAtualizacoes} ${quantidadeAtualizacoes === 1 ? 'atualização' : 'atualizações'}`;
+  return `A missão, o vínculo com as stacks${atualizacoes} serão apagados. Esta ação não pode ser desfeita.`;
+}
+
 async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
   const missao = await carregarMissaoDaUrl(params);
+  const historico = await carregarHistoricoDaMissao(missao.id);
 
   return (
     <article className="flex flex-col gap-7">
@@ -104,19 +116,31 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
         <Dado rotulo="Conclusão">{formatarDataHora(missao.concluidoEm)}</Dado>
       </dl>
 
+      <SecaoAtualizacoes
+        projetoId={missao.id}
+        atualizacoes={historico.atualizacoes}
+        missoes={historico.missoes}
+        falhouAoCarregar={historico.falhou}
+      />
+
       <div className="flex flex-wrap gap-3 border-t border-borda pt-6">
         <Link href={`/missoes/${missao.id}/editar`} className={CLASSES_ACAO_PRINCIPAL}>
           Editar missão
         </Link>
-        <ConfirmarExclusao nome={missao.nome} acao={excluirMissao.bind(null, missao.id)} />
+        <ConfirmarExclusao
+          pergunta={`Excluir a missão “${missao.nome}”?`}
+          detalhe={detalheDaExclusao(historico.atualizacoes.length)}
+          rotuloConfirmar="Excluir missão"
+          acao={excluirMissao.bind(null, missao.id)}
+        />
       </div>
     </article>
   );
 }
 
 /**
- * Detalhe de uma Missão: campos, datas (fuso de São Paulo) e as ações de
- * editar e excluir.
+ * Detalhe de uma Missão: campos, datas (fuso de São Paulo), o histórico de
+ * Atualizações e as ações de editar e excluir.
  *
  * @param props - `params.id` da Missão.
  * @returns Página de detalhe.

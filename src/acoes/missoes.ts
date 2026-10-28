@@ -5,12 +5,11 @@ import { redirect } from 'next/navigation';
 
 import type { EstadoFormularioMissao, ResultadoMovimento } from '@/acoes/missoes-estado';
 import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-validacao';
+import { clienteComSessao, ehIdValido } from '@/acoes/checagens';
 import { apagarMissao, ErroDeMissao, mudarStatusDaMissao, salvarMissao } from '@/dados/missoes';
-import { ROTA_ENTRAR, ROTA_INICIAL } from '@/dominio/acesso/rotas';
+import { ROTA_INICIAL } from '@/dominio/acesso/rotas';
 import { ehStatusMissao } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
-import { criarClienteServidor } from '@/lib/supabase/servidor';
-import { ehUuid } from '@/lib/uuid';
 
 /**
  * Server Actions das Missões. Cada uma é alcançável por um POST direto, então
@@ -18,24 +17,10 @@ import { ehUuid } from '@/lib/uuid';
  * garante que só as Missões do próprio usuário sejam alteradas.
  */
 
-type ClienteSupabase = Awaited<ReturnType<typeof criarClienteServidor>>;
-
 /** SQLSTATEs que são erro de uso (a tela explica), não falha a investigar. */
 const ERROS_ESPERADOS = new Set(['23505', 'P0002']);
 
 const MISSAO_INEXISTENTE: EstadoFormularioMissao = { erros: {}, mensagem: 'Esta missão não existe mais.' };
-
-async function clienteComSessao(): Promise<ClienteSupabase> {
-  const supabase = await criarClienteServidor();
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data?.claims) redirect(ROTA_ENTRAR);
-  return supabase;
-}
-
-/** O id chega pelo `.bind` e pode ser forjado num POST direto: qualquer tipo, qualquer texto. */
-function ehIdValido(id: unknown): id is string {
-  return typeof id === 'string' && ehUuid(id);
-}
 
 function lerFormulario(formulario: FormData): Record<string, unknown> {
   return {

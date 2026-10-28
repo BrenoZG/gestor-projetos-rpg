@@ -150,6 +150,20 @@ export async function listarNomesDeStacks(supabase: ClienteSupabase): Promise<st
   return data.map(({ nome }) => nome as string);
 }
 
+export type ResumoMissao = { id: string; nome: string };
+
+/**
+ * Id e nome das Missões do usuário, em ordem alfabética: opções para mover
+ * uma Atualização (RN-01) e para o filtro da página geral.
+ *
+ * @throws {ErroDeMissao} Se a consulta falhar.
+ */
+export async function listarResumoDasMissoes(supabase: ClienteSupabase): Promise<ResumoMissao[]> {
+  const { data, error } = await supabase.from('projetos').select('id, nome').order('nome');
+  if (error) throw new ErroDeMissao('listar_resumo_missoes', error.code);
+  return data.map(({ id, nome }) => ({ id: id as string, nome: nome as string }));
+}
+
 export type ResultadoGravacao = { ok: true; id: string } | { ok: false; codigo: string | undefined };
 
 /**
