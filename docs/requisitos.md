@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.2 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.3 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.3 (M2, 2026-10-28):** as Atualizações ficam na ficha da Missão, depois dos dados e antes de editar e excluir (RF-09, com o histórico pela data de criação); a página geral de Atualizações só consulta e muda status (RF-10); o RF-11 e a parte "Projetos por status" do RF-10 ficam atendidos pelo Quadro do M1c.
 >
 > **1.2 (M1c, 2026-10-27):** a dificuldade declarada sai; o Rank de Missão passa a ser calculado pelo estilo arquitetural, pelas capacidades e pelas stacks (RN-14); a estrutura/arquitetura vira obrigatória; mover Missões arrastando ou pelo botão (RF-20), filtros (RF-21) e visão Lista (RF-22) entram no escopo, e o "Kanban com arrastar" sai do fora de escopo. Origem: teste do dono em produção, em 26/10.
 >
@@ -223,7 +225,8 @@ Nenhuma no fechamento da baseline 1.0.
 |---|---|---|
 | RF-13 | M1a | E2E do retorno do OAuth + allowlist |
 | RF-01..04, RN-02, RN-04 (sem Atualizações), RN-05 | M1b | E2E (Playwright + axe) + pgTAP (RLS, trigger, função) |
-| RF-05..11, RN-01, RN-03, RN-04 (contagem de Atualizações) | M2 | E2E |
+| RF-05..09, RF-10 (Atualizações por status e por Projeto), RN-01, RN-03, RN-04 (contagem de Atualizações) | M2 | pgTAP (RLS, trigger, cascata) + unitário (validação, filtros, paginação) + E2E (ficha, página geral, axe) |
+| RF-10 (Projetos por status), RF-11 | M1c | Colunas e filtros do Quadro (RF-21): E2E do M1c |
 | RF-12, RN-06, RN-07, RN-09, RN-10, RN-13 | M3 | Unitário (domínio) + integração (função atômica) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
