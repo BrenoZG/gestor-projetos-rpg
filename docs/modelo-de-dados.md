@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`. A implementar: `atualizacoes` (M2), `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2). A implementar: `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -127,10 +127,18 @@ Cria (`p_id` nulo) ou altera uma Missão, insere as stacks novas (`on conflict d
 ### `atualizacoes` — grão: 1 linha por Atualização
 | Coluna | Tipo | Regra |
 |---|---|---|
+| `id` | `uuid` PK | `gen_random_uuid()` |
+| `user_id` | `uuid` FK | dono; base do RLS |
 | `projeto_id` | `uuid` FK | obrigatório; `ON DELETE CASCADE` (RN-04) |
-| `titulo` | `text` | 3–120 |
-| `descricao` | `text` | 1–5.000 |
-| `status`, `concluido_em`, datas | | mesmas regras de `projetos` |
+| `titulo` | `text` | 3–120, sem espaços nas pontas |
+| `descricao` | `text` | até 5.000, não só espaços |
+| `status` | `text` | `CHECK` nos 3 status; padrão `backlog` |
+| `concluido_em` | `timestamptz` | preenchido só em `concluido` (`CHECK` de coerência) |
+| `criado_em`, `atualizado_em` | `timestamptz` | automáticos; o histórico (RF-09) ordena por `criado_em` |
+
+**Datas:** o trigger `registrar_datas_da_atualizacao` grava `concluido_em` ao entrar em Concluído (e o apaga ao sair) e `atualizado_em` em toda edição. Não há data de ingresso em Desenvolvimento: a trava de 24 h é só do Projeto.
+
+**Privilégios e RLS** (migration `criar_atualizacoes`): `authenticated` lê e apaga as próprias e cria ou altera só `projeto_id`, `titulo`, `descricao` e `status`. As políticas de `INSERT` e `UPDATE` também exigem que a Missão de `projeto_id` seja do usuário (RN-01): sem isso, alguém penduraria uma Atualização na Missão de outro. Índices: `(projeto_id, criado_em desc)` para o histórico e `(user_id, status, criado_em desc)` para a página geral.
 
 ### `eventos_xp` — grão: 1 linha por evento de XP de um item
 | Coluna | Tipo | Regra |

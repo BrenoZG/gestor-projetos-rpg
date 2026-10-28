@@ -72,7 +72,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-06 | O sistema deve listar as Atualizações de um Projeto. | Must |
 | RF-07 | O sistema deve permitir editar uma Atualização, inclusive o Projeto vinculado. | Must |
 | RF-08 | O sistema deve permitir excluir uma Atualização. | Must |
-| RF-09 | O sistema deve exibir, na página do Projeto, a linha do tempo das Atualizações em ordem cronológica decrescente. | Must |
+| RF-09 | O sistema deve exibir, no fim da página do Projeto (antes de editar e excluir), o histórico das Atualizações em ordem decrescente de **data de criação**, com registro, edição, exclusão e mudança de status ali mesmo. | Must |
 | RF-10 | O sistema deve filtrar Projetos e Atualizações por status, e Atualizações também por Projeto. | Should |
 | RF-11 | O sistema deve buscar Projetos por trecho do nome e por stack. | Should |
 | RF-12 | O sistema deve exibir XP total, nível, título, Rank do Caçador e progresso até o próximo nível. | Must |
