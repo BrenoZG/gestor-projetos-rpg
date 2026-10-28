@@ -3,6 +3,7 @@ import { connection } from 'next/server';
 import { sair } from '@/acoes/sessao';
 import { BarraXp } from '@/componentes/barra-xp';
 import { EmblemaRank } from '@/componentes/emblema-rank';
+import { NavegacaoPrincipal } from '@/componentes/navegacao-principal';
 import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
 import { nomeDaClasse } from '@/dominio/personagem/classes';
 import { progressoDoNivel, rankDoCacador, tituloDoNivel } from '@/dominio/progressao/progressao';
@@ -72,7 +73,8 @@ export async function Hud() {
           <span className="font-mono text-xs whitespace-nowrap text-texto-suave">{xpTexto}</span>
         </div>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          <NavegacaoPrincipal />
           <SeletorEfeitos inicial={efeitos} />
           <form action={sair}>
             <button

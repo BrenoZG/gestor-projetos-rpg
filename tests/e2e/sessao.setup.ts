@@ -5,7 +5,7 @@ import { test as setup } from '@playwright/test';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
-import { ARQUIVO_SESSAO } from './apoio/caminhos';
+import { ARQUIVO_SESSAO, ARQUIVO_TOKEN } from './apoio/caminhos';
 import { lerSupabaseLocal } from './apoio/supabase-local';
 
 /** Usuário fictício do Supabase local; domínio reservado, nunca recebe e-mail. */
@@ -78,4 +78,5 @@ setup('sessão do usuário de teste', async () => {
       origins: [],
     }),
   );
+  await writeFile(ARQUIVO_TOKEN, JSON.stringify({ accessToken: sessao.session.access_token }));
 });

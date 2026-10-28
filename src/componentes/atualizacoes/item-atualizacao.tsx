@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 
 import { editarAtualizacao, excluirAtualizacao } from '@/acoes/atualizacoes';
@@ -16,17 +17,20 @@ import { SeletorStatus } from './seletor-status';
  * Uma Atualização no histórico: título, datas, descrição como digitada, os três
  * botões de status e as ações de editar (no próprio lugar) e excluir.
  *
- * @param props - Atualização, Missões para mover (RN-01), ação de mudar o
- *   status e o que fazer se a exclusão falhar.
+ * @param props - Atualização, Missões para mover (RN-01), se mostra o link
+ *   para a Missão (página geral), ação de mudar o status e o que fazer se a
+ *   exclusão falhar.
  */
 export function ItemAtualizacao({
   atualizacao,
   missoes,
+  mostrarMissao = false,
   aoMudarStatus,
   aoFalhar,
 }: {
   atualizacao: Atualizacao;
   missoes: readonly ResumoMissao[];
+  mostrarMissao?: boolean;
   aoMudarStatus: (status: StatusMissao) => void;
   aoFalhar: (mensagem: string) => void;
 }) {
@@ -36,6 +40,17 @@ export function ItemAtualizacao({
     <li className="flex flex-col gap-3 rounded-md border border-borda-forte bg-superficie/80 p-4">
       <div className="flex flex-col gap-1">
         <h4 className="font-display text-base leading-snug font-bold break-words">{atualizacao.titulo}</h4>
+        {mostrarMissao && (
+          <p className="text-sm text-texto-suave">
+            Missão:{' '}
+            <Link
+              href={`/missoes/${atualizacao.projetoId}`}
+              className="break-words text-texto underline underline-offset-4 hover:text-acento-titulo focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
+            >
+              {atualizacao.nomeMissao}
+            </Link>
+          </p>
+        )}
         <p className="font-mono text-xs text-texto-suave">
           Criada em {formatarDataHora(atualizacao.criadoEm)}
           {atualizacao.concluidoEm && <> · Concluída em {formatarDataHora(atualizacao.concluidoEm)}</>}

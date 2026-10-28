@@ -1,4 +1,5 @@
 import type { DadosAtualizacao } from '@/dominio/atualizacoes/campos';
+import { intervaloDaPagina, type FiltrosAtualizacoes } from '@/dominio/atualizacoes/filtros';
 import { ehStatusMissao, type StatusMissao } from '@/dominio/missoes/campos';
 import type { criarClienteServidor } from '@/lib/supabase/servidor';
 
@@ -67,7 +68,8 @@ export function mapearAtualizacao(linha: LinhaAtualizacao): Atualizacao {
 
 /**
  * Histórico de uma Missão, da Atualização mais recente para a mais antiga pela
- * data de criação (RF-09): editar ou concluir não muda a posição.
+ * data de criação (RF-09): editar ou concluir não muda a posição. O `id`
+ * desempata as criadas no mesmo instante, para a ordem nunca variar.
  *
  * @throws {ErroDeMissao} Se a consulta falhar.
  */
@@ -79,9 +81,36 @@ export async function listarAtualizacoesDaMissao(
     .from('atualizacoes')
     .select(COLUNAS_ATUALIZACAO)
     .eq('projeto_id', projetoId)
-    .order('criado_em', { ascending: false });
+    .order('criado_em', { ascending: false })
+    .order('id', { ascending: false });
   if (error) throw new ErroDeMissao('listar_atualizacoes', error.code);
   return (data as unknown as LinhaAtualizacao[]).map(mapearAtualizacao);
+}
+
+/**
+ * Uma página das Atualizações do usuário, com os filtros da página geral
+ * (RF-10), mais recentes primeiro. A ordem é total (data de criação e `id`):
+ * sem o desempate, itens do mesmo instante poderiam se repetir ou sumir entre
+ * as páginas.
+ *
+ * @param filtros - Status, Missão e página já validados.
+ * @returns Os itens da página e o total que bate com os filtros.
+ * @throws {ErroDeMissao} Se a consulta falhar.
+ */
+export async function listarAtualizacoes(
+  supabase: ClienteSupabase,
+  filtros: FiltrosAtualizacoes,
+): Promise<{ itens: Atualizacao[]; total: number }> {
+  const { de, ate } = intervaloDaPagina(filtros.pagina);
+  let consulta = supabase.from('atualizacoes').select(COLUNAS_ATUALIZACAO, { count: 'exact' });
+  if (filtros.status) consulta = consulta.eq('status', filtros.status);
+  if (filtros.missao) consulta = consulta.eq('projeto_id', filtros.missao);
+  const { data, error, count } = await consulta
+    .order('criado_em', { ascending: false })
+    .order('id', { ascending: false })
+    .range(de, ate);
+  if (error) throw new ErroDeMissao('listar_atualizacoes', error.code);
+  return { itens: (data as unknown as LinhaAtualizacao[]).map(mapearAtualizacao), total: count ?? 0 };
 }
 
 /**
