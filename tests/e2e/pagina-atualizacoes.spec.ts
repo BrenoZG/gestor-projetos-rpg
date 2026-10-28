@@ -99,13 +99,17 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
 
     await page.goto(`/atualizacoes?missao=${idDaUrl(urlMissao)}`);
     await expect(titulos(page)).toHaveCount(50);
-    await expect(page.getByRole('navigation', { name: 'Paginação' }).getByText('Página 1 de 2')).toBeVisible();
+    await expect(
+      page.getByRole('navigation', { name: 'Paginação' }).getByText('Página 1 de 2'),
+    ).toBeVisible();
     const primeiraPagina = await titulos(page).allTextContents();
 
     await page.getByRole('link', { name: 'Próxima página' }).click();
     await expect(page).toHaveURL(/pagina=2/);
     await expect(titulos(page)).toHaveCount(1);
-    await expect(page.getByRole('navigation', { name: 'Paginação' }).getByText('Página 2 de 2')).toBeVisible();
+    await expect(
+      page.getByRole('navigation', { name: 'Paginação' }).getByText('Página 2 de 2'),
+    ).toBeVisible();
     const segundaPagina = await titulos(page).allTextContents();
     expect(new Set([...primeiraPagina, ...segundaPagina]).size, 'as 51, sem repetição').toBe(51);
     await expect(page.getByRole('link', { name: 'Próxima página' })).toHaveCount(0);
