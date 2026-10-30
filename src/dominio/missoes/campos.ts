@@ -11,7 +11,24 @@ export const LIMITES_MISSAO = {
   stacks: { minimo: 1, maximo: 20 },
   /** O requisito limita só a quantidade; 40 evita "tags-parágrafo" (decisão do M1b). */
   nomeStack: { minimo: 1, maximo: 40 },
+  /** Ferramentas das Missões Gerais: as mesmas tabelas das stacks, mas opcionais (RN-15). */
+  ferramentas: { minimo: 0, maximo: 20 },
+  tags: { minimo: 0, maximo: 10 },
+  nomeTag: { minimo: 1, maximo: 30 },
+  links: { minimo: 0, maximo: 20 },
+  url: { maximo: 2000 },
+  tituloLink: { maximo: 80 },
 } as const;
+
+/** Tipos de projeto (RN-15): Desenvolvimento tem a parte técnica e o Rank; Geral, não. */
+export const TIPOS_PROJETO = ['dev', 'geral'] as const;
+
+export type TipoProjeto = (typeof TIPOS_PROJETO)[number];
+
+export const ROTULOS_TIPO: Readonly<Record<TipoProjeto, string>> = {
+  dev: 'Desenvolvimento',
+  geral: 'Geral',
+};
 
 /** Na ordem das colunas do Quadro. */
 export const STATUS_MISSAO = ['backlog', 'desenvolvimento', 'concluido'] as const;
@@ -72,16 +89,32 @@ export const ROTULOS_CAPACIDADE: Readonly<Record<Capacidade, string>> = {
   mobile: 'App mobile',
 };
 
+/** Link de referência de uma Missão (RF-26); o endereço já passou por `validarUrlDeLink`. */
+export type LinkReferencia = { url: string; titulo: string | null };
+
 /** Campos de uma Missão já validados e limpos, prontos para gravar. */
 export type DadosMissao = {
   nome: string;
   descricao: string;
-  arquitetura: string;
-  estilo: EstiloArquitetural;
-  capacidades: Capacidade[];
   status: StatusMissao;
+  /** Stacks (Desenvolvimento) ou ferramentas (Geral). */
   stacks: string[];
-};
+  tags: string[];
+  links: LinkReferencia[];
+} & (
+  | { tipo: 'dev'; arquitetura: string; estilo: EstiloArquitetural; capacidades: Capacidade[] }
+  | { tipo: 'geral' }
+);
+
+/**
+ * Confere se um texto é um dos tipos de projeto (valor vindo de formulário ou do banco).
+ *
+ * @param valor - Texto a conferir.
+ * @returns `true` se for `dev` ou `geral`.
+ */
+export function ehTipoProjeto(valor: string): valor is TipoProjeto {
+  return (TIPOS_PROJETO as readonly string[]).includes(valor);
+}
 
 /**
  * Confere se um texto é um dos status da Missão (valor vindo de formulário ou do banco).
