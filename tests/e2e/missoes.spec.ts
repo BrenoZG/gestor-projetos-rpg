@@ -53,10 +53,18 @@ test.describe('Missões', () => {
 
     await page.goto(`${urlMissao}/editar`);
     await expect(page.getByRole('textbox', { name: 'Nome' })).toHaveValue(nome);
-    await page.getByRole('combobox', { name: 'Status' }).selectOption('desenvolvimento');
-    await page.getByRole('button', { name: 'Salvar alterações' }).click();
-    await expect(page).toHaveURL(urlMissao);
-    await expect(page.getByText(/Rank C · Desenvolvimento/)).toBeVisible();
+    await expect(page.getByRole('combobox', { name: 'Status' }), 'a edição não muda o status').toHaveCount(0);
+
+    await page.goto(urlMissao);
+    const status = page.getByRole('group', { name: `Status de ${nome}` });
+    await status.getByRole('button', { name: 'Desenvolvimento' }).click();
+    await expect(status.getByRole('button', { name: 'Desenvolvimento' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+    await expect(page.getByRole('status').filter({ hasText: `${nome}: Desenvolvimento.` })).toBeAttached();
+    await page.reload();
+    await expect(page.getByText(/Rank C · Desenvolvimento/), 'continua ao recarregar').toBeVisible();
     const inicio = page
       .locator('dt', { hasText: 'Início em desenvolvimento' })
       .locator('xpath=following-sibling::dd');
