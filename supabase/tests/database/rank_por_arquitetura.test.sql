@@ -10,14 +10,16 @@ insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000000b');
 
 -- Estrutura e privilégios
-select col_not_null('public', 'projetos', 'estilo_arquitetural', 'estilo_arquitetural é obrigatório');
+select col_is_null('public', 'projetos', 'estilo_arquitetural',
+  'estilo_arquitetural aceita nulo: o CHECK por tipo o exige só em dev (RN-15)');
 select col_default_is('public', 'projetos', 'estilo_arquitetural', 'monolito',
   'Missões antigas recebem o estilo Monolito');
 select col_not_null('public', 'projetos', 'capacidades', 'capacidades é obrigatório (lista vazia vale)');
 select hasnt_column('public', 'projetos', 'dificuldade', 'a dificuldade declarada saiu (contrair)');
 select hasnt_function('public', 'salvar_missao', array['uuid', 'text', 'text', 'text', 'smallint', 'text', 'text[]'],
   'a função antiga saiu (contrair)');
-select col_not_null('public', 'projetos', 'arquitetura', 'a arquitetura é obrigatória no banco');
+select col_is_null('public', 'projetos', 'arquitetura',
+  'a arquitetura aceita nulo: o CHECK por tipo a exige só em dev (RN-15)');
 select ok(
   has_column_privilege('authenticated', 'public.projetos', 'estilo_arquitetural', 'insert, update')
   and has_column_privilege('authenticated', 'public.projetos', 'capacidades', 'insert, update'),
