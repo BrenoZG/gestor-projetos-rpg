@@ -7,10 +7,13 @@ import {
   ROTULOS_CAPACIDADE,
   ROTULOS_ESTILO,
   ROTULOS_STATUS,
+  ROTULOS_TIPO,
   STATUS_MISSAO,
+  TIPOS_PROJETO,
   ehCapacidade,
   ehEstiloArquitetural,
   ehStatusMissao,
+  ehTipoProjeto,
 } from '@/dominio/missoes/campos';
 
 describe('LIMITES_MISSAO', () => {
@@ -21,7 +24,31 @@ describe('LIMITES_MISSAO', () => {
       arquitetura: { minimo: 1, maximo: 20000 },
       stacks: { minimo: 1, maximo: 20 },
       nomeStack: { minimo: 1, maximo: 40 },
+      ferramentas: { minimo: 0, maximo: 20 },
+      tags: { minimo: 0, maximo: 10 },
+      nomeTag: { minimo: 1, maximo: 30 },
+      links: { minimo: 0, maximo: 20 },
+      url: { maximo: 2000 },
+      tituloLink: { maximo: 80 },
     });
+  });
+});
+
+describe('tipo do projeto (RN-15)', () => {
+  it('tem Desenvolvimento e Geral, nessa ordem', () => {
+    expect(TIPOS_PROJETO).toEqual(['dev', 'geral']);
+  });
+
+  it('tem rótulo para cada tipo', () => {
+    expect(ROTULOS_TIPO).toEqual({ dev: 'Desenvolvimento', geral: 'Geral' });
+  });
+
+  it.each(['dev', 'geral'])('reconhece "%s"', (valor) => {
+    expect(ehTipoProjeto(valor)).toBe(true);
+  });
+
+  it.each(['DEV', 'Geral', 'vendas', ''])('rejeita "%s"', (valor) => {
+    expect(ehTipoProjeto(valor)).toBe(false);
   });
 });
 
