@@ -14,12 +14,12 @@ export function chaveDeComparacao(texto: string): string {
 }
 
 /**
- * Separa o texto digitado no campo de stacks: a vírgula é separador, nunca parte do nome.
+ * Separa o texto digitado num campo de stacks, ferramentas ou tags: a vírgula é separador, nunca parte do nome.
  *
  * @param texto - Texto como digitado (ex.: "Next.js, Supabase,").
- * @returns Stacks sem espaços nas pontas e sem pedaços vazios.
+ * @returns Nomes sem espaços nas pontas e sem pedaços vazios.
  */
-export function separarStacksDigitadas(texto: string): string[] {
+export function separarNomesDigitados(texto: string): string[] {
   return texto
     .split(',')
     .map((parte) => parte.trim())
@@ -27,15 +27,15 @@ export function separarStacksDigitadas(texto: string): string[] {
 }
 
 /**
- * Remove stacks repetidas ou vazias, mantendo a primeira grafia de cada uma e a ordem de entrada.
+ * Remove nomes (stacks, ferramentas ou tags) repetidos ou vazios, mantendo a primeira grafia de cada um e a ordem de entrada (RN-05).
  *
- * @param stacks - Stacks como digitadas.
- * @returns Stacks sem espaços nas pontas e sem repetição.
+ * @param nomes - Nomes como digitados.
+ * @returns Nomes sem espaços nas pontas e sem repetição.
  */
-export function deduplicarStacks(stacks: readonly string[]): string[] {
+export function deduplicarNomes(nomes: readonly string[]): string[] {
   const vistas = new Map<string, string>();
-  for (const stack of stacks) {
-    const limpa = stack.trim();
+  for (const nome of nomes) {
+    const limpa = nome.trim();
     const chave = chaveDeComparacao(limpa);
     if (chave && !vistas.has(chave)) vistas.set(chave, limpa);
   }

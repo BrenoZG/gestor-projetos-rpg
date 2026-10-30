@@ -9,7 +9,7 @@ import {
   STATUS_MISSAO,
   type DadosMissao,
 } from '@/dominio/missoes/campos';
-import { deduplicarStacks } from '@/dominio/missoes/normalizacao';
+import { deduplicarNomes } from '@/dominio/missoes/normalizacao';
 
 /**
  * Validação do formulário de Missão, na fronteira (Server Actions). Só roda no
@@ -73,7 +73,7 @@ const esquemaMissao = z.object({
       (valor) => (typeof valor === 'string' ? [valor] : (valor ?? [])),
       z.array(z.string(), { error: MENSAGENS.quantidadeStacks }),
     )
-    .transform(deduplicarStacks)
+    .transform(deduplicarNomes)
     .pipe(
       z
         .array(z.string())
