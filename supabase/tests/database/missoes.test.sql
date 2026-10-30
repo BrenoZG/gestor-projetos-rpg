@@ -40,12 +40,14 @@ select ok(
 );
 
 -- B cadastra uma Missão; o id dela fica guardado para os testes de isolamento.
+-- Como postgres o RLS não filtra: toda consulta fora do papel authenticated
+-- filtra pelo user_id, para o teste não colidir com dados que já estão no banco.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
 select public.salvar_missao_v2(null, 'Missão de B', 'Descrição de B', 'Arquitetura.', 'monolito', '{}', 'backlog', array['Python']);
 reset role;
-select set_config('teste.id_b', (select id::text from public.projetos where nome = 'Missão de B'), true);
-select set_config('teste.stack_b', (select id::text from public.stacks where nome = 'Python'), true);
+select set_config('teste.id_b', (select id::text from public.projetos where nome = 'Missão de B' and user_id = '00000000-0000-4000-8000-00000000000b'), true);
+select set_config('teste.stack_b', (select id::text from public.stacks where nome = 'Python' and user_id = '00000000-0000-4000-8000-00000000000b'), true);
 
 -- A partir daqui, as consultas rodam como o usuário A logado.
 set local role authenticated;
@@ -156,7 +158,7 @@ reset role;
 alter table public.projetos disable trigger user;
 update public.projetos
 set status = 'desenvolvimento', inicio_desenvolvimento_em = '2020-01-01', atualizado_em = '2020-01-01'
-where nome = 'Gestor';
+where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a';
 alter table public.projetos enable trigger user;
 set local role authenticated;
 select public.salvar_missao_v2(id, 'Gestor', 'Descrição nova', 'Arquitetura.', 'monolito', '{}', 'desenvolvimento',
@@ -178,15 +180,15 @@ select throws_ok(
   'o cliente não grava a data de conclusão direto'
 );
 reset role;
-update public.projetos set status = 'concluido', concluido_em = null where nome = 'Gestor';
+update public.projetos set status = 'concluido', concluido_em = null where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a';
 select results_eq(
-  $$ select concluido_em is not null from public.projetos where nome = 'Gestor' $$,
+  $$ select concluido_em is not null from public.projetos where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a' $$,
   $$ values (true) $$,
   'nem o dono do banco deixa Concluído sem data: o trigger a grava'
 );
-update public.projetos set status = 'backlog' where nome = 'Gestor';
+update public.projetos set status = 'backlog' where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a';
 select throws_ok(
-  $$ update public.projetos set concluido_em = now() where nome = 'Gestor' $$,
+  $$ update public.projetos set concluido_em = now() where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a' $$,
   '23514',
   null,
   'CHECK de coerência: só Concluído tem data de conclusão'
