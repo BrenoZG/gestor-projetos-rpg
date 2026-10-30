@@ -222,6 +222,63 @@ test.describe('Quadro de Missões', () => {
     await excluirMissaoAberta(page);
   });
 
+  test('filtra por tipo e por tag, e o filtro fica na URL (RF-25)', async ({ page }) => {
+    const sufixo = Date.now().toString(36);
+    const geral = `Revenda filtrável ${sufixo}`;
+    const dev = `Sistema filtrável ${sufixo}`;
+    const tag = `Revenda ${sufixo}`;
+    await page.goto('/missoes/nova');
+    await page.getByRole('radio', { name: /^Geral/ }).check();
+    await page.getByRole('textbox', { name: 'Nome' }).fill(geral);
+    await page.getByRole('textbox', { name: 'Descrição' }).fill(`Descrição de ${geral}.`);
+    await page.getByRole('combobox', { name: /Tags/ }).fill(tag);
+    await page.getByRole('combobox', { name: /Tags/ }).press('Enter');
+    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.waitForURL(/\/missoes\/[0-9a-f-]{36}$/);
+    const urlGeral = page.url();
+    await cadastrarMissao(page, { nome: dev, stacks: 'Next.js,' });
+    const urlDev = page.url();
+
+    await page.goto('/');
+    const campoTipo = page.getByRole('combobox', { name: 'Tipo', exact: true });
+    const campoTag = page.getByRole('combobox', { name: 'Tag', exact: true });
+    await campoTag.selectOption(tag);
+    await expect(cartao(page, 'Backlog', geral)).toBeVisible();
+    await expect(cartao(page, 'Backlog', dev)).toHaveCount(0);
+    await expect(page).toHaveURL(/tag=/);
+
+    await page.reload();
+    await expect(campoTag, 'o filtro de tag volta da URL').toHaveValue(tag);
+    await expect(cartao(page, 'Backlog', geral)).toBeVisible();
+    await expect(cartao(page, 'Backlog', dev)).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Limpar filtros' }).click();
+    await campoTipo.selectOption('geral');
+    await expect(page).toHaveURL(/tipo=geral/);
+    await expect(cartao(page, 'Backlog', geral)).toBeVisible();
+    await expect(cartao(page, 'Backlog', dev), 'o tipo Geral esconde as Missões DEV').toHaveCount(0);
+
+    await campoTag.selectOption(tag);
+    const niveis = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const violacoes = (await new AxeBuilder({ page }).withTags(niveis).analyze()).violations;
+    expect(
+      violacoes.map((v) => `${v.id}: ${v.help}`),
+      'Quadro com os filtros de tipo e tag',
+    ).toEqual([]);
+
+    await page.getByRole('button', { name: 'Limpar filtros' }).click();
+    await expect(page, '"Limpar filtros" zera tudo').toHaveURL(/\/$/);
+    await expect(campoTipo).toHaveValue('');
+    await expect(campoTag).toHaveValue('');
+    await expect(cartao(page, 'Backlog', dev)).toBeVisible();
+
+    await page.goto(urlGeral);
+    await excluirMissaoAberta(page);
+    await page.goto(urlDev);
+    await excluirMissaoAberta(page);
+  });
+
   test('a vista Lista resume todas as Missões numa tabela (RF-22)', async ({ page }) => {
     const nome = nomeUnico('Missão na lista');
     await cadastrarMissao(page, { nome, stacks: 'Go,Rust,' });
