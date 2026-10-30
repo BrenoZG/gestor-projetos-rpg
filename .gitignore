@@ -34,3 +34,6 @@ test-results/
 # Sessão do usuário de teste local, gerada a cada execução do E2E
 tests/e2e/.auth/
 .vercel
+
+# Anotações locais de trabalho (mapa, tarefas e histórico) — ficam só na máquina
+Mapa/
