@@ -2,7 +2,7 @@
 
 Gestão de projetos pessoais e de suas atualizações, com progressão estilo RPG: cada missão concluída rende XP, níveis, medalhas e Ranks, do Estagiário ao Desenvolvedor Sênior.
 
-> **Status:** em desenvolvimento. Entregues: **M0** (fundação), **M1a** (acesso), **M1b** (Missões), **M1c** (Quadro) e **M2** (Atualizações). Próximo: **M3** (XP e níveis). Os dados exibidos em capturas e no seed são fictícios.
+> **Status:** em desenvolvimento. Entregues: **M0** (fundação), **M1a** (acesso), **M1b** (Missões), **M1c** (Quadro), **M2** (Atualizações) e **0.6.0** (tipos de projeto, tags e links). Próximo: **M3** (XP e níveis). Os dados exibidos em capturas e no seed são fictícios.
 
 ## O que faz
 
