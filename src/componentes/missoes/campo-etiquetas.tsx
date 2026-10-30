@@ -1,33 +1,43 @@
 'use client';
 
-import { useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 
-import { LIMITES_MISSAO } from '@/dominio/missoes/campos';
 import { deduplicarNomes, separarNomesDigitados } from '@/dominio/missoes/normalizacao';
 
 import { CLASSES_AJUDA, CLASSES_CAMPO, CLASSES_CHIP, CLASSES_ROTULO } from './estilos';
 import { MensagemErroCampo } from './mensagem-erro-campo';
 
-const { maximo: MAXIMO_STACKS } = LIMITES_MISSAO.stacks;
-
 /**
- * Campo de stacks em "chips": Enter ou vírgula adiciona, cada chip tem um botão
- * de remover. As stacks vão no envio como campos ocultos `stacks`; o texto ainda
- * não confirmado também vai, para não se perder se o usuário enviar direto.
+ * Campo de etiquetas em "chips" (stacks, ferramentas ou tags): Enter ou vírgula
+ * adiciona, cada chip tem um botão de remover. As etiquetas vão no envio como
+ * campos ocultos com o `nome` dado; o texto ainda não confirmado também vai,
+ * para não se perder se o usuário enviar direto.
  *
- * @param props - Stacks atuais (controladas pelo formulário), sugestões para o
- *   autocompletar, id do campo e erro vindo do servidor.
+ * @param props - Etiquetas atuais (controladas pelo formulário), nome do campo
+ *   no envio, rótulos, limite, sugestões para o autocompletar, id do campo e
+ *   erro vindo do servidor.
  */
-export function CampoStacks({
+export function CampoEtiquetas({
   id,
-  stacks,
+  nome,
+  rotulo,
+  rotuloLista,
+  exemplo,
+  maximo,
+  itens,
   aoMudar,
   sugestoes,
   erro,
 }: {
   id: string;
-  stacks: readonly string[];
-  aoMudar: (stacks: string[]) => void;
+  nome: 'stacks' | 'tags';
+  rotulo: ReactNode;
+  /** Nome acessível da lista de chips (ex.: "Stacks adicionadas"). */
+  rotuloLista: string;
+  exemplo: string;
+  maximo: number;
+  itens: readonly string[];
+  aoMudar: (itens: string[]) => void;
   sugestoes: readonly string[];
   erro?: string;
 }) {
@@ -37,10 +47,10 @@ export function CampoStacks({
   const idAjuda = `${base}-ajuda`;
   const idErro = `${base}-erro`;
   const idSugestoes = `${base}-sugestoes`;
-  const cheio = stacks.length >= MAXIMO_STACKS;
+  const cheio = itens.length >= maximo;
 
   function incluir(texto: string): void {
-    aoMudar(deduplicarNomes([...stacks, ...separarNomesDigitados(texto)]).slice(0, MAXIMO_STACKS));
+    aoMudar(deduplicarNomes([...itens, ...separarNomesDigitados(texto)]).slice(0, maximo));
   }
 
   function adicionar(): void {
@@ -48,9 +58,9 @@ export function CampoStacks({
     setRascunho('');
   }
 
-  // A vírgula fecha a stack, digitada ou colada ("a, b, c" vira 3 chips); só o
-  // pedaço depois da última vírgula continua no campo. Sem `maxLength` aqui:
-  // ele cortaria em silêncio uma lista colada. O limite por stack é do servidor.
+  // A vírgula fecha a etiqueta, digitada ou colada ("a, b, c" vira 3 chips); só
+  // o pedaço depois da última vírgula continua no campo. Sem `maxLength` aqui:
+  // ele cortaria em silêncio uma lista colada. O limite por nome é do servidor.
   function aoDigitar(valor: string): void {
     const ultimaVirgula = valor.lastIndexOf(',');
     if (ultimaVirgula === -1) {
@@ -62,7 +72,7 @@ export function CampoStacks({
   }
 
   function aoTeclar(evento: KeyboardEvent<HTMLInputElement>): void {
-    // Enter aqui confirma a stack; sem isto, enviaria o formulário inteiro.
+    // Enter aqui confirma a etiqueta; sem isto, enviaria o formulário inteiro.
     if (evento.key === 'Enter') {
       evento.preventDefault();
       if (rascunho.trim() && !cheio) adicionar();
@@ -70,25 +80,25 @@ export function CampoStacks({
   }
 
   function remover(alvo: string): void {
-    aoMudar(stacks.filter((stack) => stack !== alvo));
+    aoMudar(itens.filter((item) => item !== alvo));
     campo.current?.focus();
   }
 
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className={CLASSES_ROTULO}>
-        Stacks
+        {rotulo}
       </label>
 
-      {stacks.length > 0 && (
-        <ul className="flex flex-wrap gap-2" aria-label="Stacks adicionadas">
-          {stacks.map((stack) => (
-            <li key={stack} className={`${CLASSES_CHIP} py-0.5 pr-1 text-sm text-texto`}>
-              {stack}
+      {itens.length > 0 && (
+        <ul className="flex flex-wrap gap-2" aria-label={rotuloLista}>
+          {itens.map((item) => (
+            <li key={item} className={`${CLASSES_CHIP} py-0.5 pr-1 text-sm text-texto`}>
+              {item}
               <button
                 type="button"
-                onClick={() => remover(stack)}
-                aria-label={`Remover ${stack}`}
+                onClick={() => remover(item)}
+                aria-label={`Remover ${item}`}
                 className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-full text-texto-suave hover:bg-borda-forte hover:text-texto focus-visible:outline-2 focus-visible:outline-acento"
               >
                 <svg aria-hidden="true" viewBox="0 0 16 16" width="12" height="12">
@@ -100,7 +110,7 @@ export function CampoStacks({
                   />
                 </svg>
               </button>
-              <input type="hidden" name="stacks" value={stack} />
+              <input type="hidden" name={nome} value={item} />
             </li>
           ))}
         </ul>
@@ -115,7 +125,7 @@ export function CampoStacks({
           onChange={(evento) => aoDigitar(evento.target.value)}
           onKeyDown={aoTeclar}
           list={idSugestoes}
-          placeholder="Ex.: Next.js"
+          placeholder={exemplo}
           autoComplete="off"
           aria-invalid={erro ? true : undefined}
           aria-describedby={erro ? `${idAjuda} ${idErro}` : idAjuda}
@@ -131,7 +141,7 @@ export function CampoStacks({
         </button>
         {/* Texto digitado e não confirmado também vai no envio. */}
         {separarNomesDigitados(rascunho).map((parte, indice) => (
-          <input key={`${indice}-${parte}`} type="hidden" name="stacks" value={parte} />
+          <input key={`${indice}-${parte}`} type="hidden" name={nome} value={parte} />
         ))}
       </div>
       <datalist id={idSugestoes}>
@@ -141,7 +151,7 @@ export function CampoStacks({
       </datalist>
 
       <p id={idAjuda} className={CLASSES_AJUDA} aria-live="polite">
-        {cheio ? 'Limite atingido' : 'Enter ou vírgula para adicionar'} · {stacks.length} de {MAXIMO_STACKS}
+        {cheio ? 'Limite atingido' : 'Enter ou vírgula para adicionar'} · {itens.length} de {maximo}
       </p>
       {erro && <MensagemErroCampo id={idErro} mensagem={erro} />}
     </div>

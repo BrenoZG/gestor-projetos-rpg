@@ -22,6 +22,7 @@ import {
   type Capacidade,
   type EstiloArquitetural,
   type StatusMissao,
+  type TipoProjeto,
 } from '@/dominio/missoes/campos';
 import {
   PONTOS_POR_CAPACIDADE,
@@ -31,11 +32,14 @@ import {
   rankPorPontos,
 } from '@/dominio/missoes/rank';
 
-import { CampoStacks } from './campo-stacks';
+import { CampoEtiquetas } from './campo-etiquetas';
+import { CampoLinks, type LinhaDeLink } from './campo-links';
+import { CampoTipo } from './campo-tipo';
 import { CLASSES_AJUDA, CLASSES_CAMPO, CLASSES_ROTULO } from './estilos';
 import { MensagemErroCampo } from './mensagem-erro-campo';
 
 export type ValoresMissao = {
+  tipo: TipoProjeto;
   nome: string;
   descricao: string;
   arquitetura: string;
@@ -43,9 +47,12 @@ export type ValoresMissao = {
   capacidades: Capacidade[];
   status: StatusMissao;
   stacks: string[];
+  tags: string[];
+  links: LinhaDeLink[];
 };
 
 export const VALORES_NOVA_MISSAO: ValoresMissao = {
+  tipo: 'dev',
   nome: '',
   descricao: '',
   arquitetura: '',
@@ -53,23 +60,30 @@ export const VALORES_NOVA_MISSAO: ValoresMissao = {
   capacidades: [],
   status: 'backlog',
   stacks: [],
+  tags: [],
+  links: [],
 };
 
 /** Ordem dos campos na tela: o foco vai para o primeiro inválido. */
 const ORDEM_CAMPOS: readonly CampoMissao[] = [
+  'tipo',
   'nome',
   'descricao',
   'stacks',
+  'tags',
   'estilo',
   'capacidades',
   'arquitetura',
+  'links',
   'status',
 ];
 
-/** Num grupo de opções, o foco vai para a primeira opção do grupo. */
+/** Num grupo de opções, o foco vai para a primeira opção do grupo; nos links, para o primeiro endereço. */
 const ALVO_DO_FOCO: Partial<Record<CampoMissao, string>> = {
+  tipo: 'tipo-dev',
   estilo: `estilo-${ESTILOS_ARQUITETURAIS[0]}`,
   capacidades: `capacidade-${CAPACIDADES[0]}`,
+  links: 'links-url-0',
 };
 
 /** Opção de escolha (radio ou checkbox) com a borda acesa quando marcada. */
@@ -87,29 +101,41 @@ type AcaoMissao = (estado: EstadoFormularioMissao, formulario: FormData) => Prom
  * se perde quando o servidor devolve erros), e a validação que vale é a do
  * servidor; aqui só há limites de digitação e a prévia do Rank.
  *
- * @param props - Server Action, valores iniciais, sugestões de stacks e textos dos botões.
+ * O tipo (RN-15) mostra ou esconde a parte técnica; os valores técnicos
+ * escondidos ficam guardados e voltam se o tipo voltar a Desenvolvimento.
+ * Na edição o status não aparece: ele muda pelo Quadro e pela ficha.
+ *
+ * @param props - Server Action, modo, valores iniciais, sugestões e textos dos botões.
  */
 export function FormularioMissao({
   acao,
+  modo,
   inicial,
   sugestoesStacks,
+  sugestoesTags,
   rotuloEnviar,
   rotuloEnviando,
   hrefCancelar,
 }: {
   acao: AcaoMissao;
+  modo: 'criar' | 'editar';
   inicial: ValoresMissao;
   sugestoesStacks: readonly string[];
+  sugestoesTags: readonly string[];
   rotuloEnviar: string;
   rotuloEnviando: string;
   hrefCancelar: string;
 }) {
   const [estado, acaoFormulario, pendente] = useActionState(acao, ESTADO_INICIAL_FORMULARIO);
   const [valores, setValores] = useState(inicial);
+  const [entendeuPerda, setEntendeuPerda] = useState(false);
   const base = useId();
   const id = (campo: string) => `${base}-${campo}`;
   const avisoGeral = useRef<HTMLDivElement>(null);
   const { erros } = estado;
+  const desenvolvimento = valores.tipo === 'dev';
+  // RN-16: salvar como Geral uma Missão que era de Desenvolvimento apaga a parte técnica.
+  const apagaParteTecnica = modo === 'editar' && inicial.tipo === 'dev' && !desenvolvimento;
 
   // Depois de um envio com erro, leva o foco ao primeiro campo inválido.
   useEffect(() => {
@@ -139,13 +165,14 @@ export function FormularioMissao({
     );
   }
 
-  const pontuacao = valores.estilo
-    ? pontuacaoDaMissao({
-        estilo: valores.estilo,
-        capacidades: valores.capacidades,
-        quantidadeStacks: valores.stacks.length,
-      })
-    : null;
+  const pontuacao =
+    desenvolvimento && valores.estilo
+      ? pontuacaoDaMissao({
+          estilo: valores.estilo,
+          capacidades: valores.capacidades,
+          quantidadeStacks: valores.stacks.length,
+        })
+      : null;
   const rank = pontuacao ? rankPorPontos(pontuacao.total) : null;
 
   return (
@@ -155,6 +182,8 @@ export function FormularioMissao({
           <AvisoErro titulo="Não foi salvo.">{estado.mensagem}</AvisoErro>
         </div>
       )}
+
+      <CampoTipo id={id} tipo={valores.tipo} aoMudar={(tipo) => mudar('tipo', tipo)} erro={erros.tipo} />
 
       <div className="flex flex-col gap-2">
         <label htmlFor={id('nome')} className={CLASSES_ROTULO}>
@@ -201,139 +230,206 @@ export function FormularioMissao({
         {erros.descricao && <MensagemErroCampo id={id('descricao-erro')} mensagem={erros.descricao} />}
       </div>
 
-      <CampoStacks
+      <CampoEtiquetas
         id={id('stacks')}
-        stacks={valores.stacks}
+        nome="stacks"
+        rotulo={
+          desenvolvimento ? (
+            'Stacks'
+          ) : (
+            <>
+              Ferramentas <span className="normal-case tracking-normal">(opcional)</span>
+            </>
+          )
+        }
+        rotuloLista={desenvolvimento ? 'Stacks adicionadas' : 'Ferramentas adicionadas'}
+        exemplo={desenvolvimento ? 'Ex.: Next.js' : 'Ex.: Canva'}
+        maximo={desenvolvimento ? LIMITES_MISSAO.stacks.maximo : LIMITES_MISSAO.ferramentas.maximo}
+        itens={valores.stacks}
         aoMudar={(stacks) => mudar('stacks', stacks)}
         sugestoes={sugestoesStacks}
         erro={erros.stacks}
       />
 
-      <fieldset
-        className="flex flex-col gap-3"
-        aria-invalid={erros.estilo ? true : undefined}
-        aria-describedby={descricaoDe('estilo', id('estilo-ajuda'))}
-      >
-        <legend className={`${CLASSES_ROTULO} mb-2`}>Estilo arquitetural</legend>
-        <p id={id('estilo-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
-          Como o sistema se organiza. Escolha o mais próximo; os pontos entram no Rank.
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {ESTILOS_ARQUITETURAIS.map((estilo) => (
-            <label key={estilo} className={CLASSES_OPCAO}>
-              <input
-                id={id(`estilo-${estilo}`)}
-                type="radio"
-                name="estilo"
-                value={estilo}
-                checked={valores.estilo === estilo}
-                onChange={() => mudar('estilo', estilo)}
-                className={CLASSES_MARCADOR}
-              />
-              <span>{ROTULOS_ESTILO[estilo]}</span>
-              <span className={CLASSES_PONTOS}>+{PONTOS_POR_ESTILO[estilo]}</span>
-            </label>
-          ))}
-        </div>
-        {erros.estilo && <MensagemErroCampo id={id('estilo-erro')} mensagem={erros.estilo} />}
-      </fieldset>
-
-      <fieldset
-        className="flex flex-col gap-3"
-        aria-invalid={erros.capacidades ? true : undefined}
-        aria-describedby={descricaoDe('capacidades', id('capacidades-ajuda'))}
-      >
-        <legend className={`${CLASSES_ROTULO} mb-2`}>
-          Capacidades <span className="normal-case tracking-normal">(opcional)</span>
-        </legend>
-        <p id={id('capacidades-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
-          O que a missão precisa entregar · +{PONTOS_POR_CAPACIDADE} pontos cada
-        </p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {CAPACIDADES.map((capacidade) => (
-            <label key={capacidade} className={CLASSES_OPCAO}>
-              <input
-                id={id(`capacidade-${capacidade}`)}
-                type="checkbox"
-                name="capacidades"
-                value={capacidade}
-                checked={valores.capacidades.includes(capacidade)}
-                onChange={(evento) => alternarCapacidade(capacidade, evento.target.checked)}
-                className={CLASSES_MARCADOR}
-              />
-              <span>{ROTULOS_CAPACIDADE[capacidade]}</span>
-            </label>
-          ))}
-        </div>
-        {erros.capacidades && <MensagemErroCampo id={id('capacidades-erro')} mensagem={erros.capacidades} />}
-      </fieldset>
-
-      <div id={id('rank')} aria-live="polite" className="flex min-h-14 items-center gap-3">
-        {rank && pontuacao ? (
+      <CampoEtiquetas
+        id={id('tags')}
+        nome="tags"
+        rotulo={
           <>
-            <EmblemaRank rank={rank} rotulo={`Rank de Missão ${rank}`} className="h-12 w-11 shrink-0" />
-            <p className="text-sm text-texto-suave">
-              Rank de Missão <strong className="text-texto">{rank}</strong> · {pontuacao.total} pontos
-              <span className="block font-mono text-xs">
-                Estilo +{pontuacao.estilo} · Capacidades +{pontuacao.capacidades} · Stacks +{pontuacao.stacks}{' '}
-                (até {STACKS_QUE_PONTUAM} pontuam)
-              </span>
-            </p>
+            Tags <span className="normal-case tracking-normal">(opcional)</span>
           </>
-        ) : (
-          <p className="text-sm text-texto-suave">Escolha o estilo arquitetural para ver o Rank da missão.</p>
-        )}
-      </div>
+        }
+        rotuloLista="Tags adicionadas"
+        exemplo="Ex.: Revenda"
+        maximo={LIMITES_MISSAO.tags.maximo}
+        itens={valores.tags}
+        aoMudar={(tags) => mudar('tags', tags)}
+        sugestoes={sugestoesTags}
+        erro={erros.tags}
+      />
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor={id('arquitetura')} className={CLASSES_ROTULO}>
-          Estrutura e arquitetura
-        </label>
-        <textarea
-          id={id('arquitetura')}
-          name="arquitetura"
-          rows={6}
-          value={valores.arquitetura}
-          onChange={(evento) => mudar('arquitetura', evento.target.value)}
-          maxLength={LIMITES_MISSAO.arquitetura.maximo}
-          aria-invalid={erros.arquitetura ? true : undefined}
-          aria-describedby={descricaoDe('arquitetura', id('arquitetura-ajuda'))}
-          className={`${CLASSES_CAMPO} resize-y font-mono text-sm`}
-        />
-        <p id={id('arquitetura-ajuda')} className={CLASSES_AJUDA}>
-          Camadas, módulos e decisões, em Markdown · {numero.format(valores.arquitetura.length)} de{' '}
-          {numero.format(LIMITES_MISSAO.arquitetura.maximo)}
-        </p>
-        {erros.arquitetura && <MensagemErroCampo id={id('arquitetura-erro')} mensagem={erros.arquitetura} />}
-      </div>
+      {desenvolvimento && (
+        <>
+          <fieldset
+            className="flex flex-col gap-3"
+            aria-invalid={erros.estilo ? true : undefined}
+            aria-describedby={descricaoDe('estilo', id('estilo-ajuda'))}
+          >
+            <legend className={`${CLASSES_ROTULO} mb-2`}>Estilo arquitetural</legend>
+            <p id={id('estilo-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
+              Como o sistema se organiza. Escolha o mais próximo; os pontos entram no Rank.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {ESTILOS_ARQUITETURAIS.map((estilo) => (
+                <label key={estilo} className={CLASSES_OPCAO}>
+                  <input
+                    id={id(`estilo-${estilo}`)}
+                    type="radio"
+                    name="estilo"
+                    value={estilo}
+                    checked={valores.estilo === estilo}
+                    onChange={() => mudar('estilo', estilo)}
+                    className={CLASSES_MARCADOR}
+                  />
+                  <span>{ROTULOS_ESTILO[estilo]}</span>
+                  <span className={CLASSES_PONTOS}>+{PONTOS_POR_ESTILO[estilo]}</span>
+                </label>
+              ))}
+            </div>
+            {erros.estilo && <MensagemErroCampo id={id('estilo-erro')} mensagem={erros.estilo} />}
+          </fieldset>
 
-      <div className="flex flex-col gap-2">
-        <label htmlFor={id('status')} className={CLASSES_ROTULO}>
-          Status
-        </label>
-        <select
-          id={id('status')}
-          name="status"
-          value={valores.status}
-          onChange={(evento) => mudar('status', evento.target.value as StatusMissao)}
-          aria-invalid={erros.status ? true : undefined}
-          aria-describedby={descricaoDe('status')}
-          className={`${CLASSES_CAMPO} cursor-pointer`}
-        >
-          {STATUS_MISSAO.map((status) => (
-            <option key={status} value={status}>
-              {ROTULOS_STATUS[status]}
-            </option>
-          ))}
-        </select>
-        {erros.status && <MensagemErroCampo id={id('status-erro')} mensagem={erros.status} />}
-      </div>
+          <fieldset
+            className="flex flex-col gap-3"
+            aria-invalid={erros.capacidades ? true : undefined}
+            aria-describedby={descricaoDe('capacidades', id('capacidades-ajuda'))}
+          >
+            <legend className={`${CLASSES_ROTULO} mb-2`}>
+              Capacidades <span className="normal-case tracking-normal">(opcional)</span>
+            </legend>
+            <p id={id('capacidades-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
+              O que a missão precisa entregar · +{PONTOS_POR_CAPACIDADE} pontos cada
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {CAPACIDADES.map((capacidade) => (
+                <label key={capacidade} className={CLASSES_OPCAO}>
+                  <input
+                    id={id(`capacidade-${capacidade}`)}
+                    type="checkbox"
+                    name="capacidades"
+                    value={capacidade}
+                    checked={valores.capacidades.includes(capacidade)}
+                    onChange={(evento) => alternarCapacidade(capacidade, evento.target.checked)}
+                    className={CLASSES_MARCADOR}
+                  />
+                  <span>{ROTULOS_CAPACIDADE[capacidade]}</span>
+                </label>
+              ))}
+            </div>
+            {erros.capacidades && (
+              <MensagemErroCampo id={id('capacidades-erro')} mensagem={erros.capacidades} />
+            )}
+          </fieldset>
+
+          <div id={id('rank')} aria-live="polite" className="flex min-h-14 items-center gap-3">
+            {rank && pontuacao ? (
+              <>
+                <EmblemaRank rank={rank} rotulo={`Rank de Missão ${rank}`} className="h-12 w-11 shrink-0" />
+                <p className="text-sm text-texto-suave">
+                  Rank de Missão <strong className="text-texto">{rank}</strong> · {pontuacao.total} pontos
+                  <span className="block font-mono text-xs">
+                    Estilo +{pontuacao.estilo} · Capacidades +{pontuacao.capacidades} · Stacks +
+                    {pontuacao.stacks} (até {STACKS_QUE_PONTUAM} pontuam)
+                  </span>
+                </p>
+              </>
+            ) : (
+              <p className="text-sm text-texto-suave">
+                Escolha o estilo arquitetural para ver o Rank da missão.
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label htmlFor={id('arquitetura')} className={CLASSES_ROTULO}>
+              Estrutura e arquitetura
+            </label>
+            <textarea
+              id={id('arquitetura')}
+              name="arquitetura"
+              rows={6}
+              value={valores.arquitetura}
+              onChange={(evento) => mudar('arquitetura', evento.target.value)}
+              maxLength={LIMITES_MISSAO.arquitetura.maximo}
+              aria-invalid={erros.arquitetura ? true : undefined}
+              aria-describedby={descricaoDe('arquitetura', id('arquitetura-ajuda'))}
+              className={`${CLASSES_CAMPO} resize-y font-mono text-sm`}
+            />
+            <p id={id('arquitetura-ajuda')} className={CLASSES_AJUDA}>
+              Camadas, módulos e decisões, em Markdown · {numero.format(valores.arquitetura.length)} de{' '}
+              {numero.format(LIMITES_MISSAO.arquitetura.maximo)}
+            </p>
+            {erros.arquitetura && (
+              <MensagemErroCampo id={id('arquitetura-erro')} mensagem={erros.arquitetura} />
+            )}
+          </div>
+        </>
+      )}
+
+      <CampoLinks
+        prefixo={id('links')}
+        linhas={valores.links}
+        aoMudar={(links) => mudar('links', links)}
+        erro={erros.links}
+      />
+
+      {modo === 'criar' && (
+        <div className="flex flex-col gap-2">
+          <label htmlFor={id('status')} className={CLASSES_ROTULO}>
+            Status
+          </label>
+          <select
+            id={id('status')}
+            name="status"
+            value={valores.status}
+            onChange={(evento) => mudar('status', evento.target.value as StatusMissao)}
+            aria-invalid={erros.status ? true : undefined}
+            aria-describedby={descricaoDe('status')}
+            className={`${CLASSES_CAMPO} cursor-pointer`}
+          >
+            {STATUS_MISSAO.map((status) => (
+              <option key={status} value={status}>
+                {ROTULOS_STATUS[status]}
+              </option>
+            ))}
+          </select>
+          {erros.status && <MensagemErroCampo id={id('status-erro')} mensagem={erros.status} />}
+        </div>
+      )}
+
+      {apagaParteTecnica && (
+        <div className="flex flex-col gap-3 rounded-md border border-atencao/70 bg-superficie-alta p-4">
+          <p id={id('aviso-perda')} className="text-sm text-texto">
+            Ao salvar como Geral, o estilo, as capacidades e a arquitetura desta missão serão apagados.
+          </p>
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-texto">
+            <input
+              type="checkbox"
+              checked={entendeuPerda}
+              onChange={(evento) => setEntendeuPerda(evento.target.checked)}
+              aria-describedby={id('aviso-perda')}
+              className={CLASSES_MARCADOR}
+            />
+            Entendi
+          </label>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-3 border-t border-borda pt-6">
         <button
           type="submit"
-          disabled={pendente}
-          className={`${CLASSES_ACAO_PRINCIPAL} disabled:cursor-wait disabled:opacity-70`}
+          disabled={pendente || (apagaParteTecnica && !entendeuPerda)}
+          className={`${CLASSES_ACAO_PRINCIPAL} disabled:opacity-70 ${pendente ? 'disabled:cursor-wait' : 'disabled:cursor-not-allowed'}`}
         >
           {pendente ? rotuloEnviando : rotuloEnviar}
         </button>

@@ -6,10 +6,11 @@ import { useRouter } from 'next/navigation';
 
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import type { Missao } from '@/dados/missoes';
-import { ROTULOS_ESTILO, type StatusMissao } from '@/dominio/missoes/campos';
+import { ROTULOS_ESTILO, ROTULOS_TIPO, type StatusMissao } from '@/dominio/missoes/campos';
 
 import { CLASSES_CHIP } from './estilos';
 import { MenuMover } from './menu-mover';
+import { SeloGeral } from './selo-tipo';
 
 /** Quantas stacks cabem no cartão; o resto vira "+N". */
 const STACKS_VISIVEIS = 3;
@@ -54,11 +55,15 @@ export function CartaoMissao({
         }}
         className="group flex cursor-pointer touch-manipulation gap-4 rounded-md border border-borda-forte bg-superficie/80 p-4 pr-24 transition-[border-color,transform,background-color] duration-200 select-none hover:-translate-y-0.5 hover:border-acento hover:bg-superficie-alta has-focus-visible:border-acento"
       >
-        <EmblemaRank
-          rank={missao.rank}
-          rotulo={`Rank de Missão ${missao.rank}`}
-          className="h-12 w-11 shrink-0"
-        />
+        {missao.tipo === 'dev' ? (
+          <EmblemaRank
+            rank={missao.rank}
+            rotulo={`Rank de Missão ${missao.rank}`}
+            className="h-12 w-11 shrink-0"
+          />
+        ) : (
+          <SeloGeral className="h-12 w-11 shrink-0" />
+        )}
         <div className="flex min-w-0 flex-1 flex-col gap-2">
           <h3 className="font-display text-base leading-snug font-bold break-words">
             <Link
@@ -70,9 +75,14 @@ export function CartaoMissao({
             </Link>
           </h3>
           <p className="font-mono text-xs text-texto-suave">
-            {ROTULOS_ESTILO[missao.estilo]} · {missao.pontuacao.total} pontos
+            {missao.tipo === 'dev'
+              ? `${ROTULOS_ESTILO[missao.estilo]} · ${missao.pontuacao.total} pontos`
+              : ROTULOS_TIPO.geral}
           </p>
-          <ul className="flex flex-wrap gap-1.5" aria-label="Stacks">
+          <ul
+            className="flex flex-wrap gap-1.5"
+            aria-label={missao.tipo === 'dev' ? 'Stacks' : 'Ferramentas'}
+          >
             {visiveis.map((stack) => (
               <li key={stack} className={CLASSES_CHIP}>
                 {stack}
@@ -81,7 +91,7 @@ export function CartaoMissao({
             {restantes > 0 && (
               <li className={CLASSES_CHIP}>
                 +{restantes}
-                <span className="sr-only"> stacks</span>
+                <span className="sr-only">{missao.tipo === 'dev' ? ' stacks' : ' ferramentas'}</span>
               </li>
             )}
           </ul>
