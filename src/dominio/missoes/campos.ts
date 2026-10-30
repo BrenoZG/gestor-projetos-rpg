@@ -96,7 +96,8 @@ export type LinkReferencia = { url: string; titulo: string | null };
 export type DadosMissao = {
   nome: string;
   descricao: string;
-  status: StatusMissao;
+  /** Status inicial no cadastro; `null` na edição, que não muda o status (Quadro e ficha mudam). */
+  status: StatusMissao | null;
   /** Stacks (Desenvolvimento) ou ferramentas (Geral). */
   stacks: string[];
   tags: string[];

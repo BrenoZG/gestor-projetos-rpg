@@ -5,7 +5,16 @@
  */
 
 export type CampoMissao =
-  'nome' | 'descricao' | 'arquitetura' | 'estilo' | 'capacidades' | 'status' | 'stacks';
+  | 'tipo'
+  | 'nome'
+  | 'descricao'
+  | 'arquitetura'
+  | 'estilo'
+  | 'capacidades'
+  | 'status'
+  | 'stacks'
+  | 'tags'
+  | 'links';
 
 export type ErrosMissao = Partial<Record<CampoMissao, string>>;
 
