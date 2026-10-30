@@ -282,7 +282,7 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
-| RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v2`) + E2E |
+| RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v3`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
 | RF-14, RNF-07 (export) | M6 | Integração |
 | RNF-01..06 | Todos | CI + revisão |

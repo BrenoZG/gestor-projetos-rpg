@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`, etapa expandir). A implementar: `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`. A implementar: `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -116,7 +116,7 @@ erDiagram
 | `tipo` | `text` | `NOT NULL DEFAULT 'dev'`; `CHECK (tipo IN ('dev','geral'))` (RN-15, ADR-0010) |
 | `descricao` | `text` | 1–2.000 |
 | `arquitetura` | `text` | nula em `geral`; em `dev`, 1–20.000 e não só espaços (`CHECK`) |
-| `estilo_arquitetural` | `text` | nulo em `geral`; `CHECK` nos 7 estilos da RN-14. `DEFAULT 'monolito'` só até a etapa contrair dos tipos |
+| `estilo_arquitetural` | `text` | nulo em `geral`; `CHECK` nos 7 estilos da RN-14. Sem `DEFAULT`: a Missão `dev` informa o estilo |
 | `capacidades` | `text[]` | `NOT NULL DEFAULT '{}'`; `CHECK` de subconjunto das 8 capacidades e no máximo 8 itens. A repetição não é barrada no `CHECK` (sem subconsulta): a função grava sem repetir e o domínio conta capacidades distintas |
 | `status` | `text` | `CHECK (status IN ('backlog','desenvolvimento','concluido'))` |
 | `inicio_desenvolvimento_em` | `timestamptz` | ingresso mais recente em Desenvolvimento (trava de 24 h) |
@@ -130,7 +130,7 @@ erDiagram
 
 O Rank de Missão **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14), e só em `dev`. Guardá-lo criaria duas fontes da verdade.
 
-**Gravação:** `salvar_missao_v3` grava a Missão, as stacks (ou ferramentas), as tags, os links e os vínculos numa transação; na edição, **não altera o status**. A mudança de status (Quadro, RF-20, e ficha) altera só `status`, direto na tabela (GRANT de coluna e RLS), e não mexe na "última edição" quando o status não muda. As trocas da `salvar_missao` pela v2 e da v2 pela v3 foram feitas em dois deploys cada (expandir e depois contrair, `docs/operacao.md` §4); a v2 sai na etapa contrair dos tipos.
+**Gravação:** `salvar_missao_v3` grava a Missão, as stacks (ou ferramentas), as tags, os links e os vínculos numa transação; na edição, **não altera o status**. A mudança de status (Quadro, RF-20, e ficha) altera só `status`, direto na tabela (GRANT de coluna e RLS), e não mexe na "última edição" quando o status não muda. As trocas da `salvar_missao` pela v2 e da v2 pela v3 foram feitas em dois deploys cada (expandir e depois contrair, `docs/operacao.md` §4); a v2 saiu na migration `contrair_tipos`.
 
 ### `stacks` — grão: 1 linha por stack distinta do usuário
 | Coluna | Tipo | Regra |

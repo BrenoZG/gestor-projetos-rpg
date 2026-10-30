@@ -1,6 +1,7 @@
 -- Testes da RN-14 no banco (pgTAP): colunas estilo_arquitetural e capacidades,
--- arquitetura obrigatória (função salvar_missao_v2 e NOT NULL) e o estado
--- depois da etapa contrair (sem dificuldade e sem a salvar_missao antiga).
+-- arquitetura obrigatória (função salvar_missao_v3 e CHECK por tipo) e o estado
+-- depois das etapas contrair (sem dificuldade, sem a salvar_missao antiga, sem
+-- a salvar_missao_v2 e sem o padrão do estilo).
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
 select plan(21);
@@ -12,8 +13,8 @@ insert into auth.users (id) values
 -- Estrutura e privilégios
 select col_is_null('public', 'projetos', 'estilo_arquitetural',
   'estilo_arquitetural aceita nulo: o CHECK por tipo o exige só em dev (RN-15)');
-select col_default_is('public', 'projetos', 'estilo_arquitetural', 'monolito',
-  'Missões antigas recebem o estilo Monolito');
+select col_hasnt_default('public', 'projetos', 'estilo_arquitetural',
+  'estilo_arquitetural não tem padrão: a Missão DEV informa o estilo (contrair)');
 select col_not_null('public', 'projetos', 'capacidades', 'capacidades é obrigatório (lista vazia vale)');
 select hasnt_column('public', 'projetos', 'dificuldade', 'a dificuldade declarada saiu (contrair)');
 select hasnt_function('public', 'salvar_missao', array['uuid', 'text', 'text', 'text', 'smallint', 'text', 'text[]'],
@@ -25,17 +26,15 @@ select ok(
   and has_column_privilege('authenticated', 'public.projetos', 'capacidades', 'insert, update'),
   'o usuário grava estilo e capacidades'
 );
-select ok(
-  not has_function_privilege('anon', 'public.salvar_missao_v2(uuid, text, text, text, text, text[], text, text[])', 'execute')
-  and has_function_privilege('authenticated', 'public.salvar_missao_v2(uuid, text, text, text, text, text[], text, text[])', 'execute'),
-  'só o usuário logado executa salvar_missao_v2'
-);
+select hasnt_function('public', 'salvar_missao_v2',
+  array['uuid', 'text', 'text', 'text', 'text', 'text[]', 'text', 'text[]'],
+  'a salvar_missao_v2 saiu (contrair dos tipos)');
 
 -- B cadastra uma Missão; o id dela fica guardado para o teste de isolamento.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v2(null, 'Missão de B', 'Descrição de B', 'Um script.', 'script', '{}', 'backlog',
-                               array['Python']);
+select public.salvar_missao_v3(null, 'dev', 'Missão de B', 'Descrição de B', 'Um script.', 'script', '{}', 'backlog',
+                               array['Python'], '{}', '[]');
 reset role;
 select set_config('teste.id_b', (select id::text from public.projetos where nome = 'Missão de B'), true);
 
@@ -44,10 +43,10 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
 
 select isnt(
-  public.salvar_missao_v2(null, 'Gestor', 'Gestor de projetos', 'Next.js com Supabase.', 'monolito',
-                          array['ci_cd', 'autenticacao', 'ci_cd'], 'backlog', array['Next.js', 'Supabase']),
+  public.salvar_missao_v3(null, 'dev', 'Gestor', 'Gestor de projetos', 'Next.js com Supabase.', 'monolito',
+                          array['ci_cd', 'autenticacao', 'ci_cd'], 'backlog', array['Next.js', 'Supabase'], '{}', '[]'),
   null,
-  'A cadastra uma Missão pela função nova e recebe o id'
+  'A cadastra uma Missão pela função e recebe o id'
 );
 select results_eq(
   $$ select estilo_arquitetural, capacidades, arquitetura from public.projetos where nome = 'Gestor' $$,
@@ -61,42 +60,45 @@ select results_eq(
   'liga as stacks da Missão'
 );
 
-select public.salvar_missao_v2(id, 'Gestor', 'Gestor de projetos', 'Hexagonal agora.', 'hexagonal',
-                               array['ia'], 'desenvolvimento', array['Next.js'])
+select public.salvar_missao_v3(id, 'dev', 'Gestor', 'Gestor de projetos', 'Hexagonal agora.', 'hexagonal',
+                               array['ia'], null, array['Next.js'], '{}', '[]')
 from public.projetos where nome = 'Gestor';
 select results_eq(
-  $$ select estilo_arquitetural, capacidades, status, inicio_desenvolvimento_em is not null
-     from public.projetos where nome = 'Gestor' $$,
-  $$ values ('hexagonal'::text, array['ia']::text[], 'desenvolvimento'::text, true) $$,
-  'edita estilo, capacidades e status (o trigger grava o início)'
+  $$ select estilo_arquitetural, capacidades, status from public.projetos where nome = 'Gestor' $$,
+  $$ values ('hexagonal'::text, array['ia']::text[], 'backlog'::text) $$,
+  'edita estilo e capacidades; a edição não muda o status'
 );
 
 -- Arquitetura obrigatória (RN-14)
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]') $$,
   '22023', null,
   'arquitetura só com espaços é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Sem arquitetura', 'x', null, 'monolito', '{}', 'backlog', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Sem arquitetura', 'x', null, 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]') $$,
   '22023', null,
   'arquitetura nula é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog', array['  ']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog',
+       array['  '], '{}', '[]') $$,
   '22023', null,
   'continua exigindo de 1 a 20 stacks'
 );
 
 -- Valores fora da lista: o CHECK barra mesmo quem grava direto na tabela.
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Estilo ruim', 'x', 'y', 'monolitico', '{}', 'backlog', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Estilo ruim', 'x', 'y', 'monolitico', '{}', 'backlog',
+       array['Go'], '{}', '[]') $$,
   '23514', null,
   'estilo fora da lista é recusado'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Capacidade ruim', 'x', 'y', 'monolito', array['blockchain'], 'backlog',
-                                    array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Capacidade ruim', 'x', 'y', 'monolito', array['blockchain'],
+       'backlog', array['Go'], '{}', '[]') $$,
   '23514', null,
   'capacidade fora da lista é recusada'
 );
@@ -106,9 +108,10 @@ select throws_ok(
   'o CHECK vale também para o update direto na tabela'
 );
 
--- Isolamento: A não altera a Missão de B pela função nova.
+-- Isolamento: A não altera a Missão de B pela função.
 select throws_ok(
-  format($$ select public.salvar_missao_v2(%L::uuid, 'Tomada', 'x', 'y', 'script', '{}', 'backlog', array['Go']) $$,
+  format($$ select public.salvar_missao_v3(%L::uuid, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null,
+              array['Go'], '{}', '[]') $$,
          current_setting('teste.id_b')),
   'P0002', null,
   'A não altera a Missão de B'
