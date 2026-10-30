@@ -72,18 +72,34 @@ export function ListaMissoes({ missoes, total }: { missoes: readonly Missao[]; t
                 </Link>
               </th>
               <td className={CLASSES_CELULA}>{ROTULOS_STATUS[missao.status]}</td>
-              <td className={CLASSES_CELULA}>
-                <span className="inline-flex items-center gap-2">
-                  <EmblemaRank
-                    rank={missao.rank}
-                    rotulo={`Rank de Missão ${missao.rank}`}
-                    className="h-7 w-6"
-                  />
-                </span>
-              </td>
-              <td className={`${CLASSES_CELULA} text-right font-mono tabular-nums`}>
-                {missao.pontuacao.total}
-              </td>
+              {missao.tipo === 'dev' ? (
+                <>
+                  <td className={CLASSES_CELULA}>
+                    <span className="inline-flex items-center gap-2">
+                      <EmblemaRank
+                        rank={missao.rank}
+                        rotulo={`Rank de Missão ${missao.rank}`}
+                        className="h-7 w-6"
+                      />
+                    </span>
+                  </td>
+                  <td className={`${CLASSES_CELULA} text-right font-mono tabular-nums`}>
+                    {missao.pontuacao.total}
+                  </td>
+                </>
+              ) : (
+                <>
+                  {/* Missão Geral não tem Rank nem pontos (RN-15). */}
+                  <td className={`${CLASSES_CELULA} text-texto-suave`}>
+                    <span aria-hidden="true">—</span>
+                    <span className="sr-only">Sem Rank (Geral)</span>
+                  </td>
+                  <td className={`${CLASSES_CELULA} text-right text-texto-suave`}>
+                    <span aria-hidden="true">—</span>
+                    <span className="sr-only">Sem pontos</span>
+                  </td>
+                </>
+              )}
               <td className={`${CLASSES_CELULA} text-texto-suave`}>{missao.stacks.join(', ')}</td>
               <td className={`${CLASSES_CELULA} whitespace-nowrap text-texto-suave tabular-nums`}>
                 {formatarDataHora(missao.atualizadoEm)}

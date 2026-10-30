@@ -1,36 +1,24 @@
 import type { Metadata } from 'next';
-import { connection } from 'next/server';
 import { Suspense } from 'react';
 
 import { criarMissao } from '@/acoes/missoes';
 import { CarregandoMissao } from '@/componentes/missoes/carregando-missao';
 import { FormularioMissao, VALORES_NOVA_MISSAO } from '@/componentes/missoes/formulario-missao';
 import { JanelaMissao } from '@/componentes/missoes/janela-missao';
-import { ErroDeMissao, listarNomesDeStacks } from '@/dados/missoes';
-import { registrarEvento } from '@/lib/log';
-import { criarClienteServidor } from '@/lib/supabase/servidor';
+
+import { carregarSugestoes } from '../carregar-sugestoes';
 
 export const metadata: Metadata = { title: 'Nova missão' };
 
 async function FormularioNovaMissao() {
-  await connection();
-  const supabase = await criarClienteServidor();
-  let sugestoes: string[] = [];
-  try {
-    sugestoes = await listarNomesDeStacks(supabase);
-  } catch (erro) {
-    // Sem o autocompletar, o cadastro continua possível: registra e segue.
-    if (!(erro instanceof ErroDeMissao)) throw erro;
-    registrarEvento('erro', 'supabase_falhou', {
-      operacao: erro.operacao,
-      codigo: erro.codigo ?? 'desconhecido',
-    });
-  }
+  const sugestoes = await carregarSugestoes();
   return (
     <FormularioMissao
       acao={criarMissao}
+      modo="criar"
       inicial={VALORES_NOVA_MISSAO}
-      sugestoesStacks={sugestoes}
+      sugestoesStacks={sugestoes.stacks}
+      sugestoesTags={sugestoes.tags}
       rotuloEnviar="Registrar missão"
       rotuloEnviando="Registrando…"
       hrefCancelar="/"
@@ -39,7 +27,7 @@ async function FormularioNovaMissao() {
 }
 
 /**
- * Cadastro de Missão (RF-01).
+ * Cadastro de Missão (RF-01, RF-23).
  *
  * @returns Página com o formulário de nova Missão.
  */

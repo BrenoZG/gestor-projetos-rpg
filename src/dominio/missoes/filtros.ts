@@ -20,8 +20,13 @@ export const FILTROS_VAZIOS: FiltrosMissao = { busca: '', stack: null, rank: nul
 const TAMANHO_MAXIMO_BUSCA = LIMITES_MISSAO.nome.maximo;
 const TAMANHO_MAXIMO_STACK = LIMITES_MISSAO.nomeStack.maximo;
 
-/** O mínimo de uma Missão que os filtros leem. */
-type MissaoFiltravel = { nome: string; descricao: string; stacks: readonly string[]; rank: RankMissao };
+/** O mínimo de uma Missão que os filtros leem; Missão Geral não tem Rank (`null`). */
+type MissaoFiltravel = {
+  nome: string;
+  descricao: string;
+  stacks: readonly string[];
+  rank: RankMissao | null;
+};
 
 /**
  * Texto para comparação: sem acentos, sem maiúsculas e sem espaços nas pontas.

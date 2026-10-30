@@ -9,8 +9,12 @@ import { CarregandoMissao } from '@/componentes/missoes/carregando-missao';
 import { ConfirmarExclusao } from '@/componentes/missoes/confirmar-exclusao';
 import { CLASSES_CHIP, CLASSES_ROTULO } from '@/componentes/missoes/estilos';
 import { JanelaMissao } from '@/componentes/missoes/janela-missao';
+import { LinksDaMissao } from '@/componentes/missoes/links-da-missao';
+import { SeloGeral } from '@/componentes/missoes/selo-tipo';
+import { StatusDaMissao } from '@/componentes/missoes/status-da-missao';
 import { CLASSES_ACAO_PRINCIPAL } from '@/componentes/tela-sistema';
-import { ROTULOS_CAPACIDADE, ROTULOS_ESTILO, ROTULOS_STATUS } from '@/dominio/missoes/campos';
+import type { MissaoDesenvolvimento } from '@/dados/missoes';
+import { ROTULOS_CAPACIDADE, ROTULOS_ESTILO, ROTULOS_STATUS, ROTULOS_TIPO } from '@/dominio/missoes/campos';
 import { STACKS_QUE_PONTUAM } from '@/dominio/missoes/rank';
 import { formatarDataHora } from '@/lib/datas';
 
@@ -34,49 +38,30 @@ function detalheDaExclusao(quantidadeAtualizacoes: number): string {
     quantidadeAtualizacoes === 0
       ? ''
       : ` e ${quantidadeAtualizacoes} ${quantidadeAtualizacoes === 1 ? 'atualização' : 'atualizações'}`;
-  return `A missão, o vínculo com as stacks${atualizacoes} serão apagados. Esta ação não pode ser desfeita.`;
+  return `A missão, os vínculos com stacks e tags, os links${atualizacoes} serão apagados. Esta ação não pode ser desfeita.`;
 }
 
-async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
-  const missao = await carregarMissaoDaUrl(params);
-  const historico = await carregarHistoricoDaMissao(missao.id);
-
+function ListaDeChips({ id, titulo, itens }: { id: string; titulo: string; itens: readonly string[] }) {
   return (
-    <article className="flex flex-col gap-7">
-      <header className="flex flex-wrap items-center gap-4">
-        <EmblemaRank
-          rank={missao.rank}
-          rotulo={`Rank de Missão ${missao.rank}`}
-          className="h-16 w-14 shrink-0"
-        />
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h2 className="font-display text-2xl font-extrabold break-words">{missao.nome}</h2>
-          <p className="font-mono text-sm text-texto-suave">
-            Rank {missao.rank} · {ROTULOS_STATUS[missao.status]} · {missao.pontuacao.total} pontos
-          </p>
-        </div>
-      </header>
+    <section aria-labelledby={id} className="flex flex-col gap-2">
+      <h3 id={id} className={CLASSES_ROTULO}>
+        {titulo}
+      </h3>
+      <ul className="flex flex-wrap gap-2">
+        {itens.map((item) => (
+          <li key={item} className={`${CLASSES_CHIP} text-sm text-texto`}>
+            {item}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
-      <section aria-labelledby="titulo-descricao" className="flex flex-col gap-2">
-        <h3 id="titulo-descricao" className={CLASSES_ROTULO}>
-          Descrição
-        </h3>
-        <p className="leading-relaxed whitespace-pre-line break-words">{missao.descricao}</p>
-      </section>
-
-      <section aria-labelledby="titulo-stacks" className="flex flex-col gap-2">
-        <h3 id="titulo-stacks" className={CLASSES_ROTULO}>
-          Stacks
-        </h3>
-        <ul className="flex flex-wrap gap-2">
-          {missao.stacks.map((stack) => (
-            <li key={stack} className={`${CLASSES_CHIP} text-sm text-texto`}>
-              {stack}
-            </li>
-          ))}
-        </ul>
-      </section>
-
+/** Parte técnica (RN-14): só Missões de Desenvolvimento têm. */
+function ParteTecnica({ missao }: { missao: MissaoDesenvolvimento }) {
+  return (
+    <>
       <section aria-labelledby="titulo-calculo" className="flex flex-col gap-2">
         <h3 id="titulo-calculo" className={CLASSES_ROTULO}>
           Cálculo do Rank
@@ -108,6 +93,62 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
           {missao.arquitetura}
         </pre>
       </section>
+    </>
+  );
+}
+
+async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
+  const missao = await carregarMissaoDaUrl(params);
+  const historico = await carregarHistoricoDaMissao(missao.id);
+  const desenvolvimento = missao.tipo === 'dev';
+
+  return (
+    <article className="flex flex-col gap-7">
+      <header className="flex flex-wrap items-center gap-4">
+        {desenvolvimento ? (
+          <EmblemaRank
+            rank={missao.rank}
+            rotulo={`Rank de Missão ${missao.rank}`}
+            className="h-16 w-14 shrink-0"
+          />
+        ) : (
+          <SeloGeral className="h-16 w-14 shrink-0" />
+        )}
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h2 className="font-display text-2xl font-extrabold break-words">{missao.nome}</h2>
+          <p className="font-mono text-sm text-texto-suave">
+            {desenvolvimento
+              ? `Rank ${missao.rank} · ${ROTULOS_STATUS[missao.status]} · ${missao.pontuacao.total} pontos`
+              : `${ROTULOS_TIPO.geral} · ${ROTULOS_STATUS[missao.status]}`}
+          </p>
+        </div>
+      </header>
+
+      <section aria-labelledby="titulo-status" className="flex flex-col gap-2">
+        <h3 id="titulo-status" className={CLASSES_ROTULO}>
+          Status
+        </h3>
+        <StatusDaMissao id={missao.id} nome={missao.nome} status={missao.status} />
+      </section>
+
+      <section aria-labelledby="titulo-descricao" className="flex flex-col gap-2">
+        <h3 id="titulo-descricao" className={CLASSES_ROTULO}>
+          Descrição
+        </h3>
+        <p className="leading-relaxed whitespace-pre-line break-words">{missao.descricao}</p>
+      </section>
+
+      {missao.stacks.length > 0 && (
+        <ListaDeChips
+          id="titulo-stacks"
+          titulo={desenvolvimento ? 'Stacks' : 'Ferramentas'}
+          itens={missao.stacks}
+        />
+      )}
+      {missao.tags.length > 0 && <ListaDeChips id="titulo-tags" titulo="Tags" itens={missao.tags} />}
+      <LinksDaMissao links={missao.links} />
+
+      {missao.tipo === 'dev' && <ParteTecnica missao={missao} />}
 
       <dl className="grid gap-4 border-t border-borda pt-6 sm:grid-cols-2">
         <Dado rotulo="Criada em">{formatarDataHora(missao.criadoEm)}</Dado>
