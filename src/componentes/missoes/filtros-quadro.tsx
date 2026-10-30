@@ -2,7 +2,16 @@
 
 import { useId } from 'react';
 
-import { RANKS, VISTAS, haFiltroAtivo, type FiltrosMissao, type Vista } from '@/dominio/missoes/filtros';
+import { ROTULOS_TIPO, TIPOS_PROJETO } from '@/dominio/missoes/campos';
+import {
+  FILTROS_VAZIOS,
+  RANKS,
+  VISTAS,
+  haFiltroAtivo,
+  opcoesDoFiltro,
+  type FiltrosMissao,
+  type Vista,
+} from '@/dominio/missoes/filtros';
 
 import { CLASSES_CAMPO, CLASSES_ROTULO } from './estilos';
 
@@ -12,15 +21,16 @@ const CLASSES_BOTAO_BARRA =
   'inline-flex min-h-12 cursor-pointer items-center justify-center rounded-md border px-4 text-sm transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento';
 
 /**
- * Barra de filtros (RF-21) e de vista (RF-22) do Quadro. Só exibe e avisa:
- * quem guarda o estado (e a URL) é o Quadro.
+ * Barra de filtros (RF-21, RF-25) e de vista (RF-22) do Quadro. Só exibe e
+ * avisa: quem guarda o estado (e a URL) é o Quadro.
  *
- * @param props - Filtros e vista atuais, stacks disponíveis, contagens e as ações de mudança.
+ * @param props - Filtros e vista atuais, stacks e tags disponíveis, contagens e as ações de mudança.
  */
 export function FiltrosQuadro({
   filtros,
   vista,
   stacks,
+  tags,
   exibidas,
   total,
   aoMudarFiltros,
@@ -29,6 +39,7 @@ export function FiltrosQuadro({
   filtros: FiltrosMissao;
   vista: Vista;
   stacks: readonly string[];
+  tags: readonly string[];
   exibidas: number;
   total: number;
   aoMudarFiltros: (filtros: FiltrosMissao) => void;
@@ -44,9 +55,9 @@ export function FiltrosQuadro({
           role="search"
           aria-label="Filtrar missões"
           onSubmit={(evento) => evento.preventDefault()}
-          className="grid flex-1 gap-3 sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]"
+          className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
         >
-          <div className="flex min-w-0 flex-col gap-1.5">
+          <div className="flex min-w-0 flex-col gap-1.5 sm:col-span-2 xl:col-span-1">
             <label htmlFor={`${base}-busca`} className={CLASSES_ROTULO}>
               Buscar
             </label>
@@ -62,8 +73,31 @@ export function FiltrosQuadro({
             />
           </div>
           <div className="flex min-w-0 flex-col gap-1.5">
+            <label htmlFor={`${base}-tipo`} className={CLASSES_ROTULO}>
+              Tipo
+            </label>
+            <select
+              id={`${base}-tipo`}
+              value={filtros.tipo ?? ''}
+              onChange={(evento) =>
+                aoMudarFiltros({
+                  ...filtros,
+                  tipo: TIPOS_PROJETO.find((tipo) => tipo === evento.target.value) ?? null,
+                })
+              }
+              className={`${CLASSES_CAMPO} cursor-pointer`}
+            >
+              <option value="">Todos</option>
+              {TIPOS_PROJETO.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {ROTULOS_TIPO[tipo]}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex min-w-0 flex-col gap-1.5">
             <label htmlFor={`${base}-stack`} className={CLASSES_ROTULO}>
-              Stack
+              Stack ou ferramenta
             </label>
             <select
               id={`${base}-stack`}
@@ -72,7 +106,7 @@ export function FiltrosQuadro({
               className={`${CLASSES_CAMPO} cursor-pointer`}
             >
               <option value="">Todas</option>
-              {stacks.map((stack) => (
+              {opcoesDoFiltro(stacks, filtros.stack).map((stack) => (
                 <option key={stack} value={stack}>
                   {stack}
                 </option>
@@ -98,6 +132,24 @@ export function FiltrosQuadro({
               {RANKS.map((rank) => (
                 <option key={rank} value={rank}>
                   {rank}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex min-w-0 flex-col gap-1.5">
+            <label htmlFor={`${base}-tag`} className={CLASSES_ROTULO}>
+              Tag
+            </label>
+            <select
+              id={`${base}-tag`}
+              value={filtros.tag ?? ''}
+              onChange={(evento) => aoMudarFiltros({ ...filtros, tag: evento.target.value || null })}
+              className={`${CLASSES_CAMPO} cursor-pointer`}
+            >
+              <option value="">Todas</option>
+              {opcoesDoFiltro(tags, filtros.tag).map((tag) => (
+                <option key={tag} value={tag}>
+                  {tag}
                 </option>
               ))}
             </select>
@@ -132,7 +184,7 @@ export function FiltrosQuadro({
         {ativo && (
           <button
             type="button"
-            onClick={() => aoMudarFiltros({ busca: '', stack: null, rank: null })}
+            onClick={() => aoMudarFiltros(FILTROS_VAZIOS)}
             className="min-h-8 cursor-pointer rounded px-2 text-sm text-acento underline underline-offset-4 hover:text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
           >
             Limpar filtros

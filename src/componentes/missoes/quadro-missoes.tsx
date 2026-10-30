@@ -50,6 +50,16 @@ type Movimento = { id: string; status: StatusMissao };
 type PluginsDoQuadro = NonNullable<ComponentProps<typeof DragDropProvider>['plugins']>;
 
 /**
+ * Nomes sem repetição, em ordem alfabética do português (sem diferenciar maiúsculas).
+ *
+ * @param nomes - Nomes, com possíveis repetições.
+ * @returns A lista ordenada para um select de filtro.
+ */
+function nomesOrdenados(nomes: readonly string[]): string[] {
+  return [...new Set(nomes)].sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+}
+
+/**
  * Quadro de Missões interativo: filtros e vista na URL, arrasto entre colunas
  * (RF-20) com atualização otimista (o cartão muda na hora e volta se o
  * servidor recusar) e a visão Lista (RF-22).
@@ -120,13 +130,8 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
 
   const filtradas = filtrarMissoes(missoesOtimistas, filtros);
   const filtroAtivo = haFiltroAtivo(filtros);
-  const stacks = useMemo(
-    () =>
-      [...new Set(missoes.flatMap((missao) => missao.stacks))].sort((a, b) =>
-        a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }),
-      ),
-    [missoes],
-  );
+  const stacks = useMemo(() => nomesOrdenados(missoes.flatMap((missao) => missao.stacks)), [missoes]);
+  const tags = useMemo(() => nomesOrdenados(missoes.flatMap((missao) => missao.tags)), [missoes]);
 
   return (
     <div className="flex flex-1 flex-col gap-5">
@@ -134,6 +139,7 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
         filtros={filtros}
         vista={vista}
         stacks={stacks}
+        tags={tags}
         exibidas={filtradas.length}
         total={missoesOtimistas.length}
         aoMudarFiltros={(proximos) => mudarParametros(proximos, vista)}
