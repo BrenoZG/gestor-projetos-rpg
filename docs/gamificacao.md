@@ -122,3 +122,19 @@ nível da stack = mesma curva da seção 3, com máximo 50
 ## 6. Classe
 
 A Classe é identidade visual e não entra em nenhuma fórmula desta página (RN-11).
+
+## 7. Trilha Produtividade (Projetos Gerais) — RN-18, a partir do M3
+
+Os Projetos Gerais (RN-15) não têm Rank e rendem XP numa trilha separada, para o esforço fora da programação aparecer sem misturar com a evolução como desenvolvedor. Cada evento do ledger guarda a trilha em que nasceu; trocar o tipo do Projeto depois não move o XP (RN-16).
+
+| Evento (Geral) | XP |
+|---|---|
+| Criar Projeto | 10 (revogado como na trilha Desenvolvedor) |
+| Criar Atualização | 5 (idem) |
+| Concluir Atualização | 20 |
+| Concluir Projeto | `60 × (1 + 0,03 × min(Atualizações concluídas, 20))`, de 60 a 96; exige 24 h em Desenvolvimento (RN-06d) |
+
+Sem Rank, o tamanho do Projeto aparece pelo progresso registrado: mais Atualizações concluídas, mais XP. O teto de 20 limita picar Atualizações só para pontuar.
+
+- **Nível de Produtividade:** a mesma curva da §3 (1 a 100), **sem** medalha, título nem Rank. Mede conclusões registradas, não produtividade real.
+- **Domínio por ferramenta:** a regra da §5 aplicada às conclusões de Projetos Gerais (máximo nível 50). O mesmo grão: o XP de um Projeto conta inteiro para cada ferramenta dele.

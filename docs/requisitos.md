@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.3 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.4 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.4 (2026-10-29, antes do M3):** o Projeto ganha tipo — Desenvolvimento (tudo como antes) ou Geral (sem parte técnica e sem Rank, com ferramentas opcionais) (RF-23, RN-15, RN-16, ADR-0010); tags criadas pelo usuário (RF-24); links de referência (RF-26, RN-17); filtros por tipo e por tag (RF-25); a edição deixa de mudar o status, que muda pelo Quadro e pela ficha (RF-03); a trilha de XP Produtividade para os projetos Gerais fica especificada para o M3 (RN-18). Origem: pedido do dono, para gerir ideias fora da programação (revenda, vídeos, marketing, serviços).
 >
 > **1.3 (M2, 2026-10-28):** as Atualizações ficam na ficha da Missão, depois dos dados e antes de editar e excluir (RF-09, com o histórico pela data de criação); a página geral de Atualizações só consulta e muda status (RF-10); o RF-11 e a parte "Projetos por status" do RF-10 ficam atendidos pelo Quadro do M1c.
 >
@@ -19,7 +21,11 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 
 | Termo | Significado |
 |---|---|
-| **Missão** | Sinônimo de **Projeto** na interface. |
+| **Missão** | Sinônimo de **Projeto** na interface, dos dois tipos. |
+| **Tipo de Projeto** | **Desenvolvimento**: o resultado principal é código que o dono escreve e mantém (site, SaaS, app, automação, pipeline). **Geral**: o resultado principal é outra coisa (venda, conteúdo, serviço, aprendizado); código, se houver, é ferramenta de apoio. |
+| **Ferramenta** | O que um Projeto Geral usa para ser feito (ex.: Canva, CapCut). Mesmo cadastro das stacks; muda o rótulo. |
+| **Tag** | Etiqueta livre, criada pelo dono, para organizar e filtrar Projetos de qualquer tipo (ex.: Revenda, IA). Não muda regra nenhuma. |
+| **Link de referência** | Endereço `https` guardado no Projeto como lembrete (Google Drive, página, vídeo do YouTube ou do Instagram). O sistema nunca o abre. |
 | **Atualização** | Melhoria, correção ou implementação nova dentro de um Projeto existente. Sempre vinculada a um Projeto. |
 | **Ideia** | Não é entidade: uma ideia é um Projeto (ou Atualização) em status `Backlog`. |
 | **Estilo arquitetural** | Como o Projeto se organiza: Script ou automação, Monolito, Monolito modular, Hexagonal / Clean, Serverless, Orientado a eventos ou Microsserviços. |
@@ -38,12 +44,15 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | Campo | Regra |
 |---|---|
 | Nome | Obrigatório, 3–80 caracteres, **único por usuário** sem diferenciar maiúscula/minúscula e ignorando espaços nas pontas. |
+| Tipo | Obrigatório: `Desenvolvimento` ou `Geral` (RN-15). Projetos anteriores à 1.4 são `Desenvolvimento`. |
 | Descrição | Obrigatória, 1–2.000 caracteres. |
-| Estrutura / arquitetura | Obrigatória, Markdown, 1–20.000 caracteres (só espaços não vale). |
-| Estilo arquitetural | Obrigatório, um da lista do glossário. |
-| Capacidades | 0 a 8, da lista do glossário, sem repetição. |
-| Stacks | 1 a 20 tags, cada uma com 1 a 40 caracteres. Na digitação, a vírgula separa as tags. |
-| Status | `Backlog` · `Desenvolvimento` · `Concluído`. Padrão: `Backlog`. |
+| Estrutura / arquitetura | Só em Desenvolvimento: obrigatória, Markdown, 1–20.000 caracteres (só espaços não vale). |
+| Estilo arquitetural | Só em Desenvolvimento: obrigatório, um da lista do glossário. |
+| Capacidades | Só em Desenvolvimento: 0 a 8, da lista do glossário, sem repetição. |
+| Stacks / ferramentas | Desenvolvimento: 1 a 20 stacks. Geral: 0 a 20 ferramentas. Cada nome com 1 a 40 caracteres; na digitação, a vírgula separa os nomes. |
+| Tags | 0 a 10, cada uma com 1 a 30 caracteres, sem repetição (mesma regra da RN-05). |
+| Links de referência | 0 a 20, conforme RN-17, cada um com título opcional de até 80 caracteres. |
+| Status | `Backlog` · `Desenvolvimento` · `Concluído`. Padrão: `Backlog`. Escolhido no cadastro; depois, muda pelo Quadro e pela ficha. |
 | Datas (automáticas) | Criação · última edição · ingresso mais recente em `Desenvolvimento` · conclusão. |
 
 ### Atualização
@@ -68,7 +77,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 |---|---|---|
 | RF-01 | O sistema deve permitir ao usuário autenticado cadastrar um Projeto. | Must |
 | RF-02 | O sistema deve listar os Projetos do usuário. | Must |
-| RF-03 | O sistema deve permitir editar um Projeto. | Must |
+| RF-03 | O sistema deve permitir editar um Projeto, inclusive o tipo (RN-16). A edição não muda o status, que muda pelo Quadro (RF-20) e pela ficha. | Must |
 | RF-04 | O sistema deve permitir excluir um Projeto, conforme RN-04. | Must |
 | RF-05 | O sistema deve permitir cadastrar uma Atualização vinculada a um Projeto. | Must |
 | RF-06 | O sistema deve listar as Atualizações de um Projeto. | Must |
@@ -88,6 +97,10 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-20 | O sistema deve permitir mover um Projeto entre as colunas do Quadro sem abrir a edição: arrastando o cartão (mouse ou toque) ou pelo botão "Mover", que funciona só com o teclado (WCAG 2.5.7), conforme RN-02. | Must |
 | RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank de Missão, com todos os filtros combinados; os filtros ficam na URL. | Should |
 | RF-22 | O sistema deve oferecer a visão Lista: uma tabela com todos os Projetos (nome, status, Rank, pontos, stacks e última edição), ordenada pela última edição, mais recente primeiro, com os mesmos filtros do RF-21. | Should |
+| RF-23 | O sistema deve permitir cadastrar Projetos do tipo Desenvolvimento ou Geral, conforme RN-15. | Must |
+| RF-24 | O sistema deve permitir criar tags durante o cadastro ou a edição de um Projeto e atribuir de 0 a 10 tags a qualquer Projeto. | Should |
+| RF-25 | O sistema deve filtrar o Quadro e a visão Lista por tipo e por tag, combinados com os filtros do RF-21 e guardados na URL. | Should |
+| RF-26 | O sistema deve permitir cadastrar de 0 a 20 links de referência em qualquer Projeto, conforme RN-17, e exibi-los na ficha com o tipo do endereço (YouTube, Instagram, Google Drive ou página), abrindo numa aba nova. | Should |
 
 ## 5. Regras de negócio
 
@@ -106,7 +119,11 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-11 | A Classe é identidade visual. **Não** altera XP, nível, Rank ou Maestria. A troca é livre e sem custo. |
 | RN-12 | O atalho de teclado `C` abre a Ficha e `Esc` fecha. O atalho é ignorado com foco em campo de texto e pode ser desligado pelo usuário (WCAG 2.1.4). |
 | RN-13 | Valores de XP são inteiros, arredondados ao inteiro mais próximo (meio para cima). |
-| RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank de Missão pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. |
+| RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank de Missão pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. Só Projetos de Desenvolvimento têm Rank (RN-15). |
+| RN-15 | O tipo define os campos. Desenvolvimento exige estilo arquitetural, arquitetura e de 1 a 20 stacks e tem Rank (RN-14). Geral não tem estilo, capacidades, arquitetura nem Rank, e as ferramentas são opcionais (0 a 20). |
+| RN-16 | O tipo pode ser trocado na edição. De Desenvolvimento para Geral, estilo, capacidades e arquitetura são apagados depois de uma confirmação que avisa a perda; as stacks passam a valer como ferramentas. De Geral para Desenvolvimento, os campos técnicos precisam ser preenchidos. A partir do M3, o XP já concedido fica na trilha em que nasceu. |
+| RN-17 | Link válido: endereço `https://` bem formado, com até 2.000 caracteres e sem usuário ou senha embutidos. O sistema nunca abre o link no servidor; na tela, o link abre numa aba nova sem dar acesso à página de origem. |
+| RN-18 | (M3) Trilha **Produtividade**, só para Projetos Gerais: criar Projeto 10 XP · criar Atualização 5 · concluir Atualização 20 · concluir Projeto `60 × (1 + 0,03 × min(Atualizações concluídas, 20))`, com a trava de 24 h da RN-06d. Mesma curva de níveis da RN-07, sem medalha, título nem Rank. **Domínio por ferramenta**: a regra da RN-10 aplicada às conclusões de Projetos Gerais. Os eventos de Desenvolvimento continuam na trilha Desenvolvedor (RN-06 a RN-10). |
 
 ## 6. Classes
 
@@ -180,6 +197,38 @@ Cenário: filtro na URL
   E, sem nenhum resultado, aparece "Nenhuma missão com esses filtros." com "Limpar filtros"
 ```
 
+### RF-23 a RF-26 (tipos, tags e links)
+
+```gherkin
+Cenário: Projeto Geral sem a parte técnica
+  Dado o formulário de Projeto com o tipo Geral
+  Quando o usuário envia nome, descrição e status, sem ferramentas e sem arquitetura
+  Então o Projeto é gravado sem estilo, capacidades, arquitetura e Rank
+  E a ficha mostra "Geral" no lugar do Rank
+
+Cenário: Desenvolvimento continua exigindo a arquitetura
+  Dado o formulário de Projeto com o tipo Desenvolvimento
+  Quando o usuário envia a estrutura/arquitetura só com espaços
+  Então o campo mostra "Descreva a estrutura e a arquitetura da missão."
+
+Cenário: link que não é https
+  Dado um link "javascript:alert(1)" ou "http://exemplo.com"
+  Quando o usuário envia o formulário
+  Então aparece "Link 1: o endereço precisa começar com https:// e ser válido."
+  E nada é gravado
+
+Cenário: troca de Desenvolvimento para Geral
+  Dado um Projeto de Desenvolvimento em edição
+  Quando o usuário escolhe o tipo Geral
+  Então um aviso diz que estilo, capacidades e arquitetura serão apagados
+  E salvar só fica disponível depois de marcar "Entendi"
+
+Cenário: filtro por tag na URL
+  Dado o filtro de tag "Revenda"
+  Quando o usuário recarrega a página
+  Então o filtro continua aplicado
+```
+
 ### RN-06 (XP)
 
 ```gherkin
@@ -213,7 +262,7 @@ Cenário: concluir antes da trava não concede XP
 
 ## 9. Fora de escopo (v1)
 
-Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe.
+Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe · renomear ou excluir tags · tags em Atualizações · pré-visualização de links (vídeo embutido ou leitura do título) · medalhas, títulos e Rank na trilha Produtividade.
 
 ## 10. Questões em aberto
 
@@ -227,7 +276,9 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-01..04, RN-02, RN-04 (sem Atualizações), RN-05 | M1b | E2E (Playwright + axe) + pgTAP (RLS, trigger, função) |
 | RF-05..09, RF-10 (Atualizações por status e por Projeto), RN-01, RN-03, RN-04 (contagem de Atualizações) | M2 | pgTAP (RLS, trigger, cascata) + unitário (validação, filtros, paginação) + E2E (ficha, página geral, axe) |
 | RF-10 (Projetos por status), RF-11 | M1c | Colunas e filtros do Quadro (RF-21): E2E do M1c |
-| RF-12, RN-06, RN-07, RN-09, RN-10, RN-13 | M3 | Unitário (domínio) + integração (função atômica) |
+| RF-23, RF-24, RF-26, RN-15, RN-16, RN-17, RF-03 (edição sem status) | 1.4, parte 1 | Unitário (domínio, validação, dados) + pgTAP (CHECKs, RLS e `salvar_missao_v3`) + E2E (cadastro Geral, link recusado, troca de tipo, 360 px, axe) |
+| RF-25 | 1.4, parte 2 | Unitário (filtros) + E2E (URL, axe) |
+| RF-12, RN-06, RN-07, RN-09, RN-10, RN-13, RN-18 | M3 | Unitário (domínio) + integração (função atômica) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |

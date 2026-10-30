@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2). A implementar: `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`, etapa expandir). A implementar: `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -13,6 +13,10 @@ erDiagram
     PROJETOS ||--o{ PROJETO_STACKS : usa
     STACKS ||--o{ PROJETO_STACKS : "aparece em"
     PROJETOS ||--o{ ATUALIZACOES : recebe
+    PERSONAGEM ||--o{ TAGS : cria
+    PROJETOS ||--o{ PROJETO_TAGS : marca
+    TAGS ||--o{ PROJETO_TAGS : "aparece em"
+    PROJETOS ||--o{ PROJETO_LINKS : guarda
     PERSONAGEM ||--o{ EVENTOS_XP : acumula
 
     PERSONAGEM {
@@ -25,11 +29,12 @@ erDiagram
     PROJETOS {
         uuid id PK
         uuid user_id FK
+        text tipo "dev ou geral (RN-15)"
         text nome
         text nome_normalizado "único por user_id"
         text descricao
-        text arquitetura "Markdown, obrigatória (RN-14)"
-        text estilo_arquitetural "base do Rank"
+        text arquitetura "Markdown; obrigatória em dev, nula em geral"
+        text estilo_arquitetural "base do Rank; nulo em geral"
         text_array capacidades "0 a 8"
         text status
         timestamptz inicio_desenvolvimento_em
@@ -57,6 +62,23 @@ erDiagram
         timestamptz concluido_em
         timestamptz criado_em
         timestamptz atualizado_em
+    }
+    TAGS {
+        uuid id PK
+        uuid user_id FK
+        text nome "grafia exibida"
+        text nome_normalizado "único por user_id"
+    }
+    PROJETO_TAGS {
+        uuid projeto_id PK, FK
+        uuid tag_id PK, FK
+    }
+    PROJETO_LINKS {
+        uuid id PK
+        uuid projeto_id FK "ON DELETE CASCADE"
+        text url "https, até 2.000"
+        text titulo "opcional"
+        smallint ordem "0 a 19, única por projeto"
     }
     EVENTOS_XP {
         uuid id PK
@@ -91,22 +113,24 @@ erDiagram
 | `user_id` | `uuid` FK | dono; base do RLS |
 | `nome` | `text` | 3–80 caracteres |
 | `nome_normalizado` | `text` | `lower(trim(nome))`; `UNIQUE (user_id, nome_normalizado)` |
+| `tipo` | `text` | `NOT NULL DEFAULT 'dev'`; `CHECK (tipo IN ('dev','geral'))` (RN-15, ADR-0010) |
 | `descricao` | `text` | 1–2.000 |
-| `arquitetura` | `text` | `NOT NULL`; 1–20.000 e não só espaços (`CHECK`) |
-| `estilo_arquitetural` | `text` | `NOT NULL DEFAULT 'monolito'`; `CHECK` nos 7 estilos da RN-14 |
+| `arquitetura` | `text` | nula em `geral`; em `dev`, 1–20.000 e não só espaços (`CHECK`) |
+| `estilo_arquitetural` | `text` | nulo em `geral`; `CHECK` nos 7 estilos da RN-14. `DEFAULT 'monolito'` só até a etapa contrair dos tipos |
 | `capacidades` | `text[]` | `NOT NULL DEFAULT '{}'`; `CHECK` de subconjunto das 8 capacidades e no máximo 8 itens. A repetição não é barrada no `CHECK` (sem subconsulta): a função grava sem repetir e o domínio conta capacidades distintas |
 | `status` | `text` | `CHECK (status IN ('backlog','desenvolvimento','concluido'))` |
 | `inicio_desenvolvimento_em` | `timestamptz` | ingresso mais recente em Desenvolvimento (trava de 24 h) |
 | `concluido_em` | `timestamptz` | preenchido só em `concluido` (`CHECK` de coerência) |
 | `criado_em`, `atualizado_em` | `timestamptz` | automáticos |
+| — | | `CHECK projetos_campos_por_tipo`: `dev` exige estilo e arquitetura; `geral` os exige nulos e `capacidades = '{}'` |
 
 **Datas de status (RN-02):** um trigger `BEFORE INSERT OR UPDATE` grava `inicio_desenvolvimento_em` ao entrar em Desenvolvimento, `concluido_em` ao entrar em Concluído (e o apaga ao sair) e `atualizado_em` em toda edição. Essas colunas ficam fora dos `GRANT`s de escrita: só o trigger as grava.
 
-**Privilégios** (migration `criar_missoes`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `nome`, `descricao`, `arquitetura`, `estilo_arquitetural`, `capacidades` e `status`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
+**Privilégios** (migrations `criar_missoes` e `tipos_tags_links`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `tipo`, `nome`, `descricao`, `arquitetura`, `estilo_arquitetural`, `capacidades` e `status`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
 
-O Rank de Missão **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14). Guardá-lo criaria duas fontes da verdade.
+O Rank de Missão **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14), e só em `dev`. Guardá-lo criaria duas fontes da verdade.
 
-**Gravação:** `salvar_missao_v2` grava a Missão, as stacks e os vínculos numa transação, e recusa arquitetura vazia (`22023`). A mudança de coluna no Quadro (RF-20) altera só `status`, direto na tabela (GRANT de coluna e RLS), e não mexe na "última edição" quando o status não muda. A troca da `salvar_missao` pela v2 foi feita em dois deploys (expandir e depois contrair, `docs/operacao.md` §4).
+**Gravação:** `salvar_missao_v3` grava a Missão, as stacks (ou ferramentas), as tags, os links e os vínculos numa transação; na edição, **não altera o status**. A mudança de status (Quadro, RF-20, e ficha) altera só `status`, direto na tabela (GRANT de coluna e RLS), e não mexe na "última edição" quando o status não muda. As trocas da `salvar_missao` pela v2 e da v2 pela v3 foram feitas em dois deploys cada (expandir e depois contrair, `docs/operacao.md` §4); a v2 sai na etapa contrair dos tipos.
 
 ### `stacks` — grão: 1 linha por stack distinta do usuário
 | Coluna | Tipo | Regra |
@@ -121,8 +145,25 @@ Tabela própria, e não array no projeto: permite autocompletar (evita "Next.js"
 ### `projeto_stacks` — grão: 1 linha por par (Projeto, stack)
 PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. O RLS só aceita ligar uma Missão do usuário a uma stack do mesmo usuário.
 
-### Função `salvar_missao`
-Cria (`p_id` nulo) ou altera uma Missão, insere as stacks novas (`on conflict do nothing`, mantendo a primeira grafia) e substitui os vínculos, **numa transação** (ADR-0003). `SECURITY INVOKER`: roda com a sessão de quem chama, sob o RLS. Valida 1 a 20 stacks distintas. Erros: `23505` nome repetido · `23514` campo fora da regra · `22023` quantidade de stacks · `P0002` Missão inexistente ou de outro usuário.
+### `tags` — grão: 1 linha por tag distinta do usuário
+Espelho de `stacks`: `nome` com 1–30 caracteres (primeira grafia, RN-05), `nome_normalizado` com `UNIQUE (user_id, nome_normalizado)`. RLS: o dono lê e cria; `user_id` vem da sessão.
+
+### `projeto_tags` — grão: 1 linha por par (Projeto, tag)
+PK composta `(projeto_id, tag_id)`, as duas FKs com `ON DELETE CASCADE` e índice por `tag_id` (filtro e cascata). O RLS só aceita ligar uma Missão do usuário a uma tag do mesmo usuário.
+
+### `projeto_links` — grão: 1 linha por link de uma Missão
+| Coluna | Tipo | Regra |
+|---|---|---|
+| `id` | `uuid` PK | |
+| `projeto_id` | `uuid` FK | `ON DELETE CASCADE`; o RLS exige a Missão do usuário |
+| `url` | `text` | até 2.000; `CHECK` de `https://` sem usuário ou senha antes do domínio (segunda barreira da RN-17) |
+| `titulo` | `text` | opcional; até 80 e não só espaços |
+| `ordem` | `smallint` | 0–19, posição na tela; `UNIQUE (projeto_id, ordem)` |
+
+Os links não são alterados, só trocados inteiros pela função de gravação. O servidor nunca busca o endereço (sem risco de SSRF).
+
+### Função `salvar_missao_v3`
+Cria (`p_id` nulo) ou altera uma Missão com tipo, stacks ou ferramentas, tags e links, **numa transação** (ADR-0003). Em `geral`, descarta estilo, capacidades e arquitetura (RN-16). Insere stacks e tags novas (`on conflict do nothing`, mantendo a primeira grafia), substitui os vínculos e regrava os links com `ordem` 0, 1, …. Na edição, ignora `p_status`; no cadastro, o exige. `SECURITY INVOKER`: roda com a sessão de quem chama, sob o RLS. Erros: `23505` nome repetido · `23514` campo fora da regra · `22023` arquitetura vazia, status inicial ausente ou quantidade fora do limite (stacks 1–20 em `dev` e 0–20 em `geral`, tags 0–10, links 0–20) · `P0002` Missão inexistente ou de outro usuário.
 
 ### `atualizacoes` — grão: 1 linha por Atualização
 | Coluna | Tipo | Regra |
