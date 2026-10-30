@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`. A implementar: `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`; a função `renomear_tag` e a exclusão de tag sem uso (requisitos 1.5, migration `renomear_tags`). A implementar: `eventos_xp` e a função `concluir_item` (M3).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -146,7 +146,7 @@ Tabela própria, e não array no projeto: permite autocompletar (evita "Next.js"
 PK composta `(projeto_id, stack_id)`. Ambas as FKs com `ON DELETE CASCADE`. O RLS só aceita ligar uma Missão do usuário a uma stack do mesmo usuário.
 
 ### `tags` — grão: 1 linha por tag distinta do usuário
-Espelho de `stacks`: `nome` com 1–30 caracteres (primeira grafia, RN-05), `nome_normalizado` com `UNIQUE (user_id, nome_normalizado)`. RLS: o dono lê e cria; `user_id` vem da sessão.
+Espelho de `stacks`: `nome` com 1–30 caracteres (primeira grafia, RN-05, até o dono renomear, RN-19), `nome_normalizado` com `UNIQUE (user_id, nome_normalizado)`. RLS: o dono lê, cria, altera e exclui só a tag **sem uso** (policy com `not exists` em `projeto_tags`: o delete de tag em uso afeta 0 linhas, sem erro). Privilégios (migrations `tipos_tags_links` e `renomear_tags`): `authenticated` insere e altera só `nome` e exclui; `user_id` vem da sessão, nunca do cliente.
 
 ### `projeto_tags` — grão: 1 linha por par (Projeto, tag)
 PK composta `(projeto_id, tag_id)`, as duas FKs com `ON DELETE CASCADE` e índice por `tag_id` (filtro e cascata). O RLS só aceita ligar uma Missão do usuário a uma tag do mesmo usuário.
@@ -164,6 +164,9 @@ Os links não são alterados, só trocados inteiros pela função de gravação.
 
 ### Função `salvar_missao_v3`
 Cria (`p_id` nulo) ou altera uma Missão com tipo, stacks ou ferramentas, tags e links, **numa transação** (ADR-0003). Em `geral`, descarta estilo, capacidades e arquitetura (RN-16). Insere stacks e tags novas (`on conflict do nothing`, mantendo a primeira grafia), substitui os vínculos e regrava os links com `ordem` 0, 1, …. Na edição, ignora `p_status`; no cadastro, o exige. `SECURITY INVOKER`: roda com a sessão de quem chama, sob o RLS. Erros: `23505` nome repetido · `23514` campo fora da regra · `22023` arquitetura vazia, status inicial ausente ou quantidade fora do limite (stacks 1–20 em `dev` e 0–20 em `geral`, tags 0–10, links 0–20) · `P0002` Missão inexistente ou de outro usuário.
+
+### Função `renomear_tag`
+Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). Se o nome novo já é de outra tag do usuário (comparação da RN-05), devolve o conflito sem mudar nada; com `p_juntar`, **numa transação**, passa os vínculos para a tag existente (`on conflict do nothing` descarta o vínculo repetido), dá a ela a grafia digitada e exclui a tag renomeada (RN-19). Devolve uma linha `(resultado, projetos, destino)`: `resultado` é `renomeada`, `conflito` ou `juntada`; `projetos`, quantas Missões tinham a tag; `destino`, a grafia final (no conflito, a da tag existente). Trava as duas tags com `for update`. `SECURITY INVOKER`, sob o RLS. Erros: `P0002` tag inexistente ou de outro usuário · `23514` nome fora da regra (CHECK da tabela).
 
 ### `atualizacoes` — grão: 1 linha por Atualização
 | Coluna | Tipo | Regra |

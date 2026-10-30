@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.4 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.5 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.5 (2026-10-30, antes do M3):** página Tags com a quantidade de Projetos de cada tag (RF-27), renomear tag (RF-28) e excluir tag sem uso (RF-29); renomear para um nome que já existe junta as tags, depois de confirmação (RN-19). Sai do fora de escopo "renomear ou excluir tags"; entra "excluir tag em uso". Origem: pedido do dono, para corrigir tags digitadas errado.
 >
 > **1.4 (2026-10-29, antes do M3):** o Projeto ganha tipo — Desenvolvimento (tudo como antes) ou Geral (sem parte técnica e sem Rank, com ferramentas opcionais) (RF-23, RN-15, RN-16, ADR-0010); tags criadas pelo usuário (RF-24); links de referência (RF-26, RN-17); filtros por tipo e por tag (RF-25); a edição deixa de mudar o status, que muda pelo Quadro e pela ficha (RF-03); a trilha de XP Produtividade para os projetos Gerais fica especificada para o M3 (RN-18). Origem: pedido do dono, para gerir ideias fora da programação (revenda, vídeos, marketing, serviços).
 >
@@ -101,6 +103,9 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-24 | O sistema deve permitir criar tags durante o cadastro ou a edição de um Projeto e atribuir de 0 a 10 tags a qualquer Projeto. | Should |
 | RF-25 | O sistema deve filtrar o Quadro e a visão Lista por tipo e por tag, combinados com os filtros do RF-21 e guardados na URL. | Should |
 | RF-26 | O sistema deve permitir cadastrar de 0 a 20 links de referência em qualquer Projeto, conforme RN-17, e exibi-los na ficha com o tipo do endereço (YouTube, Instagram, Google Drive ou página), abrindo numa aba nova. | Should |
+| RF-27 | O sistema deve exibir, numa página Tags acessível pelo menu principal, as tags do usuário em ordem alfabética, cada uma com a quantidade de Projetos que a usam; sem tags, a página explica que elas nascem no cadastro ou na edição de um Projeto. | Should |
+| RF-28 | O sistema deve permitir renomear uma tag na própria linha da página Tags (Salvar, Cancelar e Esc), com a mesma regra de nome da criação (1 a 30 caracteres, sem espaços nas pontas); o nome novo vale para todos os Projetos que usam a tag, conforme RN-19. | Should |
+| RF-29 | O sistema deve permitir excluir, com confirmação, uma tag que nenhum Projeto usa. | Should |
 
 ## 5. Regras de negócio
 
@@ -110,7 +115,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-02 | Qualquer transição entre status é permitida. Entrar em `Concluído` grava a data de conclusão; sair de `Concluído` apaga essa data. Entrar em `Desenvolvimento` grava a data de ingresso (sobrescreve a anterior). |
 | RN-03 | Um Projeto `Concluído` aceita novas Atualizações e **não** é reaberto automaticamente por isso. |
 | RN-04 | Excluir um Projeto exclui suas Atualizações. A interface pede confirmação exibindo a quantidade de Atualizações que serão excluídas. |
-| RN-05 | Stacks são normalizadas para comparação: sem espaços nas pontas, sem diferenciar maiúscula/minúscula. A primeira grafia cadastrada é a exibida. |
+| RN-05 | Stacks são normalizadas para comparação: sem espaços nas pontas, sem diferenciar maiúscula/minúscula. A primeira grafia cadastrada é a exibida. A mesma regra vale para ferramentas e tags; para tags, renomear (RN-19) troca a grafia exibida. |
 | RN-06 | XP é registrado no ledger, conforme `docs/gamificacao.md`: (a) cada tipo de evento é concedido no máximo **uma vez por item**; (b) XP de conclusão é **permanente**, mesmo que o item seja excluído ou reaberto depois; (c) XP de criação é **revogado** se o item for excluído sem ter recebido XP de conclusão; (d) XP de conclusão de **Projeto** só é concedido se o Projeto estiver há **24 horas ou mais** em `Desenvolvimento`, contadas do ingresso mais recente. Conclusão que não cumpre a trava não registra evento, e uma conclusão futura que cumpra ainda pode conceder o XP. |
 | RN-07 | Nível é o maior `n` (1 a 100) tal que `XP total ≥ arredondar(20 × (n − 1)^1,5)`. |
 | RN-08 | Medalha e título são concedidos ao alcançar os níveis 10, 20, …, 100 e são **permanentes**. A animação de cada medalha toca uma única vez. |
@@ -124,6 +129,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-16 | O tipo pode ser trocado na edição. De Desenvolvimento para Geral, estilo, capacidades e arquitetura são apagados depois de uma confirmação que avisa a perda; as stacks passam a valer como ferramentas. De Geral para Desenvolvimento, os campos técnicos precisam ser preenchidos. A partir do M3, o XP já concedido fica na trilha em que nasceu. |
 | RN-17 | Link válido: endereço `https://` bem formado, com até 2.000 caracteres e sem usuário ou senha embutidos. O sistema nunca abre o link no servidor; na tela, o link abre numa aba nova sem dar acesso à página de origem. |
 | RN-18 | (M3) Trilha **Produtividade**, só para Projetos Gerais: criar Projeto 10 XP · criar Atualização 5 · concluir Atualização 20 · concluir Projeto `60 × (1 + 0,03 × min(Atualizações concluídas, 20))`, com a trava de 24 h da RN-06d. Mesma curva de níveis da RN-07, sem medalha, título nem Rank. **Domínio por ferramenta**: a regra da RN-10 aplicada às conclusões de Projetos Gerais. Os eventos de Desenvolvimento continuam na trilha Desenvolvedor (RN-06 a RN-10). |
+| RN-19 | Renomear uma tag para um nome que já é de outra tag do usuário (comparação da RN-05) **junta** as duas, depois de uma confirmação que mostra quantos Projetos serão movidos: os Projetos passam para a tag existente, que fica com a grafia digitada; um Projeto que tinha as duas fica com uma só; a tag renomeada deixa de existir. A junção não pode ser desfeita. Trocar só maiúsculas e minúsculas renomeia a mesma tag. |
 
 ## 6. Classes
 
@@ -229,6 +235,34 @@ Cenário: filtro por tag na URL
   Então o filtro continua aplicado
 ```
 
+### RF-27 a RF-29 e RN-19 (tags)
+
+```gherkin
+Cenário: renomear para um nome livre
+  Dado a tag "Vidos" usada por 1 Projeto
+  Quando o usuário a renomeia para "Vídeos"
+  Então o Projeto passa a mostrar a tag "Vídeos"
+  E a tag "Vidos" não aparece mais na página Tags
+
+Cenário: renomear para um nome que já existe junta as tags
+  Dado a tag "Revnda" usada por 2 Projetos, um deles também com a tag "Revenda"
+  Quando o usuário renomeia "Revnda" para "revenda"
+  Então aparece a confirmação de que os 2 Projetos passam para "Revenda" e "Revnda" deixa de existir
+  E, ao confirmar, os 2 Projetos ficam com uma única tag "revenda"
+  E a tag "Revnda" deixa de existir
+
+Cenário: nome fora da regra
+  Dado a edição do nome de uma tag
+  Quando o usuário salva um nome só com espaços ou com 31 caracteres
+  Então o campo mostra "A tag precisa ter de 1 a 30 caracteres."
+  E nada é gravado
+
+Cenário: excluir só tag sem uso
+  Dado uma tag usada por 0 Projetos e outra usada por 1 Projeto
+  Então só a tag sem uso oferece "Excluir"
+  E, se a tag voltar a ser usada antes da confirmação, o sistema recusa a exclusão e explica o motivo
+```
+
 ### RN-06 (XP)
 
 ```gherkin
@@ -262,7 +296,7 @@ Cenário: concluir antes da trava não concede XP
 
 ## 9. Fora de escopo (v1)
 
-Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe · renomear ou excluir tags · tags em Atualizações · pré-visualização de links (vídeo embutido ou leitura do título) · medalhas, títulos e Rank na trilha Produtividade.
+Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe · excluir tag em uso · tags em Atualizações · pré-visualização de links (vídeo embutido ou leitura do título) · medalhas, títulos e Rank na trilha Produtividade.
 
 ## 10. Questões em aberto
 
@@ -278,6 +312,7 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-10 (Projetos por status), RF-11 | M1c | Colunas e filtros do Quadro (RF-21): E2E do M1c |
 | RF-23, RF-24, RF-26, RN-15, RN-16, RN-17, RF-03 (edição sem status) | 1.4, parte 1 | Unitário (domínio, validação, dados) + pgTAP (CHECKs, RLS e `salvar_missao_v3`) + E2E (cadastro Geral, link recusado, troca de tipo, 360 px, axe) |
 | RF-25 | 1.4, parte 2 | Unitário (filtros) + E2E (URL, axe) |
+| RF-27, RF-28, RF-29, RN-19 | 1.5 | Unitário (validação, dados) + pgTAP (`renomear_tag`, policies de alterar e excluir) + E2E (juntar, teclado, nome inválido, excluir sem uso, 360 px, axe) |
 | RF-12, RN-06, RN-07, RN-09, RN-10, RN-13, RN-18 | M3 | Unitário (domínio) + integração (função atômica) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
