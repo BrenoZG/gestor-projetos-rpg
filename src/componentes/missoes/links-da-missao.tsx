@@ -1,5 +1,5 @@
 import type { LinkReferencia } from '@/dominio/missoes/campos';
-import { tipoDeLink, type TipoDeLink } from '@/dominio/missoes/links';
+import { dominioDoLink, tipoDeLink, type TipoDeLink } from '@/dominio/missoes/links';
 
 import { CLASSES_ROTULO } from './estilos';
 
@@ -20,7 +20,7 @@ const ICONES: Readonly<Record<TipoDeLink, string>> = {
 
 /** Texto do link: o título, ou o domínio quando não há título. */
 function textoDoLink({ url, titulo }: LinkReferencia): string {
-  return titulo ?? new URL(url).hostname.replace(/^www\./, '');
+  return titulo ?? dominioDoLink(url);
 }
 
 /**

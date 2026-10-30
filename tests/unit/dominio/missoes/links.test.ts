@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { tipoDeLink, validarUrlDeLink } from '@/dominio/missoes/links';
+import { dominioDoLink, tipoDeLink, validarUrlDeLink } from '@/dominio/missoes/links';
 
 describe('validarUrlDeLink (RN-17)', () => {
   it('aceita https e devolve o endereço normalizado', () => {
@@ -69,5 +69,18 @@ describe('tipoDeLink', () => {
 
   it('endereço inválido é página', () => {
     expect(tipoDeLink('não é url')).toBe('pagina');
+  });
+});
+
+describe('dominioDoLink', () => {
+  it.each([
+    ['https://www.instagram.com/p/abc', 'instagram.com'],
+    ['https://drive.google.com/file/d/abc', 'drive.google.com'],
+  ])('"%s" mostra %s (sem o www)', (url, dominio) => {
+    expect(dominioDoLink(url)).toBe(dominio);
+  });
+
+  it('endereço que o navegador não interpreta devolve o próprio texto, sem lançar', () => {
+    expect(dominioDoLink('https://exa%mple.com/')).toBe('https://exa%mple.com/');
   });
 });
