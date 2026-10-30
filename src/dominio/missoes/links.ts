@@ -48,6 +48,19 @@ export function validarUrlDeLink(entrada: string): ResultadoUrlDeLink {
 }
 
 /**
+ * Domínio do link, sem o `www.`, para o texto do link sem título. Não lança:
+ * o CHECK do banco aceita endereços que o `URL` recusa (ex.: `%` no domínio),
+ * e a ficha não pode quebrar por um link.
+ *
+ * @param url - Endereço gravado.
+ * @returns O domínio, ou o próprio endereço quando ele não puder ser interpretado.
+ */
+export function dominioDoLink(url: string): string {
+  const dominio = interpretarUrl(url)?.hostname;
+  return dominio === undefined ? url : dominio.replace(/^www\./, '');
+}
+
+/**
  * Tipo do link pelo domínio, para escolher o ícone na ficha.
  *
  * @param url - Endereço já validado.
