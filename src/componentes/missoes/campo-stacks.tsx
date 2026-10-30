@@ -3,7 +3,7 @@
 import { useId, useRef, useState, type KeyboardEvent } from 'react';
 
 import { LIMITES_MISSAO } from '@/dominio/missoes/campos';
-import { deduplicarStacks, separarStacksDigitadas } from '@/dominio/missoes/normalizacao';
+import { deduplicarNomes, separarNomesDigitados } from '@/dominio/missoes/normalizacao';
 
 import { CLASSES_AJUDA, CLASSES_CAMPO, CLASSES_CHIP, CLASSES_ROTULO } from './estilos';
 import { MensagemErroCampo } from './mensagem-erro-campo';
@@ -40,7 +40,7 @@ export function CampoStacks({
   const cheio = stacks.length >= MAXIMO_STACKS;
 
   function incluir(texto: string): void {
-    aoMudar(deduplicarStacks([...stacks, ...separarStacksDigitadas(texto)]).slice(0, MAXIMO_STACKS));
+    aoMudar(deduplicarNomes([...stacks, ...separarNomesDigitados(texto)]).slice(0, MAXIMO_STACKS));
   }
 
   function adicionar(): void {
@@ -130,7 +130,7 @@ export function CampoStacks({
           Adicionar
         </button>
         {/* Texto digitado e não confirmado também vai no envio. */}
-        {separarStacksDigitadas(rascunho).map((parte, indice) => (
+        {separarNomesDigitados(rascunho).map((parte, indice) => (
           <input key={`${indice}-${parte}`} type="hidden" name="stacks" value={parte} />
         ))}
       </div>
