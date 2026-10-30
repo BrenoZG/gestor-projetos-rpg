@@ -34,7 +34,7 @@ select ok(
 -- B cadastra uma Missão com uma Atualização; os ids ficam guardados.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v2(null, 'Missão de B', 'x', 'y', 'script', '{}', 'backlog', array['Go']);
+select public.salvar_missao_v3(null, 'dev', 'Missão de B', 'x', 'y', 'script', '{}', 'backlog', array['Go'], '{}', '[]');
 insert into public.atualizacoes (projeto_id, titulo, descricao)
 select id, 'Atualização de B', 'Feita por B' from public.projetos where nome = 'Missão de B';
 reset role;
@@ -44,8 +44,8 @@ select set_config('teste.atualizacao_b', (select id::text from public.atualizaco
 -- A partir daqui, as consultas rodam como o usuário A logado.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
-select public.salvar_missao_v2(null, 'Gestor', 'x', 'y', 'monolito', '{}', 'backlog', array['Next.js']);
-select public.salvar_missao_v2(null, 'Agenda', 'x', 'y', 'script', '{}', 'concluido', array['Python']);
+select public.salvar_missao_v3(null, 'dev', 'Gestor', 'x', 'y', 'monolito', '{}', 'backlog', array['Next.js'], '{}', '[]');
+select public.salvar_missao_v3(null, 'dev', 'Agenda', 'x', 'y', 'script', '{}', 'concluido', array['Python'], '{}', '[]');
 
 select lives_ok(
   $$ insert into public.atualizacoes (projeto_id, titulo, descricao)

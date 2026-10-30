@@ -1,9 +1,9 @@
 -- Testes dos tipos de projeto (RN-15), das tags (RF-24) e dos links (RF-26,
 -- RN-17) no banco (pgTAP): colunas e CHECKs, tabelas novas, RLS, privilégios
--- e a função salvar_missao_v3, inclusive a compatibilidade da etapa expandir.
+-- e a função salvar_missao_v3.
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
-select plan(35);
+select plan(34);
 
 insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000000a'),
@@ -198,12 +198,6 @@ select throws_ok(
   format($$ select public.salvar_missao_v3(%L, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null, array['Go'],
        '{}', '[]') $$, current_setting('teste.missao_b')),
   'P0002', null, 'A não edita a Missão de B pela v3'
-);
-
--- Compatibilidade da etapa expandir: o app antigo ainda grava pela v2
-select lives_ok(
-  $$ select public.salvar_missao_v2(null, 'Pela v2', 'x', 'y', 'script', '{}', 'backlog', array['Go']) $$,
-  'a salvar_missao_v2 continua criando Missões'
 );
 
 select * from finish();
