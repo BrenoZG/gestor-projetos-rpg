@@ -24,6 +24,7 @@ const MISSAO_INEXISTENTE: EstadoFormularioMissao = { erros: {}, mensagem: 'Esta 
 
 function lerFormulario(formulario: FormData): Record<string, unknown> {
   return {
+    tipo: formulario.get('tipo'),
     nome: formulario.get('nome'),
     descricao: formulario.get('descricao'),
     arquitetura: formulario.get('arquitetura'),
@@ -31,12 +32,15 @@ function lerFormulario(formulario: FormData): Record<string, unknown> {
     capacidades: formulario.getAll('capacidades'),
     status: formulario.get('status'),
     stacks: formulario.getAll('stacks'),
+    tags: formulario.getAll('tags'),
+    link_url: formulario.getAll('link_url'),
+    link_titulo: formulario.getAll('link_titulo'),
   };
 }
 
 async function gravar(id: string | null, formulario: FormData): Promise<EstadoFormularioMissao> {
   const supabase = await clienteComSessao();
-  const validacao = validarFormularioMissao(lerFormulario(formulario));
+  const validacao = validarFormularioMissao(lerFormulario(formulario), id === null ? 'criar' : 'editar');
   if (!validacao.ok) return { erros: validacao.erros, mensagem: null };
 
   const resultado = await salvarMissao(supabase, id, validacao.dados);
@@ -70,7 +74,8 @@ export async function criarMissao(
 }
 
 /**
- * Edita uma Missão (RF-03), inclusive o status (RN-02, datas gravadas pelo banco).
+ * Edita uma Missão (RF-03), inclusive o tipo (RN-16). O status não muda por
+ * aqui: só pelo Quadro (RF-20) e pela ficha.
  *
  * @param id - Missão a editar (ligado com `.bind`; validado aqui, pois vem do cliente).
  * @param _estadoAnterior - Estado do envio anterior.

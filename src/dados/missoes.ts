@@ -1,9 +1,11 @@
 import {
   ehEstiloArquitetural,
   ehStatusMissao,
+  ehTipoProjeto,
   type Capacidade,
   type DadosMissao,
   type EstiloArquitetural,
+  type LinkReferencia,
   type StatusMissao,
 } from '@/dominio/missoes/campos';
 import {
@@ -21,84 +23,122 @@ import type { criarClienteServidor } from '@/lib/supabase/servidor';
 
 type ClienteSupabase = Awaited<ReturnType<typeof criarClienteServidor>>;
 
-export type Missao = {
+type CamposComuns = {
   id: string;
   nome: string;
   descricao: string;
-  arquitetura: string;
-  estilo: EstiloArquitetural;
-  capacidades: Capacidade[];
   status: StatusMissao;
+  /** Stacks (Desenvolvimento) ou ferramentas (Geral), em ordem alfabética. */
   stacks: string[];
-  pontuacao: PontuacaoMissao;
-  rank: RankMissao;
+  tags: string[];
+  links: LinkReferencia[];
   inicioDesenvolvimentoEm: string | null;
   concluidoEm: string | null;
   criadoEm: string;
   atualizadoEm: string;
 };
 
-/** Linha de `projetos` com as stacks embutidas pelo PostgREST (via `projeto_stacks`). */
+export type MissaoDesenvolvimento = CamposComuns & {
+  tipo: 'dev';
+  arquitetura: string;
+  estilo: EstiloArquitetural;
+  capacidades: Capacidade[];
+  pontuacao: PontuacaoMissao;
+  rank: RankMissao;
+};
+
+/** Missão Geral (RN-15): sem parte técnica e sem Rank. */
+export type MissaoGeral = CamposComuns & { tipo: 'geral'; rank: null };
+
+export type Missao = MissaoDesenvolvimento | MissaoGeral;
+
+/** Nome embutido pelo PostgREST: objeto, lista (formato alternativo) ou nulo (sem acesso). */
+type NomeEmbutido = { nome: string } | ReadonlyArray<{ nome: string }> | null;
+
+/** Linha de `projetos` com stacks, tags e links embutidos pelo PostgREST. */
 export type LinhaMissao = {
   id: string;
+  tipo: string;
   nome: string;
   descricao: string;
-  arquitetura: string;
-  estilo_arquitetural: string;
+  arquitetura: string | null;
+  estilo_arquitetural: string | null;
   capacidades: string[];
   status: string;
   inicio_desenvolvimento_em: string | null;
   concluido_em: string | null;
   criado_em: string;
   atualizado_em: string;
-  projeto_stacks: ReadonlyArray<{ stacks: { nome: string } | ReadonlyArray<{ nome: string }> | null }>;
+  projeto_stacks: ReadonlyArray<{ stacks: NomeEmbutido }>;
+  projeto_tags: ReadonlyArray<{ tags: NomeEmbutido }>;
+  projeto_links: ReadonlyArray<{ url: string; titulo: string | null; ordem: number }>;
 };
 
 const COLUNAS_MISSAO =
-  'id, nome, descricao, arquitetura, estilo_arquitetural, capacidades, status, inicio_desenvolvimento_em, concluido_em, criado_em, atualizado_em, projeto_stacks(stacks(nome))';
+  'id, tipo, nome, descricao, arquitetura, estilo_arquitetural, capacidades, status, inicio_desenvolvimento_em, concluido_em, criado_em, atualizado_em, projeto_stacks(stacks(nome)), projeto_tags(tags(nome)), projeto_links(url, titulo, ordem)';
+
+function nomesEmOrdem(nomes: ReadonlyArray<NomeEmbutido>): string[] {
+  return nomes
+    .flatMap((item) => (item === null ? [] : Array.isArray(item) ? item : [item]))
+    .map(({ nome }) => nome)
+    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+}
 
 /**
- * Converte a linha do banco no formato das telas, com a pontuação e o Rank derivados (RN-14).
+ * Converte a linha do banco no formato das telas; em Desenvolvimento, com a
+ * pontuação e o Rank derivados (RN-14). Missão Geral não tem Rank (RN-15).
  *
- * @param linha - Linha de `projetos` com as stacks embutidas.
- * @returns A Missão, com as stacks em ordem alfabética.
- * @throws {Error} Se o status ou o estilo vindo do banco for desconhecido.
+ * @param linha - Linha de `projetos` com stacks, tags e links embutidos.
+ * @returns A Missão, com stacks e tags em ordem alfabética e links na ordem da tela.
+ * @throws {Error} Se o tipo, o status ou o estilo vindo do banco for desconhecido, ou faltar a arquitetura.
  * @throws {RangeError} Se uma capacidade vinda do banco for desconhecida.
  */
 export function mapearMissao(linha: LinhaMissao): Missao {
+  if (!ehTipoProjeto(linha.tipo)) {
+    throw new Error(`Tipo de Missão desconhecido: ${linha.tipo}`);
+  }
   if (!ehStatusMissao(linha.status)) {
     throw new Error(`Status de Missão desconhecido: ${linha.status}`);
   }
-  if (!ehEstiloArquitetural(linha.estilo_arquitetural)) {
+  const comuns: CamposComuns = {
+    id: linha.id,
+    nome: linha.nome,
+    descricao: linha.descricao,
+    status: linha.status,
+    stacks: nomesEmOrdem(linha.projeto_stacks.map(({ stacks }) => stacks)),
+    tags: nomesEmOrdem(linha.projeto_tags.map(({ tags }) => tags)),
+    links: [...linha.projeto_links]
+      .sort((a, b) => a.ordem - b.ordem)
+      .map(({ url, titulo }) => ({ url, titulo })),
+    inicioDesenvolvimentoEm: linha.inicio_desenvolvimento_em,
+    concluidoEm: linha.concluido_em,
+    criadoEm: linha.criado_em,
+    atualizadoEm: linha.atualizado_em,
+  };
+  if (linha.tipo === 'geral') return { ...comuns, tipo: 'geral', rank: null };
+
+  if (linha.estilo_arquitetural === null || !ehEstiloArquitetural(linha.estilo_arquitetural)) {
     throw new Error(`Estilo arquitetural desconhecido: ${linha.estilo_arquitetural}`);
   }
-  const stacks = linha.projeto_stacks
-    .flatMap(({ stacks: stack }) => (stack === null ? [] : Array.isArray(stack) ? stack : [stack]))
-    .map(({ nome }) => nome)
-    .sort((a, b) => a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }));
+  if (linha.arquitetura === null) {
+    throw new Error('Missão de Desenvolvimento sem arquitetura');
+  }
   // pontuacaoDaMissao recusa (RangeError) capacidade fora da lista: a conversão de tipo é conferida ali.
   const capacidades = linha.capacidades as Capacidade[];
   const pontuacao = pontuacaoDaMissao({
     estilo: linha.estilo_arquitetural,
     capacidades,
-    quantidadeStacks: stacks.length,
+    quantidadeStacks: comuns.stacks.length,
   });
 
   return {
-    id: linha.id,
-    nome: linha.nome,
-    descricao: linha.descricao,
+    ...comuns,
+    tipo: 'dev',
     arquitetura: linha.arquitetura,
     estilo: linha.estilo_arquitetural,
     capacidades,
-    status: linha.status,
-    stacks,
     pontuacao,
     rank: rankPorPontos(pontuacao.total),
-    inicioDesenvolvimentoEm: linha.inicio_desenvolvimento_em,
-    concluidoEm: linha.concluido_em,
-    criadoEm: linha.criado_em,
-    atualizadoEm: linha.atualizado_em,
   };
 }
 
@@ -140,13 +180,24 @@ export async function obterMissao(supabase: ClienteSupabase, id: string): Promis
 }
 
 /**
- * Nomes das stacks já cadastradas pelo usuário, para o autocompletar.
+ * Nomes das stacks e ferramentas já cadastradas pelo usuário, para o autocompletar.
  *
  * @throws {ErroDeMissao} Se a consulta falhar.
  */
 export async function listarNomesDeStacks(supabase: ClienteSupabase): Promise<string[]> {
   const { data, error } = await supabase.from('stacks').select('nome').order('nome');
   if (error) throw new ErroDeMissao('listar_stacks', error.code);
+  return data.map(({ nome }) => nome as string);
+}
+
+/**
+ * Nomes das tags já cadastradas pelo usuário, para o autocompletar (RF-24).
+ *
+ * @throws {ErroDeMissao} Se a consulta falhar.
+ */
+export async function listarNomesDeTags(supabase: ClienteSupabase): Promise<string[]> {
+  const { data, error } = await supabase.from('tags').select('nome').order('nome');
+  if (error) throw new ErroDeMissao('listar_tags', error.code);
   return data.map(({ nome }) => nome as string);
 }
 
@@ -167,7 +218,8 @@ export async function listarResumoDasMissoes(supabase: ClienteSupabase): Promise
 export type ResultadoGravacao = { ok: true; id: string } | { ok: false; codigo: string | undefined };
 
 /**
- * Cria (sem `id`) ou altera uma Missão com as stacks, numa transação (`salvar_missao_v2`).
+ * Cria (sem `id`) ou altera uma Missão com stacks ou ferramentas, tags e links,
+ * numa transação (`salvar_missao_v3`). Na edição, o banco não altera o status.
  *
  * @param id - Missão a alterar, ou `null` para criar.
  * @returns O id gravado, ou o código do erro do banco para a tela traduzir.
@@ -177,15 +229,20 @@ export async function salvarMissao(
   id: string | null,
   dados: DadosMissao,
 ): Promise<ResultadoGravacao> {
-  const { data, error } = await supabase.rpc('salvar_missao_v2', {
+  const tecnicos =
+    dados.tipo === 'dev'
+      ? { p_arquitetura: dados.arquitetura, p_estilo: dados.estilo, p_capacidades: dados.capacidades }
+      : { p_arquitetura: null, p_estilo: null, p_capacidades: null };
+  const { data, error } = await supabase.rpc('salvar_missao_v3', {
     p_id: id,
+    p_tipo: dados.tipo,
     p_nome: dados.nome,
     p_descricao: dados.descricao,
-    p_arquitetura: dados.arquitetura,
-    p_estilo: dados.estilo,
-    p_capacidades: dados.capacidades,
+    ...tecnicos,
     p_status: dados.status,
     p_stacks: dados.stacks,
+    p_tags: dados.tags,
+    p_links: dados.links,
   });
   if (error) return { ok: false, codigo: error.code };
   return { ok: true, id: data as string };
