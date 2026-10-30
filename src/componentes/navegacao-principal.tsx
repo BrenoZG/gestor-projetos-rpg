@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 const DESTINOS = [
   { href: '/', rotulo: 'Quadro' },
   { href: '/atualizacoes', rotulo: 'Atualizações' },
+  { href: '/tags', rotulo: 'Tags' },
 ] as const;
 
 /**
