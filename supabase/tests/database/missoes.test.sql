@@ -1,5 +1,5 @@
 -- Testes de segurança e integridade das Missões (pgTAP): tabelas projetos,
--- stacks e projeto_stacks, trigger de datas (RN-02) e função salvar_missao_v2.
+-- stacks e projeto_stacks, trigger de datas (RN-02) e função salvar_missao_v3.
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
 select plan(38);
@@ -24,8 +24,8 @@ select ok(
   'anon não tem nenhum privilégio nas 3 tabelas'
 );
 select ok(
-  not has_function_privilege('anon', 'public.salvar_missao_v2(uuid, text, text, text, text, text[], text, text[])', 'execute'),
-  'anon não executa salvar_missao_v2'
+  not has_function_privilege('anon', 'public.salvar_missao_v3(uuid, text, text, text, text, text, text[], text, text[], text[], jsonb)', 'execute'),
+  'anon não executa salvar_missao_v3'
 );
 select ok(
   not has_column_privilege('authenticated', 'public.projetos', 'concluido_em', 'update')
@@ -44,7 +44,8 @@ select ok(
 -- filtra pelo user_id, para o teste não colidir com dados que já estão no banco.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v2(null, 'Missão de B', 'Descrição de B', 'Arquitetura.', 'monolito', '{}', 'backlog', array['Python']);
+select public.salvar_missao_v3(null, 'dev', 'Missão de B', 'Descrição de B', 'Arquitetura.', 'monolito', '{}', 'backlog',
+                               array['Python'], '{}', '[]');
 reset role;
 select set_config('teste.id_b', (select id::text from public.projetos where nome = 'Missão de B' and user_id = '00000000-0000-4000-8000-00000000000b'), true);
 select set_config('teste.stack_b', (select id::text from public.stacks where nome = 'Python' and user_id = '00000000-0000-4000-8000-00000000000b'), true);
@@ -54,8 +55,8 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
 
 select isnt(
-  public.salvar_missao_v2(null, 'Gestor', 'Gestor de projetos', 'Arquitetura.', 'monolito', '{}', 'backlog',
-                       array['Next.js', ' next.js ', 'Supabase']),
+  public.salvar_missao_v3(null, 'dev', 'Gestor', 'Gestor de projetos', 'Arquitetura.', 'monolito', '{}', 'backlog',
+                          array['Next.js', ' next.js ', 'Supabase'], '{}', '[]'),
   null,
   'A cadastra uma Missão e recebe o id'
 );
@@ -75,7 +76,8 @@ select is(
   'a Missão fica ligada às 2 stacks distintas'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, '  GESTOR ', 'Outra', 'Arquitetura.', 'monolito', '{}', 'backlog', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', '  GESTOR ', 'Outra', 'Arquitetura.', 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]') $$,
   '23505',
   null,
   'nome repetido, sem diferenciar maiúscula e espaços nas pontas, é recusado'
@@ -91,7 +93,8 @@ select is_empty(
   'A não enxerga as stacks de B'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v2(%L::uuid, 'Tomada', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog', array['Go']) $$,
+  format($$ select public.salvar_missao_v3(%L::uuid, 'dev', 'Tomada', 'x', 'Arquitetura.', 'monolito', '{}', null,
+              array['Go'], '{}', '[]') $$,
          current_setting('teste.id_b')),
   'P0002',
   null,
@@ -121,31 +124,26 @@ select throws_ok(
   'A não cria Missão em nome de B'
 );
 
--- Datas por status (RN-02)
+-- Datas por status (RN-02). O status muda direto na tabela, como no Quadro e
+-- na ficha (RF-20): a salvar_missao_v3 não altera o status na edição.
 select results_eq(
   $$ select inicio_desenvolvimento_em is null, concluido_em is null from public.projetos where nome = 'Gestor' $$,
   $$ values (true, true) $$,
   'Missão nova em Backlog não tem datas de início nem de conclusão'
 );
-select public.salvar_missao_v2(id, 'Gestor', 'Gestor de projetos', 'Arquitetura.', 'monolito', '{}', 'desenvolvimento',
-                            array['Next.js', 'Supabase'])
-from public.projetos where nome = 'Gestor';
+update public.projetos set status = 'desenvolvimento' where nome = 'Gestor';
 select results_eq(
   $$ select inicio_desenvolvimento_em is not null, concluido_em is null from public.projetos where nome = 'Gestor' $$,
   $$ values (true, true) $$,
   'entrar em Desenvolvimento grava o início'
 );
-select public.salvar_missao_v2(id, 'Gestor', 'Gestor de projetos', 'Arquitetura.', 'monolito', '{}', 'concluido',
-                            array['Next.js', 'Supabase'])
-from public.projetos where nome = 'Gestor';
+update public.projetos set status = 'concluido' where nome = 'Gestor';
 select results_eq(
   $$ select inicio_desenvolvimento_em is not null, concluido_em is not null from public.projetos where nome = 'Gestor' $$,
   $$ values (true, true) $$,
   'entrar em Concluído grava a conclusão e mantém o início'
 );
-select public.salvar_missao_v2(id, 'Gestor', 'Gestor de projetos', 'Arquitetura.', 'monolito', '{}', 'backlog',
-                            array['Next.js', 'Supabase'])
-from public.projetos where nome = 'Gestor';
+update public.projetos set status = 'backlog' where nome = 'Gestor';
 select results_eq(
   $$ select concluido_em is null from public.projetos where nome = 'Gestor' $$,
   $$ values (true) $$,
@@ -161,8 +159,8 @@ set status = 'desenvolvimento', inicio_desenvolvimento_em = '2020-01-01', atuali
 where nome = 'Gestor' and user_id = '00000000-0000-4000-8000-00000000000a';
 alter table public.projetos enable trigger user;
 set local role authenticated;
-select public.salvar_missao_v2(id, 'Gestor', 'Descrição nova', 'Arquitetura.', 'monolito', '{}', 'desenvolvimento',
-                            array['Next.js', 'Supabase'])
+select public.salvar_missao_v3(id, 'dev', 'Gestor', 'Descrição nova', 'Arquitetura.', 'monolito', '{}', null,
+                               array['Next.js', 'Supabase'], '{}', '[]')
 from public.projetos where nome = 'Gestor';
 select is(
   (select inicio_desenvolvimento_em from public.projetos where nome = 'Gestor'),
@@ -197,8 +195,8 @@ set local role authenticated;
 
 -- Atomicidade e validação na função
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Atômica', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog',
-                                 array['Válida', repeat('x', 41)]) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Atômica', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog',
+                                    array['Válida', repeat('x', 41)], '{}', '[]') $$,
   '23514',
   null,
   'stack com mais de 40 caracteres é recusada'
@@ -209,33 +207,38 @@ select is_empty(
   'a recusa não deixa Missão nem stack pela metade (atomicidade)'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Sem stacks', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog', array['  ', '']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Sem stacks', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog',
+       array['  ', ''], '{}', '[]') $$,
   '22023',
   null,
   'Missão sem nenhuma stack válida é recusada'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v2(null, 'Muitas', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog', %L::text[]) $$,
+  format($$ select public.salvar_missao_v3(null, 'dev', 'Muitas', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog',
+              %L::text[], '{}', '[]') $$,
          (select array_agg('s' || n) from generate_series(1, 21) n)),
   '22023',
   null,
   'Missão com 21 stacks é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Ab', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Ab', 'x', 'Arquitetura.', 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]') $$,
   '23514',
   null,
   'nome com menos de 3 caracteres é recusado'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v2(null, 'Longa', 'x', %L, 'monolito', '{}', 'backlog', array['Go']) $$,
+  format($$ select public.salvar_missao_v3(null, 'dev', 'Longa', 'x', %L, 'monolito', '{}', 'backlog',
+              array['Go'], '{}', '[]') $$,
          repeat('a', 20001)),
   '23514',
   null,
   'arquitetura acima de 20.000 caracteres é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v2(null, 'Status estranho', 'x', 'Arquitetura.', 'monolito', '{}', 'arquivado', array['Go']) $$,
+  $$ select public.salvar_missao_v3(null, 'dev', 'Status estranho', 'x', 'Arquitetura.', 'monolito', '{}', 'arquivado',
+       array['Go'], '{}', '[]') $$,
   '23514',
   null,
   'status desconhecido é recusado'
