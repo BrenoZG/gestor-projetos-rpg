@@ -1,5 +1,8 @@
 export const ROTA_ENTRAR = '/entrar';
 export const ROTA_INICIAL = '/';
+/** Escolha da Classe no 1º acesso (RF-17), fora do HUD. */
+export const ROTA_ESCOLHER_CLASSE = '/classe';
+export const ROTA_PERSONAGEM = '/personagem';
 
 /** Abertas a quem não está logado. Comparação exata: `/entrarx` não é pública. */
 const ROTAS_PUBLICAS: ReadonlySet<string> = new Set([ROTA_ENTRAR, '/api/saude']);

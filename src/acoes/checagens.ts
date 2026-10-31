@@ -14,15 +14,24 @@ import { ehUuid } from '@/lib/uuid';
 export type ClienteSupabase = Awaited<ReturnType<typeof criarClienteServidor>>;
 
 /**
+ * Cliente do Supabase e id do usuário da sessão; sem sessão válida, manda para a entrada.
+ *
+ * @returns O cliente autenticado (o RLS usa a sessão dele) e o `sub` do token.
+ */
+export async function sessaoDoUsuario(): Promise<{ supabase: ClienteSupabase; idUsuario: string }> {
+  const supabase = await criarClienteServidor();
+  const { data, error } = await supabase.auth.getClaims();
+  if (error || !data?.claims) redirect(ROTA_ENTRAR);
+  return { supabase, idUsuario: data.claims.sub };
+}
+
+/**
  * Cliente do Supabase com a sessão do usuário; sem sessão válida, manda para a entrada.
  *
  * @returns O cliente autenticado (o RLS usa a sessão dele).
  */
 export async function clienteComSessao(): Promise<ClienteSupabase> {
-  const supabase = await criarClienteServidor();
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data?.claims) redirect(ROTA_ENTRAR);
-  return supabase;
+  return (await sessaoDoUsuario()).supabase;
 }
 
 /**
