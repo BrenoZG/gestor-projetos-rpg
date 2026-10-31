@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.6 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.7 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.7 (2026-10-31, M3):** o HUD mostra também a trilha Produtividade (nível e progresso), só quando ela tem XP (RF-12, RN-18); a revogação do XP de criação vale para as Atualizações excluídas junto com o Projeto (RN-06c); ao concluir, a interface informa o XP ganho ou por que não houve XP; a Maestria e o Domínio são calculados e exibidos no M5, e o M3 grava o snapshot das stacks e ferramentas na conclusão (RN-10). Origem: proposta do M3 aprovada pelo dono.
 >
 > **1.6 (2026-10-31, antes do M3):** vocabulário da interface — "Missão" passa a ser "Projeto" e "Rank do Caçador" passa a ser "Rank do Aventureiro" (o Rank de Missão vira Rank do Projeto). Só nomes mudam: nenhuma regra, RF ou RN muda de sentido. No código e no banco o nome continua "Missão" (glossário). Origem: pedido do dono.
 >
@@ -90,7 +92,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-09 | O sistema deve exibir, no fim da página do Projeto (antes de editar e excluir), o histórico das Atualizações em ordem decrescente de **data de criação**, com registro, edição, exclusão e mudança de status ali mesmo. | Must |
 | RF-10 | O sistema deve filtrar Projetos e Atualizações por status, e Atualizações também por Projeto. | Should |
 | RF-11 | O sistema deve buscar Projetos por trecho do nome e por stack. | Should |
-| RF-12 | O sistema deve exibir XP total, nível, título, Rank do Aventureiro e progresso até o próximo nível. | Must |
+| RF-12 | O sistema deve exibir XP total, nível, título, Rank do Aventureiro e progresso até o próximo nível e, quando a trilha Produtividade tiver XP, o nível e o progresso dela (RN-18). | Must |
 | RF-13 | O sistema deve permitir acesso apenas a contas GitHub presentes na allowlist. | Must |
 | RF-14 | O sistema deve exportar todos os dados do usuário em um arquivo JSON. | Must |
 | RF-15 | O sistema deve exibir as medalhas conquistadas e bloqueadas. | Must |
@@ -118,7 +120,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-03 | Um Projeto `Concluído` aceita novas Atualizações e **não** é reaberto automaticamente por isso. |
 | RN-04 | Excluir um Projeto exclui suas Atualizações. A interface pede confirmação exibindo a quantidade de Atualizações que serão excluídas. |
 | RN-05 | Stacks são normalizadas para comparação: sem espaços nas pontas, sem diferenciar maiúscula/minúscula. A primeira grafia cadastrada é a exibida. A mesma regra vale para ferramentas e tags; para tags, renomear (RN-19) troca a grafia exibida. |
-| RN-06 | XP é registrado no ledger, conforme `docs/gamificacao.md`: (a) cada tipo de evento é concedido no máximo **uma vez por item**; (b) XP de conclusão é **permanente**, mesmo que o item seja excluído ou reaberto depois; (c) XP de criação é **revogado** se o item for excluído sem ter recebido XP de conclusão; (d) XP de conclusão de **Projeto** só é concedido se o Projeto estiver há **24 horas ou mais** em `Desenvolvimento`, contadas do ingresso mais recente. Conclusão que não cumpre a trava não registra evento, e uma conclusão futura que cumpra ainda pode conceder o XP. |
+| RN-06 | XP é registrado no ledger, conforme `docs/gamificacao.md`: (a) cada tipo de evento é concedido no máximo **uma vez por item**; (b) XP de conclusão é **permanente**, mesmo que o item seja excluído ou reaberto depois; (c) XP de criação é **revogado** se o item for excluído sem ter recebido XP de conclusão, inclusive as Atualizações excluídas junto com o Projeto (RN-04); (d) XP de conclusão de **Projeto** só é concedido se o Projeto estiver há **24 horas ou mais** em `Desenvolvimento`, contadas do ingresso mais recente. Conclusão que não cumpre a trava não registra evento, e uma conclusão futura que cumpra ainda pode conceder o XP. |
 | RN-07 | Nível é o maior `n` (1 a 100) tal que `XP total ≥ arredondar(20 × (n − 1)^1,5)`. |
 | RN-08 | Medalha e título são concedidos ao alcançar os níveis 10, 20, …, 100 e são **permanentes**. A animação de cada medalha toca uma única vez. |
 | RN-09 | Rank do Aventureiro por faixa de nível: E 1–19 · D 20–29 · C 30–49 · B 50–69 · A 70–89 · S 90–100. Independe do Rank do Projeto: um personagem de qualquer Rank pode cadastrar projeto de qualquer Rank. |
@@ -293,7 +295,44 @@ Cenário: concluir antes da trava não concede XP
   Quando o usuário o marca como Concluído
   Então o status muda para Concluído
   E nenhum evento de conclusão é registrado
-  E a interface informa que a recompensa exige 24 h em Desenvolvimento
+  E a interface informa que a recompensa exige 24 h em Desenvolvimento e quantas horas faltaram
+
+Cenário: excluir projeto revoga a criação das Atualizações que saem junto
+  Dado um Projeto em Backlog com 2 Atualizações, uma delas concluída
+  Quando o usuário exclui o Projeto
+  Então o XP total diminui em 10 (Projeto) + 5 (Atualização não concluída)
+  E o XP de criação e de conclusão da Atualização concluída permanece
+
+Cenário: concluir mostra o XP ganho
+  Dado um Projeto que cumpre a trava e ainda não recebeu XP de conclusão
+  Quando o usuário o conclui pelo Quadro ou pela ficha
+  Então a interface mostra o XP ganho e o HUD atualiza o XP e o nível
+
+Cenário: reconcluir informa que o XP já foi recebido
+  Dado um Projeto que já recebeu XP de conclusão
+  Quando o usuário o reabre e o conclui de novo
+  Então a interface informa que o XP deste Projeto já foi recebido
+```
+
+### RN-18 (trilha Produtividade)
+
+```gherkin
+Cenário: Projeto Geral rende XP na trilha Produtividade
+  Dado um Projeto Geral, em Desenvolvimento há 25 horas, com 5 Atualizações concluídas
+  Quando o usuário o marca como Concluído
+  Então o ledger registra 69 XP de conclusão na trilha Produtividade
+  E o XP da trilha Desenvolvedor não muda
+
+Cenário: Produtividade só aparece no HUD com XP
+  Dado um usuário sem XP na trilha Produtividade
+  Então o HUD não mostra a linha de Produtividade
+  Quando ele cria um Projeto Geral
+  Então o HUD mostra "Produtividade" no nível 1 com 10 XP
+
+Cenário: trocar o tipo não move o XP
+  Dado um Projeto Geral que já concedeu 10 XP de criação na Produtividade
+  Quando o usuário o troca para Desenvolvimento
+  Então os 10 XP continuam na trilha Produtividade
 ```
 
 ## 9. Fora de escopo (v1)
@@ -315,9 +354,9 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-23, RF-24, RF-26, RN-15, RN-16, RN-17, RF-03 (edição sem status) | 1.4, parte 1 | Unitário (domínio, validação, dados) + pgTAP (CHECKs, RLS e `salvar_missao_v3`) + E2E (cadastro Geral, link recusado, troca de tipo, 360 px, axe) |
 | RF-25 | 1.4, parte 2 | Unitário (filtros) + E2E (URL, axe) |
 | RF-27, RF-28, RF-29, RN-19 | 1.5 | Unitário (validação, dados) + pgTAP (`renomear_tag`, policies de alterar e excluir) + E2E (juntar, teclado, nome inválido, excluir sem uso, 360 px, axe) |
-| RF-12, RN-06, RN-07, RN-09, RN-10, RN-13, RN-18 | M3 | Unitário (domínio) + integração (função atômica) |
+| RF-12, RN-06, RN-07, RN-09, RN-13, RN-18, RN-10 (snapshot) | M3 | Unitário (domínio) + pgTAP (RLS do ledger, trigger de revogação, funções atômicas) + E2E (HUD, trava, aviso, 360 px, axe) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
-| RF-16, RF-19, RN-08, RN-12 | M5 | E2E + axe |
+| RF-16, RF-19, RN-08, RN-10 (cálculo e exibição), RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
 | RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v3`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
