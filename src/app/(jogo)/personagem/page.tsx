@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 
 import { BarraXp } from '@/componentes/barra-xp';
+import { ExportarDados } from '@/componentes/personagem/exportar-dados';
 import { BrasaoClasse } from '@/componentes/brasao-classe';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { Medalha } from '@/componentes/medalha';
@@ -231,6 +232,7 @@ async function ConteudoFicha() {
       </section>
 
       <PreferenciaAtalho inicial={atalhoLigado} />
+      <ExportarDados />
     </>
   );
 }
@@ -247,8 +249,8 @@ function FichaCarregando() {
 /**
  * Ficha do Personagem (RF-19): resumo das trilhas e da próxima medalha,
  * Maestria por stack e Domínio por ferramenta (RN-10, RN-18), galeria das 10
- * medalhas (RF-15), troca livre de Classe (RF-18, RN-11) e o liga/desliga do
- * atalho `C` (RN-12). A rota continua `/personagem`.
+ * medalhas (RF-15), troca livre de Classe (RF-18, RN-11), o liga/desliga do
+ * atalho `C` (RN-12) e o export JSON (RF-14). A rota continua `/personagem`.
  */
 export default function PaginaFicha() {
   return (

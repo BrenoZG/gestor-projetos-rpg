@@ -68,6 +68,46 @@ export function nomeDoArquivoExport(agora: Date): string {
   return `gestor-projetos-${FORMATO_DIA.format(agora)}.json`;
 }
 
+const PADRAO_NOME_NO_CABECALHO = /filename="([^"]+)"/;
+
+/**
+ * Nome do arquivo que o servidor mandou no `Content-Disposition`.
+ *
+ * @param cabecalho - Valor do cabeçalho, ou `null` se ausente.
+ * @returns O nome, ou `null` se o cabeçalho não trouxer um.
+ */
+export function nomeDoArquivoNoCabecalho(cabecalho: string | null): string | null {
+  return cabecalho?.match(PADRAO_NOME_NO_CABECALHO)?.[1] ?? null;
+}
+
+export type ResumoDoArquivo = { projetos: number; atualizacoes: number };
+
+/**
+ * Projetos e Atualizações do arquivo baixado, para o aviso de sucesso. Não
+ * valida o arquivo inteiro: o servidor já validou; aqui só se lê o que se mostra.
+ *
+ * @param texto - Conteúdo baixado.
+ * @returns As contagens, ou `null` se o texto não for um arquivo do export.
+ */
+export function resumoDoArquivo(texto: string): ResumoDoArquivo | null {
+  let arquivo: unknown;
+  try {
+    arquivo = JSON.parse(texto);
+  } catch {
+    // Não é JSON (ex.: página HTML de erro): sem resumo, quem chama decide.
+    return null;
+  }
+  if (typeof arquivo !== 'object' || arquivo === null) return null;
+  const { formato, dados } = arquivo as {
+    formato?: unknown;
+    dados?: { projetos?: unknown; atualizacoes?: unknown };
+  };
+  if (formato !== FORMATO_EXPORT || !Array.isArray(dados?.projetos) || !Array.isArray(dados.atualizacoes)) {
+    return null;
+  }
+  return { projetos: dados.projetos.length, atualizacoes: dados.atualizacoes.length };
+}
+
 /**
  * Quantas linhas cada tabela trouxe: vai para o log e para o aviso de sucesso.
  *
