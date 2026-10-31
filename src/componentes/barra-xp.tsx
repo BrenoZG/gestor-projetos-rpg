@@ -1,3 +1,5 @@
+import { useId } from 'react';
+
 import type { ProgressoNivel } from '@/dominio/progressao/progressao';
 
 /**
@@ -6,8 +8,8 @@ import type { ProgressoNivel } from '@/dominio/progressao/progressao';
  *
  * Desenhada em SVG porque a largura vem de um dado: atributo SVG é permitido
  * pela CSP; `style="width: …"` seria bloqueado. A variante `secundaria` (trilha
- * Produtividade) é mais fina e de cor sólida: sem gradiente, não repete o `id`
- * do SVG quando as duas barras estão na mesma página.
+ * Produtividade) é mais fina e de cor sólida. O `id` do gradiente é único por
+ * barra (`useId`): a Ficha mostra várias barras na mesma página.
  *
  * @param props - Progresso do nível (`progressoDoNivel`), nome acessível e variante.
  */
@@ -22,6 +24,7 @@ export function BarraXp({
   variante?: 'principal' | 'secundaria';
   className?: string;
 }) {
+  const idGradiente = useId();
   const { nivel, xpNoNivel, xpParaProximo, fracao } = progresso;
   const percentual = Math.round(fracao * 1000) / 10;
   const descricao =
@@ -50,12 +53,12 @@ export function BarraXp({
         {variante === 'principal' ? (
           <>
             <defs>
-              <linearGradient id="preenchimento-xp" x1="0" x2="1">
+              <linearGradient id={idGradiente} x1="0" x2="1">
                 <stop offset="0" className="parada-acento-forte" />
                 <stop offset="1" className="parada-acento" />
               </linearGradient>
             </defs>
-            <rect width={percentual} height="10" fill="url(#preenchimento-xp)" className="preenchimento-xp" />
+            <rect width={percentual} height="10" fill={`url(#${idGradiente})`} className="preenchimento-xp" />
           </>
         ) : (
           <rect

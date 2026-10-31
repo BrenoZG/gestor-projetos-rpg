@@ -6,7 +6,7 @@
 
 export const NOME_COOKIE_ATALHO = 'atalho-ficha';
 
-const VALOR_DESLIGADO = 'desligado';
+export const VALOR_ATALHO_DESLIGADO = 'desligado';
 
 /** Um ano: é uma preferência de interface, não um dado sensível. */
 const VALIDADE_COOKIE_SEGUNDOS = 60 * 60 * 24 * 365;
@@ -29,7 +29,7 @@ const ENTRADAS_SEM_TEXTO = new Set([
  * @param cookies - Texto no formato de `document.cookie` (`nome=valor; ...`).
  */
 export function atalhoLigado(cookies: string): boolean {
-  return !cookies.split(';').some((par) => par.trim() === `${NOME_COOKIE_ATALHO}=${VALOR_DESLIGADO}`);
+  return !cookies.split(';').some((par) => par.trim() === `${NOME_COOKIE_ATALHO}=${VALOR_ATALHO_DESLIGADO}`);
 }
 
 /**
@@ -41,7 +41,7 @@ export function atalhoLigado(cookies: string): boolean {
  */
 export function montarCookieAtalho(ligado: boolean, seguro: boolean): string {
   if (ligado) return `${NOME_COOKIE_ATALHO}=; Path=/; Max-Age=0; SameSite=Lax`;
-  const base = `${NOME_COOKIE_ATALHO}=${VALOR_DESLIGADO}; Path=/; Max-Age=${VALIDADE_COOKIE_SEGUNDOS}; SameSite=Lax`;
+  const base = `${NOME_COOKIE_ATALHO}=${VALOR_ATALHO_DESLIGADO}; Path=/; Max-Age=${VALIDADE_COOKIE_SEGUNDOS}; SameSite=Lax`;
   return seguro ? `${base}; Secure` : base;
 }
 

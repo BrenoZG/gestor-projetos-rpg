@@ -7,7 +7,7 @@ const DESTINOS = [
   { href: '/', rotulo: 'Quadro' },
   { href: '/atualizacoes', rotulo: 'Atualizações' },
   { href: '/tags', rotulo: 'Tags' },
-  { href: '/personagem', rotulo: 'Personagem' },
+  { href: '/personagem', rotulo: 'Ficha' },
 ] as const;
 
 /**
