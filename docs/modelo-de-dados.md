@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`; a função `renomear_tag` e a exclusão de tag sem uso (requisitos 1.5, migration `renomear_tags`). A implementar: `eventos_xp` e a função `concluir_item` (M3).
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`; a função `renomear_tag` e a exclusão de tag sem uso (requisitos 1.5, migration `renomear_tags`); `eventos_xp`, o trigger de revogação e as funções `salvar_missao_v4`, `criar_atualizacao`, `mudar_status_missao`, `mudar_status_atualizacao` e `resumo_xp` (M3, migration `criar_eventos_xp`). A `salvar_missao_v3` sai na contração seguinte.
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -84,6 +84,7 @@ erDiagram
         uuid id PK
         uuid user_id FK
         text tipo
+        text trilha "desenvolvedor ou produtividade"
         uuid referencia_id "id do item; sobrevive à exclusão"
         integer xp "maior que zero"
         text nome_snapshot
@@ -104,7 +105,7 @@ erDiagram
 | `medalha_vista` | `smallint` | 0–10; última medalha cuja animação já tocou |
 | `criado_em` | `timestamptz` | `default now()` |
 
-**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: quem grava esse campo é a função de XP do M3, e assim ninguém sobe o próprio nível pela API. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
+**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: quem vai gravar esse campo é a função das medalhas (M5), e assim ninguém sobe o próprio nível pela API. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
 
 ### `projetos` — grão: 1 linha por Projeto
 | Coluna | Tipo | Regra |
@@ -188,14 +189,15 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | Coluna | Tipo | Regra |
 |---|---|---|
 | `tipo` | `text` | `criacao_projeto` · `criacao_atualizacao` · `conclusao_projeto` · `conclusao_atualizacao` |
+| `trilha` | `text` | `desenvolvedor` · `produtividade`, pelo tipo do Projeto no momento do evento; trocar o tipo depois não move o XP (RN-16, RN-18) |
 | `referencia_id` | `uuid` | id do Projeto ou Atualização. **Sem FK**: o evento precisa sobreviver à exclusão do item |
 | `xp` | `integer` | `CHECK (xp > 0)` |
 | `nome_snapshot` | `text` | nome do item no momento do evento (Registro de Projetos) |
-| `rank_snapshot` | `text` | Rank do Projeto no momento do evento |
-| `stacks_snapshot` | `text[]` | stacks normalizadas na conclusão do Projeto (Maestria) |
-| — | | `UNIQUE (referencia_id, tipo)`: garante RN-06a no banco, não só na aplicação |
+| `rank_snapshot` | `text` | Rank do Projeto na conclusão; nulo na trilha Produtividade e na criação |
+| `stacks_snapshot` | `text[]` | stacks ou ferramentas normalizadas, só na conclusão do Projeto (Maestria e Domínio, calculados no M5) |
+| — | | `UNIQUE (user_id, referencia_id, tipo)`: garante RN-06a no banco; o dono na chave impede que um usuário ocupe o par de outro |
 
-**Append-only:** o RLS permite `SELECT`; a escrita acontece apenas pela função `concluir_item` e pelas funções de criação e exclusão. A única remoção prevista é a revogação do XP de criação (RN-06c).
+**Append-only** (ADR-0011): o RLS deixa o dono ler; inserir só para item próprio; apagar só o evento de criação de item já excluído. Não há `UPDATE`. As funções gravam o item e o evento numa transação, com o XP calculado no domínio (ADR-0003). A única remoção é a revogação do XP de criação (RN-06c), feita pelo trigger `revogar_xp_de_criacao` (`AFTER DELETE` em `projetos` e `atualizacoes`), que vale também na cascata. Índice `(user_id, trilha) include (xp)` para a soma do HUD.
 
 ## 3. Segurança no banco
 
@@ -208,7 +210,7 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 
 | Consulta | Fonte | Atenção ao grão |
 |---|---|---|
-| XP total | `SUM(xp)` em `eventos_xp` do usuário | Grão do evento: sem JOIN, sem risco de duplicação |
+| XP total por trilha | `resumo_xp()`: `SUM(xp)` em `eventos_xp` do usuário, por `trilha` | Grão do evento: sem JOIN, sem risco de duplicação |
 | Nível, título, Rank do Aventureiro | XP total + domínio | Calculado, não armazenado (exceto `nivel_maximo`) |
 | Maestria | `unnest(stacks_snapshot)` em eventos `conclusao_projeto`, agrupado por stack | O XP de um Projeto é replicado para cada stack **por definição** (ver `gamificacao.md` §5). A soma entre stacks não é o XP total |
 | Registro de Projetos | `eventos_xp` ordenado por `criado_em` | Usa os snapshots; continua legível após exclusões |
@@ -218,6 +220,6 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | Dimensão | Garantia |
 |---|---|
 | Validade | `CHECK` em status, estilo arquitetural, capacidades, classe, tamanhos e `xp > 0` |
-| Unicidade | `UNIQUE` em nome normalizado de Projeto e stack; `UNIQUE (referencia_id, tipo)` no ledger |
+| Unicidade | `UNIQUE` em nome normalizado de Projeto e stack; `UNIQUE (user_id, referencia_id, tipo)` no ledger |
 | Completude | `NOT NULL` em todo campo obrigatório |
 | Consistência | `CHECK` de coerência entre `status` e `concluido_em`; função atômica para status + XP |

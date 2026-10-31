@@ -59,18 +59,19 @@ sequenceDiagram
     participant D as Domínio
     participant DB as Postgres
 
-    U->>UI: Marca missão como Concluída
-    UI->>A: concluirProjeto(id)
-    A->>DB: Lê projeto, stacks, atualizações concluídas (RLS)
-    A->>D: calcularXpConclusao(projeto, agora)
-    D-->>A: { xp, elegivel } (trava de 24 h)
-    A->>DB: rpc concluir_item(id, xp)
-    Note over DB: Uma transação: atualiza status<br/>e insere no ledger com UNIQUE(referencia_id, tipo)
-    DB-->>A: XP total atualizado
-    A->>D: nivelPorXp(total) e medalhas novas
-    A-->>UI: { xpGanho, nivelAntes, nivelDepois, medalhaNova }
-    UI-->>U: Janela do Sistema e, se subiu de nível, cinemática
+    U->>UI: Move o Projeto para Concluído (Quadro ou ficha)
+    UI->>A: moverMissao(id, 'concluido')
+    A->>DB: Lê o Projeto, as Atualizações concluídas e se já houve XP de conclusão (RLS)
+    A->>D: avaliarConclusaoProjeto(...)
+    D-->>A: { xp } ou o motivo: trava de 24 h ou XP já recebido
+    A->>DB: rpc mudar_status_missao(id, status, xp, rank)
+    Note over DB: Uma transação: atualiza o status e insere no ledger<br/>com UNIQUE(user_id, referencia_id, tipo), snapshots e trilha
+    DB-->>A: { situacao, xp_ganho }
+    A-->>UI: { ok, recompensa }
+    UI-->>U: Aviso (+XP, trava ou já recebido); o HUD soma o ledger de novo
 ```
+
+Criar Projeto ou Atualização segue o mesmo desenho (`salvar_missao_v4`, `criar_atualizacao`). Excluir revoga o XP de criação por trigger, inclusive na cascata (ADR-0011). Nível e medalhas do diagrama original ficam para o M5.
 
 **Por que a função SQL:** o cliente Supabase não abre transação. Atualizar o status e gravar o XP em duas chamadas permite um estado inconsistente (missão concluída sem XP) se a segunda falhar (ADR-0003).
 

@@ -1,6 +1,6 @@
 # Gamificação — regras e fórmulas
 
-> Fonte da verdade numérica das RN-06 a RN-13 de [`requisitos.md`](requisitos.md). Os valores vivem num **único módulo de configuração** do domínio (`src/dominio/gamificacao/`, a partir do M3). Os números desta página foram calculados pela mesma fórmula, não digitados à mão.
+> Fonte da verdade numérica das RN-06 a RN-13 de [`requisitos.md`](requisitos.md). Os valores vivem num **único módulo de configuração** do domínio (`src/dominio/gamificacao/xp.ts`, desde o M3). Os números desta página foram calculados pela mesma fórmula, não digitados à mão.
 
 ## 1. Rank do Projeto — RN-14
 
@@ -51,17 +51,17 @@ Só as 10 primeiras stacks pontuam: sem teto, cadastrar 40 tags viraria atalho d
 | Concluir Atualização | E 15 · D 20 · C 25 · B 30 · A 35 · S 40 | Pelo Rank do Projeto no momento da conclusão |
 | Concluir Projeto | `base × (1 + 0,03 × min(atualizações concluídas, 20))` | Exige 24 h em Desenvolvimento (RN-06d) |
 
-Base por Rank: **E 40 · D 60 · C 90 · B 130 · A 180 · S 250**. Resultado arredondado ao inteiro mais próximo (RN-13).
+Base por Rank: **E 40 · D 60 · C 90 · B 130 · A 180 · S 250**. Resultado arredondado ao inteiro mais próximo, meio para cima (RN-13). A conta é feita em inteiros (centésimos): em ponto flutuante, `90 × 1,15` dá `103,4999…` e arredondaria para baixo.
 
 | Exemplo de conclusão de Projeto | XP |
 |---|---|
 | Rank E, 0 atualizações | 40 |
-| Rank C, 5 atualizações | 103 |
+| Rank C, 5 atualizações | 104 (90 × 1,15 = 103,5) |
 | Rank B, 7 atualizações | 157 |
 | Rank S, 20 ou mais atualizações (teto) | 400 |
 
 ### Permanência (ledger)
-- Cada par `(item, tipo de evento)` gera **no máximo um** evento.
+- Cada par `(item, tipo de evento)` gera **no máximo um** evento. Reconcluir não rende XP de novo, e a tela avisa que o XP já foi recebido, em vez de pedir outras 24 h.
 - XP de conclusão nunca é removido: excluir ou reabrir o item não o afeta.
 - XP de criação é removido na exclusão **somente** se o item não tem evento de conclusão.
 - Consequência aceita (ADR-0002): mudar uma fórmula afeta apenas eventos futuros.

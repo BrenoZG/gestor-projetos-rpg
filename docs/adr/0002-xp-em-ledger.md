@@ -2,6 +2,7 @@
 
 - **Status:** aceito
 - **Data:** 2026-10-21
+- **Complementada por:** [ADR-0011](0011-privilegios-do-ledger-e-revogacao-por-trigger.md) (implementação no M3: `UNIQUE (user_id, referencia_id, tipo)`, funções por operação e revogação por trigger)
 
 ## Contexto
 A primeira proposta calculava o XP a partir do estado atual (projetos e atualizações existentes). A regra de negócio aprovada depois exige que **XP de um projeto concluído não diminua se o projeto for excluído** (RN-06b), o que o modelo derivado não consegue atender: se o item some, o XP calculado some junto.

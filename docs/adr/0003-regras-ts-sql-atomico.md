@@ -2,6 +2,7 @@
 
 - **Status:** aceito
 - **Data:** 2026-10-21
+- **Complementada por:** [ADR-0011](0011-privilegios-do-ledger-e-revogacao-por-trigger.md) (implementação no M3: `UNIQUE (user_id, referencia_id, tipo)`, funções por operação e revogação por trigger)
 
 ## Contexto
 Concluir uma missão exige duas escritas: mudar o status e gravar o XP. O cliente Supabase não abre transação; em duas chamadas, uma falha entre elas deixa a missão concluída sem XP (ou o contrário).
