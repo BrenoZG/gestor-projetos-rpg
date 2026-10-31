@@ -5,6 +5,8 @@ import { useOptimistic, useState, useTransition } from 'react';
 import { mudarStatusDaAtualizacao } from '@/acoes/atualizacoes';
 import type { ResultadoMovimento } from '@/acoes/missoes-estado';
 import { AvisoErro } from '@/componentes/aviso-erro';
+import { anuncioDaRecompensa, AvisoRecompensa } from '@/componentes/aviso-recompensa';
+import type { Recompensa } from '@/dominio/gamificacao/recompensa';
 import type { Atualizacao } from '@/dados/atualizacoes';
 import type { ResumoMissao } from '@/dados/missoes';
 import { ROTULOS_STATUS, type StatusMissao } from '@/dominio/missoes/campos';
@@ -43,9 +45,11 @@ export function ListaAtualizacoes({
   const [, iniciarTransicao] = useTransition();
   const [anuncio, setAnuncio] = useState('');
   const [erro, setErro] = useState<string | null>(null);
+  const [recompensa, setRecompensa] = useState<Recompensa | null>(null);
 
   function mudarStatus(atualizacao: Atualizacao, status: StatusMissao): void {
     setErro(null);
+    setRecompensa(null);
     iniciarTransicao(async () => {
       aplicarMudanca({ id: atualizacao.id, status });
       let resultado: ResultadoMovimento;
@@ -54,8 +58,13 @@ export function ListaAtualizacoes({
       } catch {
         resultado = FALHA_DE_REDE;
       }
-      if (resultado.ok) setAnuncio(`${atualizacao.titulo}: ${ROTULOS_STATUS[status]}.`);
-      else setErro(resultado.mensagem);
+      if (resultado.ok) {
+        setRecompensa(resultado.recompensa ?? null);
+        const extra = resultado.recompensa
+          ? ` ${anuncioDaRecompensa(resultado.recompensa, 'atualizacao')}`
+          : '';
+        setAnuncio(`${atualizacao.titulo}: ${ROTULOS_STATUS[status]}.${extra}`);
+      } else setErro(resultado.mensagem);
     });
   }
 
@@ -65,6 +74,7 @@ export function ListaAtualizacoes({
         {anuncio}
       </p>
       {erro && <AvisoErro titulo="A atualização não foi alterada.">{erro}</AvisoErro>}
+      {recompensa && <AvisoRecompensa recompensa={recompensa} item="atualizacao" />}
       <ol aria-label={rotulo} className="flex flex-col gap-3">
         {otimistas.map((atualizacao) => (
           <ItemAtualizacao
