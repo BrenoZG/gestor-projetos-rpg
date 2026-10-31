@@ -23,7 +23,12 @@ export function recompensaDaConclusao(
   xpGanho: number | null,
   trilha: Trilha,
 ): Recompensa {
-  if (!avaliacao.concede) return { tipo: 'trava', horasRestantes: avaliacao.horasRestantes };
+  if (!avaliacao.concede) {
+    return avaliacao.motivo === 'trava'
+      ? { tipo: 'trava', horasRestantes: avaliacao.horasRestantes }
+      : { tipo: 'ja_recebido' };
+  }
+  // O banco ignora o evento repetido (on conflict): a corrida também cai aqui.
   if (xpGanho === null) return { tipo: 'ja_recebido' };
   return { tipo: 'xp', xp: xpGanho, trilha };
 }

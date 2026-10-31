@@ -87,24 +87,32 @@ export type EntradaConclusaoProjeto = {
   /** Ingresso mais recente em Desenvolvimento; `null` se nunca entrou. */
   inicioDesenvolvimentoEm: Date | null;
   agora: Date;
+  /** O Projeto já tem evento de conclusão no ledger (RN-06a). */
+  jaRecebido: boolean;
 };
 
-export type AvaliacaoConclusao = { concede: true; xp: number } | { concede: false; horasRestantes: number };
+export type AvaliacaoConclusao =
+  | { concede: true; xp: number }
+  | { concede: false; motivo: 'trava'; horasRestantes: number }
+  | { concede: false; motivo: 'ja_recebido' };
 
 /**
  * Decide se a conclusão do Projeto rende XP (trava de 24 h, RN-06d) e quanto.
+ * O XP já recebido vem antes da trava: reabrir zera o relógio, e a tela não
+ * pode sugerir esperar 24 h por um XP que não volta (RN-06a).
  *
- * @param entrada - Rank, Atualizações concluídas, ingresso em Desenvolvimento e o instante atual.
- * @returns O XP, ou as horas que faltaram, arredondadas para cima, para a tela explicar.
+ * @param entrada - Rank, Atualizações concluídas, ingresso em Desenvolvimento, o instante atual e se já houve XP.
+ * @returns O XP; ou o motivo de não haver XP, com as horas que faltaram (arredondadas para cima) na trava.
  * @throws {RangeError} Nas mesmas condições de {@link xpConclusaoProjeto}.
  */
 export function avaliarConclusaoProjeto(entrada: EntradaConclusaoProjeto): AvaliacaoConclusao {
-  const { rank, atualizacoesConcluidas, inicioDesenvolvimentoEm, agora } = entrada;
+  const { rank, atualizacoesConcluidas, inicioDesenvolvimentoEm, agora, jaRecebido } = entrada;
+  if (jaRecebido) return { concede: false, motivo: 'ja_recebido' };
   const trava = HORAS_DA_TRAVA * MS_POR_HORA;
   const decorrido =
     inicioDesenvolvimentoEm === null ? 0 : agora.getTime() - inicioDesenvolvimentoEm.getTime();
   if (decorrido < trava) {
-    return { concede: false, horasRestantes: Math.ceil((trava - decorrido) / MS_POR_HORA) };
+    return { concede: false, motivo: 'trava', horasRestantes: Math.ceil((trava - decorrido) / MS_POR_HORA) };
   }
   return { concede: true, xp: xpConclusaoProjeto(rank, atualizacoesConcluidas) };
 }

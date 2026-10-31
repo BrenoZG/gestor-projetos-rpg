@@ -29,3 +29,23 @@ export async function obterXpPorTrilha(supabase: ClienteSupabase): Promise<XpPor
   }
   return xp;
 }
+
+/**
+ * O Projeto já tem XP de conclusão no ledger (RN-06a)? Serve para a tela não
+ * pedir as 24 h de um XP que não volta. A unicidade continua garantida pelo
+ * banco; esta leitura só escolhe o texto.
+ *
+ * @throws {ErroDeMissao} Se a consulta falhar.
+ */
+export async function jaRecebeuConclusaoDoProjeto(
+  supabase: ClienteSupabase,
+  projetoId: string,
+): Promise<boolean> {
+  const { count, error } = await supabase
+    .from('eventos_xp')
+    .select('id', { count: 'exact', head: true })
+    .eq('referencia_id', projetoId)
+    .eq('tipo', 'conclusao_projeto');
+  if (error) throw new ErroDeMissao('ler_conclusao_projeto', error.code);
+  return (count ?? 0) > 0;
+}
