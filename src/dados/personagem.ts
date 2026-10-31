@@ -15,22 +15,31 @@ export type DadosPersonagem = {
   classe: ChaveClasse | null;
   /** Maior nível já alcançado (RN-08). */
   nivelMaximo: number;
+  /** Último nível cuja cinemática já tocou (RF-16). */
+  nivelVisto: number;
 };
 
-type LinhaPersonagem = { classe: string | null; nivel_maximo: number };
+type LinhaPersonagem = { classe: string | null; nivel_maximo: number; nivel_visto: number };
 
 /**
- * Classe e nível máximo do usuário logado.
+ * Classe, nível máximo e último nível exibido do usuário logado.
  *
  * @returns Os dados, ou `null` se a linha não existe (o login a cria).
  * @throws {ErroDeMissao} Se a consulta falhar.
  */
 export async function obterPersonagem(supabase: ClienteSupabase): Promise<DadosPersonagem | null> {
-  const { data, error } = await supabase.from('personagem').select('classe, nivel_maximo').maybeSingle();
+  const { data, error } = await supabase
+    .from('personagem')
+    .select('classe, nivel_maximo, nivel_visto')
+    .maybeSingle();
   if (error) throw new ErroDeMissao('ler_personagem', error.code);
   if (!data) return null;
-  const { classe, nivel_maximo } = data as LinhaPersonagem;
-  return { classe: classe !== null && ehChaveClasse(classe) ? classe : null, nivelMaximo: nivel_maximo };
+  const { classe, nivel_maximo, nivel_visto } = data as LinhaPersonagem;
+  return {
+    classe: classe !== null && ehChaveClasse(classe) ? classe : null,
+    nivelMaximo: nivel_maximo,
+    nivelVisto: nivel_visto,
+  };
 }
 
 /**
@@ -63,4 +72,15 @@ export async function gravarClasse(
 export async function registrarNivelMaximo(supabase: ClienteSupabase, nivel: number): Promise<void> {
   const { error } = await supabase.rpc('registrar_nivel_maximo', { p_nivel: nivel });
   if (error) throw new ErroDeMissao('registrar_nivel_maximo', error.code);
+}
+
+/**
+ * Marca a cinemática até o nível como vista (RF-16, RN-08). A função do banco
+ * só aumenta o valor e não passa do `nivel_maximo`.
+ *
+ * @throws {ErroDeMissao} Se o banco recusar ou falhar.
+ */
+export async function marcarConquistaVista(supabase: ClienteSupabase, nivel: number): Promise<void> {
+  const { error } = await supabase.rpc('marcar_conquista_vista', { p_nivel: nivel });
+  if (error) throw new ErroDeMissao('marcar_conquista_vista', error.code);
 }

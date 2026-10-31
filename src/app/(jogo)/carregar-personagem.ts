@@ -15,6 +15,8 @@ export type PersonagemDoJogo = {
   classe: ChaveClasse;
   /** Maior nível já registrado no banco (RN-08). */
   nivelMaximo: number;
+  /** Último nível cuja cinemática já tocou (RF-16). */
+  nivelVisto: number;
   xp: XpPorTrilha;
 };
 
@@ -46,7 +48,12 @@ export const carregarPersonagem = cache(async (): Promise<PersonagemDoJogo> => {
   }
   const [personagem, xp] = leitura;
   if (!personagem?.classe) redirect(ROTA_ESCOLHER_CLASSE);
-  return { classe: personagem.classe, nivelMaximo: personagem.nivelMaximo, xp };
+  return {
+    classe: personagem.classe,
+    nivelMaximo: personagem.nivelMaximo,
+    nivelVisto: personagem.nivelVisto,
+    xp,
+  };
 });
 
 function lerTudo(supabase: Awaited<ReturnType<typeof criarClienteServidor>>) {

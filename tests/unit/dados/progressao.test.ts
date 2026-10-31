@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { jaRecebeuConclusaoDoProjeto, obterXpPorTrilha } from '@/dados/progressao';
+import { jaRecebeuConclusaoDoProjeto, obterMaestria, obterXpPorTrilha } from '@/dados/progressao';
 
 type Cliente = Parameters<typeof obterXpPorTrilha>[0];
 
@@ -64,5 +64,35 @@ describe('jaRecebeuConclusaoDoProjeto', () => {
   it('lança ErroDeMissao quando a consulta falha', async () => {
     const { cliente } = consultaFalsa({ count: null, error: { code: '57014' } });
     await expect(jaRecebeuConclusaoDoProjeto(cliente, 'p1')).rejects.toMatchObject({ codigo: '57014' });
+  });
+});
+
+describe('obterMaestria', () => {
+  it('lê as linhas da função maestria, na ordem do banco', async () => {
+    const { cliente, rpc } = clienteFalso({
+      data: [
+        { trilha: 'desenvolvedor', nome: 'Python', xp: 190, projetos: 2 },
+        { trilha: 'produtividade', nome: 'Canva', xp: 60, projetos: 1 },
+      ],
+      error: null,
+    });
+    await expect(obterMaestria(cliente)).resolves.toEqual([
+      { trilha: 'desenvolvedor', nome: 'Python', xp: 190, projetos: 2 },
+      { trilha: 'produtividade', nome: 'Canva', xp: 60, projetos: 1 },
+    ]);
+    expect(rpc).toHaveBeenCalledWith('maestria');
+  });
+
+  it('ignora trilha desconhecida vinda do banco', async () => {
+    const { cliente } = clienteFalso({
+      data: [{ trilha: 'outra', nome: 'X', xp: 5, projetos: 1 }],
+      error: null,
+    });
+    await expect(obterMaestria(cliente)).resolves.toEqual([]);
+  });
+
+  it('lança ErroDeMissao quando o banco falha', async () => {
+    const { cliente } = clienteFalso({ data: null, error: { code: '57014' } });
+    await expect(obterMaestria(cliente)).rejects.toMatchObject({ operacao: 'maestria', codigo: '57014' });
   });
 });

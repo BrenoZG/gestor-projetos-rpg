@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { gravarClasse, obterPersonagem, registrarNivelMaximo } from '@/dados/personagem';
+import {
+  gravarClasse,
+  marcarConquistaVista,
+  obterPersonagem,
+  registrarNivelMaximo,
+} from '@/dados/personagem';
 
 type Cliente = Parameters<typeof obterPersonagem>[0];
 
@@ -14,19 +19,26 @@ describe('obterPersonagem', () => {
     return { cliente: { from } as unknown as Cliente, from, select };
   }
 
-  it('lê a classe e o nível máximo do personagem', async () => {
+  it('lê a classe, o nível máximo e o último nível exibido do personagem', async () => {
     const { cliente, from, select } = leituraFalsa({
-      data: { classe: 'invocador_ia', nivel_maximo: 23 },
+      data: { classe: 'invocador_ia', nivel_maximo: 23, nivel_visto: 20 },
       error: null,
     });
-    await expect(obterPersonagem(cliente)).resolves.toEqual({ classe: 'invocador_ia', nivelMaximo: 23 });
+    await expect(obterPersonagem(cliente)).resolves.toEqual({
+      classe: 'invocador_ia',
+      nivelMaximo: 23,
+      nivelVisto: 20,
+    });
     expect(from).toHaveBeenCalledWith('personagem');
-    expect(select).toHaveBeenCalledWith('classe, nivel_maximo');
+    expect(select).toHaveBeenCalledWith('classe, nivel_maximo, nivel_visto');
   });
 
   it('classe nula ou desconhecida vira null', async () => {
-    const { cliente } = leituraFalsa({ data: { classe: 'antiga', nivel_maximo: 1 }, error: null });
-    await expect(obterPersonagem(cliente)).resolves.toEqual({ classe: null, nivelMaximo: 1 });
+    const { cliente } = leituraFalsa({
+      data: { classe: 'antiga', nivel_maximo: 1, nivel_visto: 1 },
+      error: null,
+    });
+    await expect(obterPersonagem(cliente)).resolves.toEqual({ classe: null, nivelMaximo: 1, nivelVisto: 1 });
   });
 
   it('sem linha, devolve null', async () => {
@@ -85,6 +97,22 @@ describe('registrarNivelMaximo', () => {
     const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: '22023' } });
     await expect(registrarNivelMaximo({ rpc } as unknown as Cliente, 23)).rejects.toMatchObject({
       operacao: 'registrar_nivel_maximo',
+      codigo: '22023',
+    });
+  });
+});
+
+describe('marcarConquistaVista', () => {
+  it('chama a marcar_conquista_vista com o nível', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: 20, error: null });
+    await marcarConquistaVista({ rpc } as unknown as Cliente, 20);
+    expect(rpc).toHaveBeenCalledWith('marcar_conquista_vista', { p_nivel: 20 });
+  });
+
+  it('lança ErroDeMissao quando o banco falha', async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: '22023' } });
+    await expect(marcarConquistaVista({ rpc } as unknown as Cliente, 20)).rejects.toMatchObject({
+      operacao: 'marcar_conquista_vista',
       codigo: '22023',
     });
   });

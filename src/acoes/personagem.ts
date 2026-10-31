@@ -3,11 +3,12 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
-import { sessaoDoUsuario } from '@/acoes/checagens';
+import { clienteComSessao, sessaoDoUsuario } from '@/acoes/checagens';
 import type { EstadoFormularioClasse } from '@/acoes/personagem-estado';
-import { validarClasse } from '@/acoes/personagem-validacao';
+import { sincronizarNivelMaximo } from '@/acoes/nivel';
+import { validarClasse, validarNivelVisto } from '@/acoes/personagem-validacao';
 import { ErroDeMissao } from '@/dados/missoes';
-import { gravarClasse } from '@/dados/personagem';
+import { gravarClasse, marcarConquistaVista as gravarConquistaVista } from '@/dados/personagem';
 import { ROTA_INICIAL } from '@/dominio/acesso/rotas';
 import { registrarEvento } from '@/lib/log';
 
@@ -69,4 +70,31 @@ export async function trocarClasse(
 ): Promise<EstadoFormularioClasse> {
   const mensagem = await gravar(formulario);
   return mensagem ? { ...estadoAnterior, mensagem } : { mensagem: null, salvo: estadoAnterior.salvo + 1 };
+}
+
+/**
+ * A cinemática de level up foi exibida até `nivel` (RF-16, RN-08). Sincroniza
+ * antes o nível máximo: se aquela gravação falhou, o teto da função do banco
+ * prenderia a cinemática, que tocaria de novo a cada página. Uma falha só vai
+ * para o log; no pior caso, a cinemática toca de novo depois.
+ *
+ * Sem `revalidatePath`: a tela já fechou a cinemática no próprio estado, e
+ * renderizar o layout de novo não muda nada visível.
+ *
+ * @param nivel - Nível exibido (inteiro de 1 a 100); valor inválido é ignorado.
+ */
+export async function marcarConquistaVista(nivel: unknown): Promise<void> {
+  const supabase = await clienteComSessao();
+  const nivelValido = validarNivelVisto(nivel);
+  if (nivelValido === null) return;
+  await sincronizarNivelMaximo(supabase);
+  try {
+    await gravarConquistaVista(supabase, nivelValido);
+  } catch (erro) {
+    if (!(erro instanceof ErroDeMissao)) throw erro;
+    registrarEvento('erro', 'supabase_falhou', {
+      operacao: erro.operacao,
+      codigo: erro.codigo ?? 'desconhecido',
+    });
+  }
 }
