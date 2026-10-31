@@ -128,7 +128,7 @@ erDiagram
 
 **Privilégios** (migrations `criar_missoes` e `tipos_tags_links`): `authenticated` lê e apaga as próprias Missões e cria ou altera só `tipo`, `nome`, `descricao`, `arquitetura`, `estilo_arquitetural`, `capacidades` e `status`; `user_id` vem do default `auth.uid()`, nunca do cliente. `anon` não tem nenhum privilégio. Objetos novos no `public` nascem sem acesso (migration `revogar_exposicao_padrao`).
 
-O Rank de Missão **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14), e só em `dev`. Guardá-lo criaria duas fontes da verdade.
+O Rank do Projeto **não é coluna**: o domínio o deriva de `estilo_arquitetural`, `capacidades` e da contagem de stacks (RN-14), e só em `dev`. Guardá-lo criaria duas fontes da verdade.
 
 **Gravação:** `salvar_missao_v3` grava a Missão, as stacks (ou ferramentas), as tags, os links e os vínculos numa transação; na edição, **não altera o status**. A mudança de status (Quadro, RF-20, e ficha) altera só `status`, direto na tabela (GRANT de coluna e RLS), e não mexe na "última edição" quando o status não muda. As trocas da `salvar_missao` pela v2 e da v2 pela v3 foram feitas em dois deploys cada (expandir e depois contrair, `docs/operacao.md` §4); a v2 saiu na migration `contrair_tipos`.
 
@@ -190,8 +190,8 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | `tipo` | `text` | `criacao_projeto` · `criacao_atualizacao` · `conclusao_projeto` · `conclusao_atualizacao` |
 | `referencia_id` | `uuid` | id do Projeto ou Atualização. **Sem FK**: o evento precisa sobreviver à exclusão do item |
 | `xp` | `integer` | `CHECK (xp > 0)` |
-| `nome_snapshot` | `text` | nome do item no momento do evento (Registro de Missões) |
-| `rank_snapshot` | `text` | Rank de Missão no momento do evento |
+| `nome_snapshot` | `text` | nome do item no momento do evento (Registro de Projetos) |
+| `rank_snapshot` | `text` | Rank do Projeto no momento do evento |
 | `stacks_snapshot` | `text[]` | stacks normalizadas na conclusão do Projeto (Maestria) |
 | — | | `UNIQUE (referencia_id, tipo)`: garante RN-06a no banco, não só na aplicação |
 
@@ -209,9 +209,9 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | Consulta | Fonte | Atenção ao grão |
 |---|---|---|
 | XP total | `SUM(xp)` em `eventos_xp` do usuário | Grão do evento: sem JOIN, sem risco de duplicação |
-| Nível, título, Rank do Caçador | XP total + domínio | Calculado, não armazenado (exceto `nivel_maximo`) |
+| Nível, título, Rank do Aventureiro | XP total + domínio | Calculado, não armazenado (exceto `nivel_maximo`) |
 | Maestria | `unnest(stacks_snapshot)` em eventos `conclusao_projeto`, agrupado por stack | O XP de um Projeto é replicado para cada stack **por definição** (ver `gamificacao.md` §5). A soma entre stacks não é o XP total |
-| Registro de Missões | `eventos_xp` ordenado por `criado_em` | Usa os snapshots; continua legível após exclusões |
+| Registro de Projetos | `eventos_xp` ordenado por `criado_em` | Usa os snapshots; continua legível após exclusões |
 
 ## 5. Qualidade de dados (restrições no banco)
 

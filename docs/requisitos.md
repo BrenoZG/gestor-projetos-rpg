@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.5 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.6 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.6 (2026-10-31, antes do M3):** vocabulário da interface — "Missão" passa a ser "Projeto" e "Rank do Caçador" passa a ser "Rank do Aventureiro" (o Rank de Missão vira Rank do Projeto). Só nomes mudam: nenhuma regra, RF ou RN muda de sentido. No código e no banco o nome continua "Missão" (glossário). Origem: pedido do dono.
 >
 > **1.5 (2026-10-30, antes do M3):** página Tags com a quantidade de Projetos de cada tag (RF-27), renomear tag (RF-28) e excluir tag sem uso (RF-29); renomear para um nome que já existe junta as tags, depois de confirmação (RN-19). Sai do fora de escopo "renomear ou excluir tags"; entra "excluir tag em uso". Origem: pedido do dono, para corrigir tags digitadas errado.
 >
@@ -23,7 +25,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 
 | Termo | Significado |
 |---|---|
-| **Missão** | Sinônimo de **Projeto** na interface, dos dois tipos. |
+| **Projeto** | O que o dono cadastra e acompanha no Quadro, de dois tipos (abaixo). É o nome usado na interface. No código e no banco continua **Missão** (tabela `missoes`, rota `/missoes`, `salvar_missao_v3`). |
 | **Tipo de Projeto** | **Desenvolvimento**: o resultado principal é código que o dono escreve e mantém (site, SaaS, app, automação, pipeline). **Geral**: o resultado principal é outra coisa (venda, conteúdo, serviço, aprendizado); código, se houver, é ferramenta de apoio. |
 | **Ferramenta** | O que um Projeto Geral usa para ser feito (ex.: Canva, CapCut). Mesmo cadastro das stacks; muda o rótulo. |
 | **Tag** | Etiqueta livre, criada pelo dono, para organizar e filtrar Projetos de qualquer tipo (ex.: Revenda, IA). Não muda regra nenhuma. |
@@ -32,8 +34,8 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | **Ideia** | Não é entidade: uma ideia é um Projeto (ou Atualização) em status `Backlog`. |
 | **Estilo arquitetural** | Como o Projeto se organiza: Script ou automação, Monolito, Monolito modular, Hexagonal / Clean, Serverless, Orientado a eventos ou Microsserviços. |
 | **Capacidade** | O que o Projeto entrega além do código de negócio: Autenticação, Banco de dados, Integração com API externa, Tempo real, Filas e processamento assíncrono, IA ou machine learning, CI/CD e deploy, App mobile. |
-| **Rank de Missão** | Letra E–S calculada pelo sistema a partir do estilo arquitetural, das capacidades e da quantidade de stacks do Projeto (RN-14). É a dificuldade do Projeto. |
-| **Rank do Caçador** | Letra E–S do personagem, derivada do nível. Independe do Rank de Missão. |
+| **Rank do Projeto** | Letra E–S calculada pelo sistema a partir do estilo arquitetural, das capacidades e da quantidade de stacks do Projeto (RN-14). É a dificuldade do Projeto. |
+| **Rank do Aventureiro** | Letra E–S do personagem, derivada do nível. Independe do Rank do Projeto. |
 | **XP** | Pontos de experiência. Concedidos por eventos registrados no ledger. |
 | **Ledger de XP** | Registro permanente e append-only de cada ganho de XP. |
 | **Medalha / Título** | Conquista a cada 10 níveis; cada medalha traz um título novo. |
@@ -88,16 +90,16 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-09 | O sistema deve exibir, no fim da página do Projeto (antes de editar e excluir), o histórico das Atualizações em ordem decrescente de **data de criação**, com registro, edição, exclusão e mudança de status ali mesmo. | Must |
 | RF-10 | O sistema deve filtrar Projetos e Atualizações por status, e Atualizações também por Projeto. | Should |
 | RF-11 | O sistema deve buscar Projetos por trecho do nome e por stack. | Should |
-| RF-12 | O sistema deve exibir XP total, nível, título, Rank do Caçador e progresso até o próximo nível. | Must |
+| RF-12 | O sistema deve exibir XP total, nível, título, Rank do Aventureiro e progresso até o próximo nível. | Must |
 | RF-13 | O sistema deve permitir acesso apenas a contas GitHub presentes na allowlist. | Must |
 | RF-14 | O sistema deve exportar todos os dados do usuário em um arquivo JSON. | Must |
 | RF-15 | O sistema deve exibir as medalhas conquistadas e bloqueadas. | Must |
 | RF-16 | O sistema deve exibir a animação de conquista ao subir de nível e ao ganhar medalha, conforme RN-08. | Should |
-| RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Missões. | Must |
+| RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Projetos. | Must |
 | RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela Ficha do Personagem. | Should |
 | RF-19 | O sistema deve exibir a Ficha do Personagem, acessível pelo menu e pela tecla `C`, conforme RN-12. | Must |
 | RF-20 | O sistema deve permitir mover um Projeto entre as colunas do Quadro sem abrir a edição: arrastando o cartão (mouse ou toque) ou pelo botão "Mover", que funciona só com o teclado (WCAG 2.5.7), conforme RN-02. | Must |
-| RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank de Missão, com todos os filtros combinados; os filtros ficam na URL. | Should |
+| RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank do Projeto, com todos os filtros combinados; os filtros ficam na URL. | Should |
 | RF-22 | O sistema deve oferecer a visão Lista: uma tabela com todos os Projetos (nome, status, Rank, pontos, stacks e última edição), ordenada pela última edição, mais recente primeiro, com os mesmos filtros do RF-21. | Should |
 | RF-23 | O sistema deve permitir cadastrar Projetos do tipo Desenvolvimento ou Geral, conforme RN-15. | Must |
 | RF-24 | O sistema deve permitir criar tags durante o cadastro ou a edição de um Projeto e atribuir de 0 a 10 tags a qualquer Projeto. | Should |
@@ -119,12 +121,12 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-06 | XP é registrado no ledger, conforme `docs/gamificacao.md`: (a) cada tipo de evento é concedido no máximo **uma vez por item**; (b) XP de conclusão é **permanente**, mesmo que o item seja excluído ou reaberto depois; (c) XP de criação é **revogado** se o item for excluído sem ter recebido XP de conclusão; (d) XP de conclusão de **Projeto** só é concedido se o Projeto estiver há **24 horas ou mais** em `Desenvolvimento`, contadas do ingresso mais recente. Conclusão que não cumpre a trava não registra evento, e uma conclusão futura que cumpra ainda pode conceder o XP. |
 | RN-07 | Nível é o maior `n` (1 a 100) tal que `XP total ≥ arredondar(20 × (n − 1)^1,5)`. |
 | RN-08 | Medalha e título são concedidos ao alcançar os níveis 10, 20, …, 100 e são **permanentes**. A animação de cada medalha toca uma única vez. |
-| RN-09 | Rank do Caçador por faixa de nível: E 1–19 · D 20–29 · C 30–49 · B 50–69 · A 70–89 · S 90–100. Independe do Rank de Missão: um personagem de qualquer Rank pode cadastrar missão de qualquer Rank. |
+| RN-09 | Rank do Aventureiro por faixa de nível: E 1–19 · D 20–29 · C 30–49 · B 50–69 · A 70–89 · S 90–100. Independe do Rank do Projeto: um personagem de qualquer Rank pode cadastrar projeto de qualquer Rank. |
 | RN-10 | Maestria de uma stack = soma do XP de **conclusão de Projetos** cuja lista de stacks (no momento da conclusão) contém a stack. Nível pela mesma curva da RN-07, com **máximo no nível 50**. Atualizações não contam. |
 | RN-11 | A Classe é identidade visual. **Não** altera XP, nível, Rank ou Maestria. A troca é livre e sem custo. |
 | RN-12 | O atalho de teclado `C` abre a Ficha e `Esc` fecha. O atalho é ignorado com foco em campo de texto e pode ser desligado pelo usuário (WCAG 2.1.4). |
 | RN-13 | Valores de XP são inteiros, arredondados ao inteiro mais próximo (meio para cima). |
-| RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank de Missão pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. Só Projetos de Desenvolvimento têm Rank (RN-15). |
+| RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank do Projeto pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. Só Projetos de Desenvolvimento têm Rank (RN-15). |
 | RN-15 | O tipo define os campos. Desenvolvimento exige estilo arquitetural, arquitetura e de 1 a 20 stacks e tem Rank (RN-14). Geral não tem estilo, capacidades, arquitetura nem Rank, e as ferramentas são opcionais (0 a 20). |
 | RN-16 | O tipo pode ser trocado na edição. De Desenvolvimento para Geral, estilo, capacidades e arquitetura são apagados depois de uma confirmação que avisa a perda; as stacks passam a valer como ferramentas. De Geral para Desenvolvimento, os campos técnicos precisam ser preenchidos. A partir do M3, o XP já concedido fica na trilha em que nasceu. |
 | RN-17 | Link válido: endereço `https://` bem formado, com até 2.000 caracteres e sem usuário ou senha embutidos. O sistema nunca abre o link no servidor; na tela, o link abre numa aba nova sem dar acesso à página de origem. |
@@ -158,7 +160,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 
 ## 8. Critérios de aceite
 
-### RN-14 (Rank de Missão)
+### RN-14 (Rank do Projeto)
 
 ```gherkin
 Cenário: o Rank sai da conta, não de uma escolha
@@ -174,7 +176,7 @@ Cenário: fronteiras das faixas
 Cenário: arquitetura em branco
   Dado o formulário de Projeto com a estrutura/arquitetura só com espaços
   Quando o usuário envia
-  Então o campo mostra "Descreva a estrutura e a arquitetura da missão."
+  Então o campo mostra "Descreva a estrutura e a arquitetura do projeto."
   E nada é gravado
 ```
 
@@ -194,13 +196,13 @@ Cenário: mover só com o teclado
 
 Cenário: servidor recusa ou rede cai
   Quando a gravação do movimento falha
-  Então o cartão volta à coluna de origem e um alerta explica que a Missão não foi movida
+  Então o cartão volta à coluna de origem e um alerta explica que o projeto não foi movido
 
 Cenário: filtro na URL
   Dado o filtro de texto "gestor"
   Quando o usuário recarrega a página
   Então o filtro continua aplicado
-  E, sem nenhum resultado, aparece "Nenhuma missão com esses filtros." com "Limpar filtros"
+  E, sem nenhum resultado, aparece "Nenhum projeto com esses filtros." com "Limpar filtros"
 ```
 
 ### RF-23 a RF-26 (tipos, tags e links)
@@ -215,7 +217,7 @@ Cenário: Projeto Geral sem a parte técnica
 Cenário: Desenvolvimento continua exigindo a arquitetura
   Dado o formulário de Projeto com o tipo Desenvolvimento
   Quando o usuário envia a estrutura/arquitetura só com espaços
-  Então o campo mostra "Descreva a estrutura e a arquitetura da missão."
+  Então o campo mostra "Descreva a estrutura e a arquitetura do projeto."
 
 Cenário: link que não é https
   Dado um link "javascript:alert(1)" ou "http://exemplo.com"

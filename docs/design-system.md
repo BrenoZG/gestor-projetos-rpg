@@ -97,7 +97,7 @@ Comportamento conhecido: ao sair de "Desligado" para outra opção, as animaçõ
 | Emblema de Rank (SVG gerado) | E Ferro · D Bronze · C Prata · B Safira · A Rubi · S Lendário | M4 |
 | Brasão de Classe (SVG gerado) | 8 classes | M4 |
 | Tela "Escolha sua classe" | — | M4 |
-| Janela do Sistema | Missão concluída, XP ganho, recompensa bloqueada pela trava | M4 |
+| Janela do Sistema | Projeto concluído, XP ganho, recompensa bloqueada pela trava | M4 |
 | Cinemática de level up | Com ou sem medalha nova; com ou sem troca de Rank | M5 |
 | Ficha do Personagem | Página completa (tecla `C`) | M5 |
 

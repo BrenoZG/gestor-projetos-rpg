@@ -2,7 +2,7 @@
 
 > Fonte da verdade numérica das RN-06 a RN-13 de [`requisitos.md`](requisitos.md). Os valores vivem num **único módulo de configuração** do domínio (`src/dominio/gamificacao/`, a partir do M3). Os números desta página foram calculados pela mesma fórmula, não digitados à mão.
 
-## 1. Rank de Missão (Projeto) — RN-14
+## 1. Rank do Projeto — RN-14
 
 O sistema calcula o Rank; o usuário não declara dificuldade (desde o M1c, `src/dominio/missoes/rank.ts`).
 
@@ -92,7 +92,7 @@ O título vale do nível da medalha até o nível anterior à próxima. Medalhas
 
 **Calibração:** com ritmo estimado de ~1,5 Projeto e ~10 Atualizações concluídos por mês, o Nv 100 chega em cerca de 3 anos. A curva é côncava: o começo é rápido para motivar, e o fim é mais conquistado.
 
-## 4. Rank do Caçador
+## 4. Rank do Aventureiro
 
 | Rank | Níveis | Títulos dentro da faixa |
 |---|---|---|
