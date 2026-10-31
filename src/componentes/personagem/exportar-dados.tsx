@@ -95,7 +95,7 @@ export function ExportarDados() {
       salvarArquivo(conteudo, nome);
       setEstado({ tipo: 'sucesso', nome, resumo: resumoDoArquivo(await conteudo.text()) });
     } catch {
-      // A causa já foi registrada no servidor; o navegador mostra só a mensagem genérica.
+      // Rede, sessão vencida ou falha do servidor (esta fica no log): a pessoa vê só a mensagem genérica.
       setEstado({ tipo: 'erro' });
     }
   }
