@@ -5,6 +5,7 @@ import { test as setup } from '@playwright/test';
 import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
+import { definirPersonagemDoUsuarioDeTeste } from './apoio/banco-local';
 import { ARQUIVO_SESSAO, ARQUIVO_TOKEN } from './apoio/caminhos';
 import { EMAIL_TESTE, lerSupabaseLocal } from './apoio/supabase-local';
 
@@ -12,7 +13,8 @@ import { EMAIL_TESTE, lerSupabaseLocal } from './apoio/supabase-local';
  * Cria (se preciso) o usuário de teste no Supabase local, abre uma sessão pela
  * API admin (o login real pelo GitHub não é automatizável) e grava os cookies
  * no formato do `@supabase/ssr`, que o app lê. Também apaga as Missões que
- * sobraram de execuções anteriores, para cada execução começar do zero.
+ * sobraram de execuções anteriores e dá uma Classe ao personagem, para cada
+ * execução começar do mesmo ponto.
  */
 setup('sessão do usuário de teste', async () => {
   const { url, chavePublica, chaveSecreta } = lerSupabaseLocal();
@@ -57,6 +59,9 @@ setup('sessão do usuário de teste', async () => {
   });
   const { error: erroLimpeza } = await comoUsuario.from('projetos').delete().not('id', 'is', null);
   if (erroLimpeza) throw erroLimpeza;
+  // Sem Classe, toda tela do jogo manda para a escolha (RF-17): os specs
+  // começam com uma; o do 1º acesso a apaga e devolve.
+  definirPersonagemDoUsuarioDeTeste({ classe: 'arquimago_dados' });
 
   await mkdir(dirname(ARQUIVO_SESSAO), { recursive: true });
   await writeFile(

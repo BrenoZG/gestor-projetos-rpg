@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 
+import { ehChaveClasse } from '../../../src/dominio/personagem/classes';
 import { ehUuid } from '../../../src/lib/uuid';
 
 import { EMAIL_TESTE, lerSupabaseLocal } from './supabase-local';
@@ -47,5 +48,29 @@ export function retrocederDesenvolvimento(projetoId: string, horas: number): voi
   if (!ehUuid(projetoId) || !Number.isInteger(horas)) throw new Error('Id ou horas inválidos.');
   executarSql(
     `update public.projetos set inicio_desenvolvimento_em = now() - interval '${horas} hours' where id = '${projetoId}'`,
+  );
+}
+
+/**
+ * Estado do personagem do usuário de teste. O `nivel_maximo` só é gravado pela
+ * função do banco, e a Classe nula simula o 1º acesso (RF-17).
+ *
+ * @param estado - Classe (ou `null`) e nível máximo de 1 a 100.
+ */
+export function definirPersonagemDoUsuarioDeTeste({
+  classe,
+  nivelMaximo = 1,
+}: {
+  classe: string | null;
+  nivelMaximo?: number;
+}): void {
+  if (classe !== null && !ehChaveClasse(classe)) throw new Error('Classe inválida.');
+  if (!Number.isInteger(nivelMaximo) || nivelMaximo < 1 || nivelMaximo > 100)
+    throw new Error('Nível inválido.');
+  const valorClasse = classe === null ? 'null' : `'${classe}'`;
+  executarSql(
+    `insert into public.personagem (user_id, classe, nivel_maximo)
+     select id, ${valorClasse}, ${nivelMaximo} from auth.users where email = '${EMAIL_TESTE}'
+     on conflict (user_id) do update set classe = excluded.classe, nivel_maximo = excluded.nivel_maximo`,
   );
 }
