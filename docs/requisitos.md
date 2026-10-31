@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.8 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.9 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.9 (2026-10-31, M5):** a página do Personagem vira a Ficha (RF-19; a rota continua `/personagem` e o menu diz "Ficha"), com a Maestria por stack e o Domínio por ferramenta (RN-10, RN-18). `C` abre a Ficha e `Esc` volta para a tela anterior, ou para o Quadro quando a Ficha foi a primeira tela; o atalho `C` é ignorado em campo de texto, com Ctrl/Alt/⌘, com tecla segurada e com uma janela aberta, e é desligado por aparelho (RN-12). O `Esc` não depende desse liga/desliga, porque não é tecla de caractere. A cinemática (RF-16) é só da trilha Desenvolvedor: vários níveis de uma vez viram uma cinemática só, com a medalha mais alta, e os níveis alcançados antes do M5 não tocam. A Janela do Sistema mostra o resultado da conclusão de **Projeto** e vem antes da cinemática; a conclusão de Atualização continua com o aviso do M3. Origem: proposta do M5 aprovada pelo dono.
 >
 > **1.8 (2026-10-31, M4):** a troca de Classe (RF-18) e as medalhas (RF-15) ficam na página do Personagem, semente da Ficha (RF-19, M5); medalha conquistada = maior nível já alcançado, guardado em `nivel_maximo` já no M4, para a revogação de XP não tirar medalha (RN-08). A animação da RN-08 continua no M5. Origem: proposta do M4 aprovada pelo dono.
 >
@@ -77,7 +79,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 |---|---|
 | Classe | Uma das 8 classes da seção 6. Vazia até a primeira escolha. |
 | Nível máximo alcançado | Mantido pelo sistema; garante medalhas permanentes. |
-| Última medalha vista | Mantido pelo sistema; garante que a animação de conquista toque uma única vez. |
+| Último nível e última medalha vistos | Mantidos pelo sistema; garantem que a animação de conquista toque uma única vez. |
 
 ## 4. Requisitos funcionais
 
@@ -100,7 +102,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-15 | O sistema deve exibir as medalhas conquistadas e bloqueadas. | Must |
 | RF-16 | O sistema deve exibir a animação de conquista ao subir de nível e ao ganhar medalha, conforme RN-08. | Should |
 | RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Projetos. | Must |
-| RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela página do Personagem (semente da Ficha, RF-19). | Should |
+| RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela Ficha do Personagem (RF-19). | Should |
 | RF-19 | O sistema deve exibir a Ficha do Personagem, acessível pelo menu e pela tecla `C`, conforme RN-12. | Must |
 | RF-20 | O sistema deve permitir mover um Projeto entre as colunas do Quadro sem abrir a edição: arrastando o cartão (mouse ou toque) ou pelo botão "Mover", que funciona só com o teclado (WCAG 2.5.7), conforme RN-02. | Must |
 | RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank do Projeto, com todos os filtros combinados; os filtros ficam na URL. | Should |
@@ -358,7 +360,7 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-27, RF-28, RF-29, RN-19 | 1.5 | Unitário (validação, dados) + pgTAP (`renomear_tag`, policies de alterar e excluir) + E2E (juntar, teclado, nome inválido, excluir sem uso, 360 px, axe) |
 | RF-12, RN-06, RN-07, RN-09, RN-13, RN-18, RN-10 (snapshot) | M3 | Unitário (domínio) + pgTAP (RLS do ledger, trigger de revogação, funções atômicas) + E2E (HUD, trava, aviso, 360 px, axe) |
 | RF-15, RF-17, RF-18, RN-11, RN-08 (medalha permanente) | M4 | Unitário (medalhas, validação, dados) + pgTAP (`registrar_nivel_maximo`) + E2E (1º acesso, troca, galeria, 360 px, axe) |
-| RF-16, RF-19, RN-08 (animação), RN-10 (cálculo e exibição), RN-12 | M5 | E2E + axe |
+| RF-16, RF-19, RN-08 (animação), RN-10 (cálculo e exibição), RN-12 | M5 | Unitário (Maestria, conquista pendente, atalho, dados, validação) + pgTAP (`marcar_conquista_vista`, `maestria()`) + E2E (C/Esc, campo de texto, atalho desligado, Maestria, Janela do Sistema, cinemática com menos movimento, fila, 360 px, axe) |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
 | RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v4`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |

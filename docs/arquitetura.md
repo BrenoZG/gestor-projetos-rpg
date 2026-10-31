@@ -71,7 +71,9 @@ sequenceDiagram
     UI-->>U: Aviso (+XP, trava ou já recebido); o HUD soma o ledger de novo
 ```
 
-Criar Projeto ou Atualização segue o mesmo desenho (`salvar_missao_v4`, `criar_atualizacao`). Excluir revoga o XP de criação por trigger, inclusive na cascata (ADR-0011). Depois de dar XP, a ação guarda o nível de Desenvolvedor em `personagem.nivel_maximo` pela `registrar_nivel_maximo` (M4), que só aumenta o valor; uma falha ali só vai para o log, porque a tela usa o maior entre o máximo e o nível atual. As animações de nível e medalha ficam para o M5.
+Criar Projeto ou Atualização segue o mesmo desenho (`salvar_missao_v4`, `criar_atualizacao`). Excluir revoga o XP de criação por trigger, inclusive na cascata (ADR-0011). Depois de dar XP, a ação guarda o nível de Desenvolvedor em `personagem.nivel_maximo` pela `registrar_nivel_maximo` (M4), que só aumenta o valor; uma falha ali só vai para o log, porque a tela usa o maior entre o máximo e o nível atual.
+
+A cinemática de level up (M5) não depende de a ação devolver "subiu": o HUD, renderizado de novo depois de toda ação que dá XP (inclusive a criação, que termina em redirect), compara o nível conquistado com `personagem.nivel_visto`. Ao fechar a cinemática, a Server Action `marcarConquistaVista` sincroniza o `nivel_maximo` e grava o visto pela `marcar_conquista_vista`. No navegador, o `ProvedorSistema` (layout do jogo) mostra uma janela de cada vez: a ação de mudar status reserva a fila antes de chamar o servidor, e a Janela do Sistema da conclusão abre e fecha antes da cinemática.
 
 **Por que a função SQL:** o cliente Supabase não abre transação. Atualizar o status e gravar o XP em duas chamadas permite um estado inconsistente (missão concluída sem XP) se a segunda falhar (ADR-0003).
 
