@@ -1,4 +1,5 @@
 import 'server-only';
+import { connection } from 'next/server';
 
 import { ErroDeMissao } from '@/dados/missoes';
 import { obterMaestria, type LinhaMaestria } from '@/dados/progressao';
@@ -11,6 +12,9 @@ import { criarClienteServidor } from '@/lib/supabase/servidor';
  * @throws {Error} Mensagem genérica se o banco falhar (a tela de erro assume; o código vai para o log).
  */
 export async function carregarMaestria(): Promise<LinhaMaestria[]> {
+  // Só na requisição real: o partialPrefetching pré-renderiza em tempo de
+  // execução e proíbe Date.now(), que o supabase-js usa ao ler a sessão.
+  await connection();
   const supabase = await criarClienteServidor();
   try {
     return await obterMaestria(supabase);
