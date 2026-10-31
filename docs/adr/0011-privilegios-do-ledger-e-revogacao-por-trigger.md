@@ -8,7 +8,7 @@
 O M3 grava XP em `eventos_xp`. As funções do projeto são `SECURITY INVOKER`: rodam sob o RLS de quem chama. Para gravar no ledger por elas, o papel `authenticated` precisa de `INSERT` e `DELETE` na tabela, e isso também libera esses comandos pela API. Faltava definir quanto o banco protege o ledger e onde fica a revogação do XP de criação (RN-06c), que também precisa valer quando as Atualizações saem em cascata com o Projeto (RN-04).
 
 ## Decisão
-- **RLS do ledger:** o usuário lê e insere só os próprios eventos, e só para um Projeto ou Atualização dele. Apaga **só** evento de criação que não tem o evento de conclusão correspondente. Não há `UPDATE`. A permanência da conclusão (RN-06b) e a unicidade (RN-06a, `UNIQUE (user_id, referencia_id, tipo)`) passam a ser garantidas pelo banco, por qualquer caminho.
+- **RLS do ledger:** o usuário lê e insere só os próprios eventos, e só para um Projeto ou Atualização dele. Apaga **só** evento de criação de item que já foi excluído; conclusão, nunca. Não há `UPDATE`. A policy não consulta a própria `eventos_xp` (o Postgres recusa com recursão infinita): quem confere "sem conclusão" é o trigger. A permanência da conclusão (RN-06b) e a unicidade (RN-06a, `UNIQUE (user_id, referencia_id, tipo)`) passam a ser garantidas pelo banco, por qualquer caminho.
 - **Revogação por trigger `AFTER DELETE`** em `projetos` e `atualizacoes`, sem nenhum valor de XP: só apaga o evento de criação que não tem conclusão. Vale na exclusão direta e na cascata.
 - **Concessão continua como na ADR-0003:** o TypeScript calcula o XP, e as funções `salvar_missao_v4`, `criar_atualizacao`, `mudar_status_missao` e `mudar_status_atualizacao` gravam o item e o evento na mesma transação.
 
