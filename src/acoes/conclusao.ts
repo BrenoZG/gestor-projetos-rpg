@@ -2,6 +2,7 @@ import 'server-only';
 
 import { contarAtualizacoesConcluidas, obterProjetoDaAtualizacao } from '@/dados/atualizacoes';
 import { obterMissao, type RecompensaDaConclusao } from '@/dados/missoes';
+import { jaRecebeuConclusaoDoProjeto } from '@/dados/progressao';
 import {
   avaliarConclusaoProjeto,
   trilhaDoTipo,
@@ -23,12 +24,12 @@ type ClienteSupabase = Awaited<ReturnType<typeof criarClienteServidor>>;
 export type PreparoConclusao = {
   avaliacao: AvaliacaoConclusao;
   trilha: Trilha;
-  /** O que gravar no ledger; `null` quando a trava não foi cumprida. */
+  /** O que gravar no ledger; `null` quando não há XP (trava ou XP já recebido). */
   recompensa: RecompensaDaConclusao | null;
 };
 
 /**
- * Conclusão de Projeto: Rank, Atualizações concluídas e a trava de 24 h (RN-06d).
+ * Conclusão de Projeto: Rank, Atualizações concluídas, XP já recebido e a trava de 24 h (RN-06).
  *
  * @returns O preparo, ou `null` se o Projeto não existe ou é de outro usuário.
  * @throws {ErroDeMissao} Se uma leitura falhar.
@@ -39,11 +40,16 @@ export async function prepararConclusaoDaMissao(
 ): Promise<PreparoConclusao | null> {
   const missao = await obterMissao(supabase, id);
   if (!missao) return null;
+  const [atualizacoesConcluidas, jaRecebido] = await Promise.all([
+    contarAtualizacoesConcluidas(supabase, id),
+    jaRecebeuConclusaoDoProjeto(supabase, id),
+  ]);
   const avaliacao = avaliarConclusaoProjeto({
     rank: missao.rank,
-    atualizacoesConcluidas: await contarAtualizacoesConcluidas(supabase, id),
+    atualizacoesConcluidas,
     inicioDesenvolvimentoEm: missao.inicioDesenvolvimentoEm ? new Date(missao.inicioDesenvolvimentoEm) : null,
     agora: new Date(),
+    jaRecebido,
   });
   return {
     avaliacao,

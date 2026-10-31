@@ -17,8 +17,16 @@ describe('recompensaDaConclusao', () => {
     });
   });
 
+  it('diz que o XP já foi recebido quando o domínio já sabia disso', () => {
+    expect(recompensaDaConclusao({ concede: false, motivo: 'ja_recebido' }, null, 'desenvolvedor')).toEqual({
+      tipo: 'ja_recebido',
+    });
+  });
+
   it('explica a trava com as horas que faltaram (RN-06d)', () => {
-    expect(recompensaDaConclusao({ concede: false, horasRestantes: 21 }, null, 'desenvolvedor')).toEqual({
+    expect(
+      recompensaDaConclusao({ concede: false, motivo: 'trava', horasRestantes: 21 }, null, 'desenvolvedor'),
+    ).toEqual({
       tipo: 'trava',
       horasRestantes: 21,
     });

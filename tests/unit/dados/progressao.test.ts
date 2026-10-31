@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { obterXpPorTrilha } from '@/dados/progressao';
+import { jaRecebeuConclusaoDoProjeto, obterXpPorTrilha } from '@/dados/progressao';
 
 type Cliente = Parameters<typeof obterXpPorTrilha>[0];
 
@@ -35,5 +35,34 @@ describe('obterXpPorTrilha', () => {
   it('lança ErroDeMissao, só com o código, quando o banco falha', async () => {
     const { cliente } = clienteFalso({ data: null, error: { code: '57014' } });
     await expect(obterXpPorTrilha(cliente)).rejects.toMatchObject({ name: 'ErroDeMissao', codigo: '57014' });
+  });
+});
+
+describe('jaRecebeuConclusaoDoProjeto', () => {
+  function consultaFalsa(resposta: { count: number | null; error: { code: string } | null }) {
+    const eq = vi.fn();
+    const cadeia = { select: vi.fn(() => cadeia), eq };
+    eq.mockReturnValueOnce(cadeia).mockResolvedValueOnce(resposta);
+    const from = vi.fn(() => cadeia);
+    return { cliente: { from } as unknown as Cliente, from, cadeia, eq };
+  }
+
+  it('procura o evento de conclusão do Projeto no ledger, sem trazer linhas', async () => {
+    const { cliente, from, cadeia, eq } = consultaFalsa({ count: 1, error: null });
+    await expect(jaRecebeuConclusaoDoProjeto(cliente, 'p1')).resolves.toBe(true);
+    expect(from).toHaveBeenCalledWith('eventos_xp');
+    expect(cadeia.select).toHaveBeenCalledWith('id', { count: 'exact', head: true });
+    expect(eq).toHaveBeenNthCalledWith(1, 'referencia_id', 'p1');
+    expect(eq).toHaveBeenNthCalledWith(2, 'tipo', 'conclusao_projeto');
+  });
+
+  it('sem evento, ainda não recebeu', async () => {
+    const { cliente } = consultaFalsa({ count: 0, error: null });
+    await expect(jaRecebeuConclusaoDoProjeto(cliente, 'p1')).resolves.toBe(false);
+  });
+
+  it('lança ErroDeMissao quando a consulta falha', async () => {
+    const { cliente } = consultaFalsa({ count: null, error: { code: '57014' } });
+    await expect(jaRecebeuConclusaoDoProjeto(cliente, 'p1')).rejects.toMatchObject({ codigo: '57014' });
   });
 });

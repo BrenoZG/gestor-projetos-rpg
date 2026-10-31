@@ -83,6 +83,7 @@ describe('avaliarConclusaoProjeto', () => {
         atualizacoesConcluidas: 7,
         inicioDesenvolvimentoEm: horasAtras(25),
         agora: AGORA,
+        jaRecebido: false,
       }),
     ).toEqual({ concede: true, xp: 157 });
   });
@@ -94,6 +95,7 @@ describe('avaliarConclusaoProjeto', () => {
         atualizacoesConcluidas: 0,
         inicioDesenvolvimentoEm: horasAtras(24),
         agora: AGORA,
+        jaRecebido: false,
       }),
     ).toEqual({ concede: true, xp: 40 });
   });
@@ -105,8 +107,9 @@ describe('avaliarConclusaoProjeto', () => {
         atualizacoesConcluidas: 0,
         inicioDesenvolvimentoEm: horasAtras(2.5),
         agora: AGORA,
+        jaRecebido: false,
       }),
-    ).toEqual({ concede: false, horasRestantes: 22 });
+    ).toEqual({ concede: false, motivo: 'trava', horasRestantes: 22 });
   });
 
   it('recusa com 24 horas restantes quando o Projeto nunca entrou em Desenvolvimento', () => {
@@ -116,7 +119,20 @@ describe('avaliarConclusaoProjeto', () => {
         atualizacoesConcluidas: 3,
         inicioDesenvolvimentoEm: null,
         agora: AGORA,
+        jaRecebido: false,
       }),
-    ).toEqual({ concede: false, horasRestantes: 24 });
+    ).toEqual({ concede: false, motivo: 'trava', horasRestantes: 24 });
+  });
+
+  it('diz que o XP já foi recebido antes de olhar a trava: reabrir zera o relógio, mas não devolve o XP (RN-06a)', () => {
+    expect(
+      avaliarConclusaoProjeto({
+        rank: 'B',
+        atualizacoesConcluidas: 7,
+        inicioDesenvolvimentoEm: horasAtras(0),
+        agora: AGORA,
+        jaRecebido: true,
+      }),
+    ).toEqual({ concede: false, motivo: 'ja_recebido' });
   });
 });
