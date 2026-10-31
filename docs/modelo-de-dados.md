@@ -105,7 +105,7 @@ erDiagram
 | `medalha_vista` | `smallint` | 0–10; última medalha cuja animação já tocou |
 | `criado_em` | `timestamptz` | `default now()` |
 
-**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: quem vai gravar esse campo é a função das medalhas (M5), e assim ninguém sobe o próprio nível pela API. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
+**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: só a função `registrar_nivel_maximo` (M4, `SECURITY DEFINER`, `search_path` vazio, filtro `auth.uid()`) grava esse campo, e grava `greatest(atual, novo)`, então ninguém baixa o próprio nível pela API. Risco aceito, como o `p_xp` (ADR-0003): o dono pode subi-lo chamando a função. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
 
 ### `projetos` — grão: 1 linha por Projeto
 | Coluna | Tipo | Regra |

@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.7 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.8 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.8 (2026-10-31, M4):** a troca de Classe (RF-18) e as medalhas (RF-15) ficam na página do Personagem, semente da Ficha (RF-19, M5); medalha conquistada = maior nível já alcançado, guardado em `nivel_maximo` já no M4, para a revogação de XP não tirar medalha (RN-08). A animação da RN-08 continua no M5. Origem: proposta do M4 aprovada pelo dono.
 >
 > **1.7 (2026-10-31, M3):** o HUD mostra também a trilha Produtividade (nível e progresso), só quando ela tem XP (RF-12, RN-18); a revogação do XP de criação vale para as Atualizações excluídas junto com o Projeto (RN-06c); ao concluir, a interface informa o XP ganho ou por que não houve XP; a Maestria e o Domínio são calculados e exibidos no M5, e o M3 grava o snapshot das stacks e ferramentas na conclusão (RN-10). Origem: proposta do M3 aprovada pelo dono.
 >
@@ -98,7 +100,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-15 | O sistema deve exibir as medalhas conquistadas e bloqueadas. | Must |
 | RF-16 | O sistema deve exibir a animação de conquista ao subir de nível e ao ganhar medalha, conforme RN-08. | Should |
 | RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Projetos. | Must |
-| RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela Ficha do Personagem. | Should |
+| RF-18 | O sistema deve permitir trocar de Classe a qualquer momento pela página do Personagem (semente da Ficha, RF-19). | Should |
 | RF-19 | O sistema deve exibir a Ficha do Personagem, acessível pelo menu e pela tecla `C`, conforme RN-12. | Must |
 | RF-20 | O sistema deve permitir mover um Projeto entre as colunas do Quadro sem abrir a edição: arrastando o cartão (mouse ou toque) ou pelo botão "Mover", que funciona só com o teclado (WCAG 2.5.7), conforme RN-02. | Must |
 | RF-21 | O sistema deve filtrar os Projetos do Quadro por texto (no nome e na descrição, sem diferenciar maiúsculas nem acentos), por stack e por Rank do Projeto, com todos os filtros combinados; os filtros ficam na URL. | Should |
@@ -355,8 +357,8 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-25 | 1.4, parte 2 | Unitário (filtros) + E2E (URL, axe) |
 | RF-27, RF-28, RF-29, RN-19 | 1.5 | Unitário (validação, dados) + pgTAP (`renomear_tag`, policies de alterar e excluir) + E2E (juntar, teclado, nome inválido, excluir sem uso, 360 px, axe) |
 | RF-12, RN-06, RN-07, RN-09, RN-13, RN-18, RN-10 (snapshot) | M3 | Unitário (domínio) + pgTAP (RLS do ledger, trigger de revogação, funções atômicas) + E2E (HUD, trava, aviso, 360 px, axe) |
-| RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
-| RF-16, RF-19, RN-08, RN-10 (cálculo e exibição), RN-12 | M5 | E2E + axe |
+| RF-15, RF-17, RF-18, RN-11, RN-08 (medalha permanente) | M4 | Unitário (medalhas, validação, dados) + pgTAP (`registrar_nivel_maximo`) + E2E (1º acesso, troca, galeria, 360 px, axe) |
+| RF-16, RF-19, RN-08 (animação), RN-10 (cálculo e exibição), RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
 | RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v4`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
