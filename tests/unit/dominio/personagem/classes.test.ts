@@ -3,7 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { CHAVES_CLASSE, nomeDaClasse } from '@/dominio/personagem/classes';
+import { CHAVES_CLASSE, CLASSES, ehChaveClasse, nomeDaClasse } from '@/dominio/personagem/classes';
 
 /** Chaves aceitas pelo CHECK `personagem_classe_valida` da migration. */
 function chavesDoBanco(): string[] {
@@ -28,5 +28,27 @@ describe('classes do personagem', () => {
 
   it.each([null, '', 'mago_inexistente', 'constructor'])('devolve null sem classe válida (%j)', (chave) => {
     expect(nomeDaClasse(chave)).toBeNull();
+  });
+});
+
+describe('CLASSES', () => {
+  it('lista as 8 na ordem de requisitos.md §6, com nome e área', () => {
+    expect(CLASSES.map((c) => c.chave)).toEqual([...CHAVES_CLASSE]);
+    expect(CLASSES[0]).toEqual({
+      chave: 'arquimago_dados',
+      nome: 'Arquimago de Dados',
+      area: 'Dados, BI, engenharia e análise de dados',
+    });
+    expect(CLASSES[7]?.area).toBe('UI/UX, design de produto');
+  });
+});
+
+describe('ehChaveClasse', () => {
+  it('aceita uma chave do banco', () => {
+    expect(ehChaveClasse('invocador_ia')).toBe(true);
+  });
+
+  it.each(['', 'mago_inexistente', 'toString', 'INVOCADOR_IA'])('recusa %j', (valor) => {
+    expect(ehChaveClasse(valor)).toBe(false);
   });
 });
