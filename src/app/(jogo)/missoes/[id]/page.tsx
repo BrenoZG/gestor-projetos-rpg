@@ -189,7 +189,7 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
 export default function PaginaMissao({ params }: PageProps<'/missoes/[id]'>) {
   return (
     <JanelaMissao
-      rotulo="[ SISTEMA ] · MISSÃO"
+      rotulo="[ SISTEMA ] · PROJETO"
       titulo="Ficha do projeto"
       voltarPara="/"
       textoVoltar="Quadro de Projetos"

@@ -7,6 +7,7 @@ for (const caminho of ['/', '/missoes/nova', '/missoes/00000000-0000-4000-8000-0
     await page.goto(caminho);
     await expect(page).toHaveURL(/\/entrar$/);
     await expect(page.getByRole('heading', { name: /Identifique-se/ })).toBeVisible();
+    await expect(page.getByText('[ SISTEMA ] · NOVO AVENTUREIRO', { exact: true })).toBeVisible();
   });
 }
 

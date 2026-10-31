@@ -13,7 +13,9 @@ test.describe('Projetos', () => {
     const nome = nomeUnico('Projeto do fluxo');
 
     await page.goto('/');
+    await expect(page.getByText('[ SISTEMA ] · QUADRO DE PROJETOS', { exact: true })).toBeVisible();
     await page.getByRole('link', { name: /Novo projeto/ }).click();
+    await expect(page.getByText('[ SISTEMA ] · NOVO PROJETO', { exact: true })).toBeVisible();
     await page.getByRole('textbox', { name: 'Nome' }).fill(nome);
     await page.getByRole('textbox', { name: 'Descrição' }).fill('Prova do fluxo completo.');
     const stacks = page.getByRole('combobox', { name: 'Stacks' });
@@ -41,6 +43,7 @@ test.describe('Projetos', () => {
     await expect(page).toHaveURL(/\/missoes\/[0-9a-f-]{36}$/);
     const urlMissao = page.url();
     await expect(page.getByRole('heading', { level: 2, name: nome })).toBeVisible();
+    await expect(page.getByText('[ SISTEMA ] · PROJETO', { exact: true })).toBeVisible();
     await expect(page.getByText('Rank C · Backlog · 31 pontos')).toBeVisible();
     await expect(page.getByText('Autenticação, Banco de dados, CI/CD e deploy')).toBeVisible();
 
@@ -52,6 +55,7 @@ test.describe('Projetos', () => {
     await expect(cartao).toContainText('Hexagonal / Clean · 31 pontos');
 
     await page.goto(`${urlMissao}/editar`);
+    await expect(page.getByText('[ SISTEMA ] · EDITAR PROJETO', { exact: true })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Nome' })).toHaveValue(nome);
     await expect(page.getByRole('combobox', { name: 'Status' }), 'a edição não muda o status').toHaveCount(0);
 

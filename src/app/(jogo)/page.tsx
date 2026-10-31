@@ -91,7 +91,7 @@ export default function PaginaQuadro() {
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div className="entrada-suave flex flex-col gap-2">
           <span className="font-mono text-xs tracking-[0.2em] text-acento sm:text-sm">
-            [ SISTEMA ] · QUADRO DE MISSÕES
+            [ SISTEMA ] · QUADRO DE PROJETOS
           </span>
           <h1 className="titulo-jogo font-display text-[clamp(2rem,5vw,3.5rem)] leading-none font-extrabold">
             Quadro de Projetos
