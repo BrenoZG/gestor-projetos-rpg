@@ -23,6 +23,8 @@
 
 Para publicar de novo sem um commit novo (por exemplo, depois de trocar uma variável na Vercel): Actions → Deploy → **Run workflow** na `main`.
 
+**Versão (release) dentro do PR da funcionalidade:** o último commit do PR sobe a versão (`npm version X.Y.Z --no-git-tag-version`, commit `chore(release): versão X.Y.Z (…)`). Depois do merge e do deploy verde, a tag leve `vX.Y.Z` vai no commit de release da `main` e a Release é criada no GitHub. Não há PR nem deploy separados só para a versão. Versão em SemVer: funcionalidade nova sobe o número do meio; correção, o último.
+
 ## 3. Quando algo dá errado
 | Sintoma | O que o pipeline já fez | O que fazer |
 |---|---|---|
