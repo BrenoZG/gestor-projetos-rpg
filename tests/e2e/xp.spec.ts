@@ -13,6 +13,9 @@ const barraDesenvolvedor = (pagina: Page) =>
 const barraProdutividade = (pagina: Page) =>
   hud(pagina).getByRole('progressbar', { name: 'Progresso de XP de Produtividade no nível atual' });
 
+/** Janela do Sistema da conclusão (M5): um dialog modal com o nome do Projeto. */
+const janelaDoSistema = (pagina: Page, nome: string) => pagina.getByRole('dialog', { name: nome });
+
 function idDaUrl(pagina: Page): string {
   const id = /\/missoes\/([0-9a-f-]{36})$/.exec(pagina.url())?.[1];
   if (!id) throw new Error(`Sem id na URL: ${pagina.url()}`);
@@ -74,11 +77,25 @@ test.describe('XP e níveis (M3)', () => {
     await mudarStatusNaFicha(page, nome, 'Concluído');
 
     // Monolito (5) + 1 stack (2) = 7 pontos, Rank E: 40 XP, sem Atualizações.
-    await expect(page.getByText('+40 XP Trilha Desenvolvedor.', { exact: true })).toBeVisible();
+    const janela = janelaDoSistema(page, nome);
+    await expect(janela).toContainText('[ SISTEMA ] · PROJETO CONCLUÍDO');
+    await expect(janela, 'o leitor de tela ouve o XP na descrição da janela').toHaveAccessibleDescription(
+      '+40 XP Trilha Desenvolvedor.',
+    );
+    await expect(janela.getByRole('button', { name: 'Continuar' }), 'o foco vai ao botão').toBeFocused();
+
+    const resultado = await new AxeBuilder({ page }).withTags(NIVEIS_WCAG).analyze();
+    expect(
+      resultado.violations.map((v) => `${v.id}: ${v.help}`),
+      'axe na ficha com a Janela do Sistema aberta',
+    ).toEqual([]);
+
+    await page.keyboard.press('Enter');
+    await expect(janela, 'Enter fecha a janela').toBeHidden();
     await expect(
-      page.getByRole('status').filter({ hasText: '+40 XP' }),
-      'o leitor de tela também ouve',
-    ).toHaveCount(1);
+      page.getByRole('group', { name: `Status de ${nome}` }).getByRole('button', { name: 'Concluído' }),
+      'o foco volta ao botão que concluiu',
+    ).toBeFocused();
     await expect(hud(page)).toContainText('NV 2');
     await expect(barraDesenvolvedor(page), '50 XP: nível 2, 30 dos 37 até o 3').toHaveAttribute(
       'aria-valuetext',
@@ -86,18 +103,12 @@ test.describe('XP e níveis (M3)', () => {
     );
 
     await mudarStatusNaFicha(page, nome, 'Desenvolvimento');
-    await expect(page.getByText('+40 XP'), 'o aviso some na ação seguinte').toHaveCount(0);
+    await expect(janela, 'sair de Concluído não abre janela').toBeHidden();
     await mudarStatusNaFicha(page, nome, 'Concluído');
-    await expect(
-      page.getByText('Concluído. O XP deste projeto já foi recebido antes.', { exact: true }),
-    ).toBeVisible();
+    await expect(janela).toHaveAccessibleDescription('Concluído. O XP deste projeto já foi recebido antes.');
+    await page.keyboard.press('Escape');
+    await expect(janela, 'Esc fecha a janela').toBeHidden();
     await expect(barraDesenvolvedor(page)).toHaveAttribute('aria-valuetext', '30 de 37 XP rumo ao nível 3');
-
-    const resultado = await new AxeBuilder({ page }).withTags(NIVEIS_WCAG).analyze();
-    expect(
-      resultado.violations.map((v) => `${v.id}: ${v.help}`),
-      'axe na ficha com o aviso',
-    ).toEqual([]);
 
     await excluirMissaoAberta(page);
     await expect(
@@ -112,12 +123,13 @@ test.describe('XP e níveis (M3)', () => {
     await mudarStatusNaFicha(page, nome, 'Desenvolvimento');
     await mudarStatusNaFicha(page, nome, 'Concluído');
 
-    await expect(
-      page.getByText(
-        'Concluído, sem XP. A recompensa exige 24 h em Desenvolvimento e faltaram 24 h. Para ganhar o XP, volte o projeto para Desenvolvimento e conclua depois de 24 h.',
-        { exact: true },
-      ),
-    ).toBeVisible();
+    const janela = janelaDoSistema(page, nome);
+    await expect(janela).toContainText('[ SISTEMA ] · RECOMPENSA BLOQUEADA');
+    await expect(janela).toHaveAccessibleDescription(
+      'Concluído, sem XP. A recompensa exige 24 h em Desenvolvimento e faltaram 24 h. Para ganhar o XP, volte o projeto para Desenvolvimento e conclua depois de 24 h.',
+    );
+    await janela.getByRole('button', { name: 'Entendi' }).click();
+    await expect(janela).toBeHidden();
     await expect(barraDesenvolvedor(page), 'só o XP de criação').toHaveAttribute(
       'aria-valuetext',
       '10 de 20 XP rumo ao nível 2',

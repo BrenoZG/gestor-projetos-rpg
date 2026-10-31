@@ -143,9 +143,14 @@ test.describe('Quadro de Projetos', () => {
     await expect(
       page.getByRole('status').filter({ hasText: `${nome} movido para Concluídas` }),
     ).toBeAttached();
+    // Concluir abre a Janela do Sistema (M5); Enter fecha.
+    const janela = page.getByRole('dialog', { name: nome });
+    await expect(janela.getByRole('button', { name: 'Entendi' })).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(janela).toBeHidden();
     await expect(
       cartao(page, 'Concluídas', nome).getByRole('button', { name: `Mover ${nome}` }),
-      'o foco acompanha o cartão',
+      'ao fechar a janela, o foco volta ao botão do cartão, na coluna nova',
     ).toBeFocused();
 
     await page.goto(urlMissao);
