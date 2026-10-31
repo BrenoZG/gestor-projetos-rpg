@@ -1,12 +1,8 @@
-import { connection } from 'next/server';
-
 import { sair } from '@/acoes/sessao';
 import { BarraXp } from '@/componentes/barra-xp';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { NavegacaoPrincipal } from '@/componentes/navegacao-principal';
 import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
-import { ErroDeMissao } from '@/dados/missoes';
-import { obterXpPorTrilha, type XpPorTrilha } from '@/dados/progressao';
 import { nomeDaClasse } from '@/dominio/personagem/classes';
 import {
   progressoDoNivel,
@@ -15,56 +11,32 @@ import {
   type ProgressoNivel,
 } from '@/dominio/progressao/progressao';
 import { obterPreferenciaEfeitos } from '@/lib/efeitos-servidor';
-import { registrarEvento } from '@/lib/log';
-import { criarClienteServidor } from '@/lib/supabase/servidor';
+
+import { carregarPersonagem } from './carregar-personagem';
 
 function textoDoXp({ xpNoNivel, xpParaProximo }: ProgressoNivel): string {
   return xpParaProximo === null ? 'NÍVEL MÁXIMO' : `${xpNoNivel} / ${xpParaProximo} XP`;
-}
-
-/** XP por trilha do ledger; a falha vai para o log só com o código. */
-async function lerXp(supabase: Awaited<ReturnType<typeof criarClienteServidor>>): Promise<XpPorTrilha> {
-  try {
-    return await obterXpPorTrilha(supabase);
-  } catch (erro) {
-    if (!(erro instanceof ErroDeMissao)) throw erro;
-    registrarEvento('erro', 'supabase_falhou', {
-      operacao: erro.operacao,
-      codigo: erro.codigo ?? 'desconhecido',
-    });
-    throw new Error('Não foi possível carregar o XP.');
-  }
 }
 
 /**
  * HUD do Aventureiro: barra superior com Rank, título, classe, nível e XP
  * (RF-12). O XP é a soma do ledger por trilha; a trilha Produtividade (RN-18)
  * só aparece quando tem XP, sem medalha, título nem Rank. Os dados vêm do
- * usuário logado (RLS: só as próprias linhas).
+ * usuário logado (RLS: só as próprias linhas); sem Classe, o carregador manda
+ * para a escolha (RF-17).
  *
  * @throws {Error} Se o personagem ou o XP não puderem ser lidos; a tela de erro assume.
  */
 export async function Hud() {
-  // Só na requisição real: o partialPrefetching pré-renderiza em tempo de
-  // execução com os cookies disponíveis, mas proíbe Date.now(), que o
-  // supabase-js usa ao ler a sessão. Sem isto, cada visita gerava uma consulta
-  // abortada e um erro falso no log.
-  await connection();
-  const supabase = await criarClienteServidor();
-  const [{ data: personagem, error }, xp, efeitos] = await Promise.all([
-    supabase.from('personagem').select('classe').maybeSingle(),
-    lerXp(supabase),
+  const [{ classe: chaveClasse, xp }, efeitos] = await Promise.all([
+    carregarPersonagem(),
     obterPreferenciaEfeitos(),
   ]);
-  if (error) {
-    registrarEvento('erro', 'supabase_falhou', { operacao: 'ler_personagem', codigo: error.code });
-    throw new Error('Não foi possível carregar o personagem.');
-  }
 
   const progresso = progressoDoNivel(xp.desenvolvedor);
   const produtividade = xp.produtividade > 0 ? progressoDoNivel(xp.produtividade) : null;
   const rank = rankDoAventureiro(progresso.nivel);
-  const classe = nomeDaClasse(personagem?.classe ?? null);
+  const classe = nomeDaClasse(chaveClasse);
 
   return (
     <header className="hud-sistema entrada-hud sticky top-0 z-30">
@@ -78,9 +50,7 @@ export async function Hud() {
             <span className="truncate font-display text-base font-extrabold sm:text-lg">
               {tituloDoNivel(progresso.nivel)}
             </span>
-            <span className="truncate text-xs text-texto-suave">
-              {classe ?? 'Sem classe · a escolha chega em breve'}
-            </span>
+            <span className="truncate text-xs text-texto-suave">{classe}</span>
           </div>
         </div>
 

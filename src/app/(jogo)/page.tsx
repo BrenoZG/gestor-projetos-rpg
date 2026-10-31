@@ -7,9 +7,13 @@ import { atraso, COLUNAS } from '@/componentes/missoes/colunas';
 import { QuadroMissoes } from '@/componentes/missoes/quadro-missoes';
 import { CLASSES_ACAO_PRINCIPAL } from '@/componentes/tela-sistema';
 import { ErroDeMissao, listarMissoes, type Missao } from '@/dados/missoes';
+import { MEDALHAS, medalhasDoPersonagem, nivelConquistado } from '@/dominio/progressao/medalhas';
+import { calcularNivel } from '@/dominio/progressao/progressao';
 import { registrarEvento } from '@/lib/log';
 import { extrairNonce } from '@/lib/seguranca/csp';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
+
+import { carregarPersonagem, type PersonagemDoJogo } from './carregar-personagem';
 
 async function carregarMissoes(): Promise<Missao[]> {
   await connection();
@@ -30,14 +34,17 @@ async function lerNonce(): Promise<string | undefined> {
   return extrairNonce((await headers()).get('content-security-policy'));
 }
 
-function Estatisticas({ missoes }: { missoes: readonly Missao[] }) {
+function Estatisticas({ missoes, personagem }: { missoes: readonly Missao[]; personagem: PersonagemDoJogo }) {
   const concluidas = missoes.filter((missao) => missao.status === 'concluido').length;
-  // XP e medalhas chegam com o ledger (M3); até lá, zero é o valor real.
+  // Mesma trilha do nível do HUD e das medalhas: Desenvolvedor (RN-18).
+  const xp = personagem.xp.desenvolvedor;
+  const nivel = nivelConquistado(personagem.nivelMaximo, calcularNivel(xp));
+  const medalhas = medalhasDoPersonagem(nivel).filter((medalha) => medalha.conquistada).length;
   const itens = [
     { rotulo: 'Projetos ativos', valor: String(missoes.length - concluidas) },
     { rotulo: 'Concluídas', valor: String(concluidas) },
-    { rotulo: 'XP total', valor: '0' },
-    { rotulo: 'Medalhas', valor: '0 / 10' },
+    { rotulo: 'XP Desenvolvedor', valor: xp.toLocaleString('pt-BR') },
+    { rotulo: 'Medalhas', valor: `${medalhas} / ${MEDALHAS.length}` },
   ];
   return (
     <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -57,10 +64,14 @@ function Estatisticas({ missoes }: { missoes: readonly Missao[] }) {
 }
 
 async function ConteudoQuadro() {
-  const [missoes, nonce] = await Promise.all([carregarMissoes(), lerNonce()]);
+  const [missoes, nonce, personagem] = await Promise.all([
+    carregarMissoes(),
+    lerNonce(),
+    carregarPersonagem(),
+  ]);
   return (
     <>
-      <Estatisticas missoes={missoes} />
+      <Estatisticas missoes={missoes} personagem={personagem} />
       <QuadroMissoes missoes={missoes} nonce={nonce} />
     </>
   );
