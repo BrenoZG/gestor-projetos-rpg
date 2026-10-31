@@ -202,8 +202,8 @@ export function FormularioMissao({
           className={CLASSES_CAMPO}
         />
         <p id={id('nome-ajuda')} className={CLASSES_AJUDA}>
-          De {LIMITES_MISSAO.nome.minimo} a {LIMITES_MISSAO.nome.maximo} caracteres, único entre as suas
-          missões.
+          De {LIMITES_MISSAO.nome.minimo} a {LIMITES_MISSAO.nome.maximo} caracteres, único entre os seus
+          projetos.
         </p>
         {erros.nome && <MensagemErroCampo id={id('nome-erro')} mensagem={erros.nome} />}
       </div>
@@ -224,7 +224,7 @@ export function FormularioMissao({
           className={`${CLASSES_CAMPO} resize-y`}
         />
         <p id={id('descricao-ajuda')} className={CLASSES_AJUDA}>
-          O que é a missão e qual problema ela resolve · {numero.format(valores.descricao.length)} de{' '}
+          O que é o projeto e qual problema ele resolve · {numero.format(valores.descricao.length)} de{' '}
           {numero.format(LIMITES_MISSAO.descricao.maximo)}
         </p>
         {erros.descricao && <MensagemErroCampo id={id('descricao-erro')} mensagem={erros.descricao} />}
@@ -308,7 +308,7 @@ export function FormularioMissao({
               Capacidades <span className="normal-case tracking-normal">(opcional)</span>
             </legend>
             <p id={id('capacidades-ajuda')} className={`${CLASSES_AJUDA} -mt-1`}>
-              O que a missão precisa entregar · +{PONTOS_POR_CAPACIDADE} pontos cada
+              O que o projeto precisa entregar · +{PONTOS_POR_CAPACIDADE} pontos cada
             </p>
             <div className="grid gap-2 sm:grid-cols-2">
               {CAPACIDADES.map((capacidade) => (
@@ -334,9 +334,9 @@ export function FormularioMissao({
           <div id={id('rank')} aria-live="polite" className="flex min-h-14 items-center gap-3">
             {rank && pontuacao ? (
               <>
-                <EmblemaRank rank={rank} rotulo={`Rank de Missão ${rank}`} className="h-12 w-11 shrink-0" />
+                <EmblemaRank rank={rank} rotulo={`Rank do Projeto ${rank}`} className="h-12 w-11 shrink-0" />
                 <p className="text-sm text-texto-suave">
-                  Rank de Missão <strong className="text-texto">{rank}</strong> · {pontuacao.total} pontos
+                  Rank do Projeto <strong className="text-texto">{rank}</strong> · {pontuacao.total} pontos
                   <span className="block font-mono text-xs">
                     Estilo +{pontuacao.estilo} · Capacidades +{pontuacao.capacidades} · Stacks +
                     {pontuacao.stacks} (até {STACKS_QUE_PONTUAM} pontuam)
@@ -345,7 +345,7 @@ export function FormularioMissao({
               </>
             ) : (
               <p className="text-sm text-texto-suave">
-                Escolha o estilo arquitetural para ver o Rank da missão.
+                Escolha o estilo arquitetural para ver o Rank do projeto.
               </p>
             )}
           </div>
@@ -410,7 +410,7 @@ export function FormularioMissao({
       {apagaParteTecnica && (
         <div className="flex flex-col gap-3 rounded-md border border-atencao/70 bg-superficie-alta p-4">
           <p id={id('aviso-perda')} className="text-sm text-texto">
-            Ao salvar como Geral, o estilo, as capacidades e a arquitetura desta missão serão apagados.
+            Ao salvar como Geral, o estilo, as capacidades e a arquitetura deste projeto serão apagados.
           </p>
           <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm text-texto">
             <input

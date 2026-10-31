@@ -149,11 +149,11 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
       <p role="status" className="sr-only">
         {anuncio}
       </p>
-      {erro && <AvisoErro titulo="A missão não foi movida.">{erro}</AvisoErro>}
+      {erro && <AvisoErro titulo="O projeto não foi movido.">{erro}</AvisoErro>}
 
       {filtroAtivo && filtradas.length === 0 && (
         <p className="rounded-md border border-dashed border-borda-campo px-6 py-6 text-center text-texto">
-          Nenhuma missão com esses filtros.
+          Nenhum projeto com esses filtros.
         </p>
       )}
 

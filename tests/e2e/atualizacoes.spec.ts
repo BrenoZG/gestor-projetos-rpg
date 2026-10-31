@@ -10,7 +10,7 @@ const item = (pagina: Page, titulo: string): Locator =>
     .getByRole('listitem')
     .filter({ has: pagina.getByRole('heading', { level: 4, name: titulo }) });
 
-/** Registra uma Atualização pelo formulário da ficha da Missão aberta. */
+/** Registra uma Atualização pelo formulário da ficha do Projeto aberta. */
 async function registrar(pagina: Page, titulo: string, descricao = `O que foi feito em ${titulo}.`) {
   const formulario = secao(pagina).getByRole('form', { name: 'Nova atualização' });
   await formulario.getByRole('textbox', { name: 'Título' }).fill(titulo);
@@ -23,7 +23,7 @@ test.describe('Atualizações', () => {
   test('registra no fim da ficha e mostra o histórico, mais recente primeiro (RF-05, RF-06, RF-09)', async ({
     page,
   }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com histórico'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com histórico'), stacks: 'Go,' });
     await expect(secao(page).getByText('Nenhuma atualização registrada ainda.')).toBeVisible();
 
     await registrar(page, 'Primeira atualização', 'Linha 1\nLinha 2');
@@ -50,10 +50,10 @@ test.describe('Atualizações', () => {
       return {
         datas: posicao('Conclusão'),
         atualizacoes: posicao('Atualizações · 2'),
-        editar: posicao('Editar missão'),
+        editar: posicao('Editar projeto'),
       };
     });
-    expect(ordem.atualizacoes, 'depois dos dados da Missão').toBeGreaterThan(ordem.datas);
+    expect(ordem.atualizacoes, 'depois dos dados do Projeto').toBeGreaterThan(ordem.datas);
     expect(ordem.editar, 'antes de Editar e Excluir').toBeGreaterThan(ordem.atualizacoes);
 
     await page.reload();
@@ -62,7 +62,7 @@ test.describe('Atualizações', () => {
   });
 
   test('mostra os erros por campo e leva o foco ao título', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com erro'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com erro'), stacks: 'Go,' });
     const formulario = secao(page).getByRole('form', { name: 'Nova atualização' });
     await formulario.getByRole('textbox', { name: 'Título' }).fill('Ab');
     await formulario.getByRole('button', { name: 'Registrar atualização' }).click();
@@ -75,7 +75,7 @@ test.describe('Atualizações', () => {
   });
 
   test('muda o status pelos três botões, sem abrir a edição', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com status'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com status'), stacks: 'Go,' });
     await registrar(page, 'Atualização com status');
     const status = item(page, 'Atualização com status').getByRole('group', {
       name: 'Status de Atualização com status',
@@ -95,11 +95,11 @@ test.describe('Atualizações', () => {
     await excluirMissaoAberta(page);
   });
 
-  test('edita e move a Atualização para outra Missão (RF-07, RN-01)', async ({ page }) => {
-    const destino = nomeUnico('Missão de destino');
+  test('edita e move a Atualização para outro Projeto (RF-07, RN-01)', async ({ page }) => {
+    const destino = nomeUnico('Projeto de destino');
     await cadastrarMissao(page, { nome: destino, stacks: 'Go,' });
     const urlDestino = page.url();
-    await cadastrarMissao(page, { nome: nomeUnico('Missão de origem'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto de origem'), stacks: 'Go,' });
     const urlOrigem = page.url();
     await registrar(page, 'Atualização viajante');
 
@@ -107,14 +107,14 @@ test.describe('Atualizações', () => {
       .getByRole('button', { name: 'Editar Atualização viajante' })
       .click();
     const edicao = item(page, 'Atualização viajante').getByRole('form', { name: 'Editar atualização' });
-    await edicao.getByRole('textbox', { name: 'Título' }).fill('Atualização que mudou de missão');
-    await edicao.getByRole('combobox', { name: 'Missão' }).selectOption({ label: destino });
+    await edicao.getByRole('textbox', { name: 'Título' }).fill('Atualização que mudou de projeto');
+    await edicao.getByRole('combobox', { name: 'Projeto' }).selectOption({ label: destino });
     await edicao.getByRole('button', { name: 'Salvar' }).click();
 
     await expect(historico(page)).toHaveCount(0);
     await expect(secao(page).getByText('Nenhuma atualização registrada ainda.')).toBeVisible();
     await page.goto(urlDestino);
-    await expect(item(page, 'Atualização que mudou de missão')).toBeVisible();
+    await expect(item(page, 'Atualização que mudou de projeto')).toBeVisible();
 
     await excluirMissaoAberta(page);
     await page.goto(urlOrigem);
@@ -122,7 +122,7 @@ test.describe('Atualizações', () => {
   });
 
   test('exclui uma Atualização com confirmação (RF-08)', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão que perde uma'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto que perde uma'), stacks: 'Go,' });
     await registrar(page, 'Atualização descartável');
 
     await item(page, 'Atualização descartável')
@@ -135,8 +135,8 @@ test.describe('Atualizações', () => {
     await excluirMissaoAberta(page);
   });
 
-  test('excluir a Missão avisa quantas Atualizações vão junto (RN-04)', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com duas'), stacks: 'Go,' });
+  test('excluir o Projeto avisa quantas Atualizações vão junto (RN-04)', async ({ page }) => {
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com duas'), stacks: 'Go,' });
     await registrar(page, 'Uma');
     await registrar(page, 'Outra');
 
@@ -154,7 +154,7 @@ test.describe('Atualizações', () => {
       (await new AxeBuilder({ page }).withTags(niveis).analyze()).violations.map((v) => `${v.id}: ${v.help}`);
 
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await cadastrarMissao(page, { nome: nomeUnico('Missão auditada'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto auditado'), stacks: 'Go,' });
     await registrar(page, 'Atualização auditada');
     await item(page, 'Atualização auditada')
       .getByRole('group')

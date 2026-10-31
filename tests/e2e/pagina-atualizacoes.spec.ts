@@ -7,7 +7,7 @@ import { semearAtualizacoes } from './apoio/semear';
 const lista = (pagina: Page) => pagina.getByRole('list', { name: 'Atualizações encontradas' });
 const titulos = (pagina: Page) => lista(pagina).getByRole('heading', { level: 4 });
 
-/** Registra uma Atualização pela ficha da Missão aberta. */
+/** Registra uma Atualização pela ficha do Projeto aberta. */
 async function registrar(pagina: Page, titulo: string) {
   const formulario = pagina.getByRole('form', { name: 'Nova atualização' });
   await formulario.getByRole('textbox', { name: 'Título' }).fill(titulo);
@@ -19,7 +19,7 @@ async function registrar(pagina: Page, titulo: string) {
 const idDaUrl = (url: string) => new URL(url).pathname.split('/').pop()!;
 
 test.describe('Página geral de Atualizações (RF-10)', () => {
-  test('reúne as Atualizações de todas as Missões e filtra por Missão e por status', async ({ page }) => {
+  test('reúne as Atualizações de todos os Projetos e filtra por Projeto e por status', async ({ page }) => {
     const gestor = nomeUnico('Gestor geral');
     const agenda = nomeUnico('Agenda geral');
     await cadastrarMissao(page, { nome: gestor, stacks: 'Go,' });
@@ -42,18 +42,18 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
     await expect(page.getByRole('form', { name: 'Nova atualização' }), 'aqui não se cadastra').toHaveCount(0);
     await expect(
       lista(page).getByRole('link', { name: agenda }),
-      'cada item leva à Missão dele',
+      'cada item leva ao Projeto dele',
     ).toHaveAttribute('href', new URL(urlAgenda).pathname);
 
     const filtros = page.getByRole('search', { name: 'Filtrar atualizações' });
-    await filtros.getByRole('combobox', { name: 'Missão' }).selectOption({ label: gestor });
+    await filtros.getByRole('combobox', { name: 'Projeto' }).selectOption({ label: gestor });
     await filtros.getByRole('button', { name: 'Filtrar' }).click();
     await expect(page).toHaveURL(new RegExp(`missao=${idDaUrl(urlGestor)}`));
     await expect(titulos(page)).toHaveText(['Ajuste do Gestor']);
 
     await page.reload();
     await expect(titulos(page), 'o filtro volta da URL').toHaveText(['Ajuste do Gestor']);
-    await expect(filtros.getByRole('combobox', { name: 'Missão' })).toHaveValue(idDaUrl(urlGestor));
+    await expect(filtros.getByRole('combobox', { name: 'Projeto' })).toHaveValue(idDaUrl(urlGestor));
 
     await filtros.getByRole('combobox', { name: 'Status' }).selectOption('concluido');
     await filtros.getByRole('button', { name: 'Filtrar' }).click();
@@ -67,8 +67,8 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
     await excluirMissaoAberta(page);
   });
 
-  test('muda o status na página geral e a ficha da Missão reflete', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão do status geral'), stacks: 'Go,' });
+  test('muda o status na página geral e a ficha do Projeto reflete', async ({ page }) => {
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto do status geral'), stacks: 'Go,' });
     const urlMissao = page.url();
     await registrar(page, 'Status pela página geral');
 
@@ -93,7 +93,7 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
   });
 
   test('pagina de 50 em 50, sem repetir nem pular itens', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com muitas'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com muitas'), stacks: 'Go,' });
     const urlMissao = page.url();
     await semearAtualizacoes(idDaUrl(urlMissao), 51, 'Lote');
 
@@ -122,7 +122,7 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
   });
 
   test('sem violações de acessibilidade (axe) e sem rolagem horizontal a 360 px', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão auditada no geral'), stacks: 'Go,' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto auditado no geral'), stacks: 'Go,' });
     const urlMissao = page.url();
     await registrar(page, 'Atualização auditada no geral');
 

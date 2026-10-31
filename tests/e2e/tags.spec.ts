@@ -17,7 +17,7 @@ function sufixoUnico(): string {
   return Date.now().toString(36);
 }
 
-/** Cadastra uma Missão Geral com as tags dadas e devolve o endereço da ficha. */
+/** Cadastra um Projeto Geral com as tags dadas e devolve o endereço da ficha. */
 async function cadastrarComTags(pagina: Page, tags: string[]): Promise<string> {
   const nome = nomeUnico('Tags');
   await pagina.goto('/missoes/nova');
@@ -29,7 +29,7 @@ async function cadastrarComTags(pagina: Page, tags: string[]): Promise<string> {
     await campoTags.fill(tag);
     await campoTags.press('Enter');
   }
-  await pagina.getByRole('button', { name: 'Registrar missão' }).click();
+  await pagina.getByRole('button', { name: 'Registrar projeto' }).click();
   await pagina.waitForURL(/\/missoes\/[0-9a-f-]{36}$/);
   return pagina.url();
 }

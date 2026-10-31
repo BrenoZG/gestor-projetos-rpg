@@ -50,7 +50,7 @@ describe('validarFormularioAtualizacao', () => {
   });
 
   it.each(['nao-e-uuid', '', undefined, 42])('recusa a Missão %j', (projetoId) => {
-    expect(erroDe('projetoId', projetoId)).toBe('Escolha uma das suas missões.');
+    expect(erroDe('projetoId', projetoId)).toBe('Escolha um dos seus projetos.');
   });
 
   it('junta os erros de todos os campos inválidos', () => {
@@ -67,14 +67,14 @@ describe('mensagemDoErroDaAtualizacao', () => {
   it('Missão de outro usuário ou inexistente (RLS, 42501) vira erro no campo da Missão', () => {
     expect(mensagemDoErroDaAtualizacao('42501')).toEqual({
       campo: 'projetoId',
-      mensagem: 'Escolha uma das suas missões.',
+      mensagem: 'Escolha um dos seus projetos.',
     });
   });
 
   it('Missão apagada no meio do caminho (FK, 23503) também', () => {
     expect(mensagemDoErroDaAtualizacao('23503')).toEqual({
       campo: 'projetoId',
-      mensagem: 'Escolha uma das suas missões.',
+      mensagem: 'Escolha um dos seus projetos.',
     });
   });
 

@@ -48,7 +48,7 @@ export function ColunaMissoes({
             </h2>
             <span className="rounded-full border border-borda-forte px-2.5 py-0.5 font-mono text-xs text-texto-suave">
               {missoes.length}
-              <span className="sr-only"> {missoes.length === 1 ? 'missão' : 'missões'}</span>
+              <span className="sr-only"> {missoes.length === 1 ? 'projeto' : 'projetos'}</span>
             </span>
           </header>
 

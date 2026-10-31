@@ -39,7 +39,7 @@ const MENSAGENS_RECUSA: Readonly<Record<MotivoAviso, Mensagem>> = {
 };
 
 /** O que espera o aventureiro do outro lado do portão (gamificacao.md). */
-const DESTAQUES = ['Missões Rank E → S', 'XP até o Nível 100', 'Medalhas I → X', '8 Classes'] as const;
+const DESTAQUES = ['Projetos Rank E → S', 'XP até o Nível 100', 'Medalhas I → X', '8 Classes'] as const;
 
 /** Atraso de entrada de cada destaque: entram em cascata depois do título. */
 const ATRASOS_CASCATA = [
@@ -107,7 +107,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
           </div>
 
           <p className="max-w-xl text-base leading-relaxed text-texto-suave sm:text-lg xl:text-xl">
-            Transforme cada projeto em uma missão. Conclua, ganhe XP, suba de Rank e desbloqueie medalhas.
+            Cada projeto concluído vale XP. Suba de Rank e desbloqueie medalhas.
           </p>
 
           <ul className="hidden flex-wrap gap-2 sm:flex" aria-label="O que você encontra lá dentro">
@@ -153,7 +153,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
                   <dt className="font-mono text-sm text-texto-tenue">Objetivo</dt>
                   <dd>Confirmar sua identidade pelo GitHub</dd>
                   <dt className="font-mono text-sm text-texto-tenue">Recompensa</dt>
-                  <dd>Acesso ao Quadro de Missões</dd>
+                  <dd>Acesso ao Quadro de Projetos</dd>
                   <dt className="font-mono text-sm text-texto-tenue">Penalidade</dt>
                   <dd className="text-texto-suave">Acesso negado a quem não é da guilda</dd>
                 </dl>

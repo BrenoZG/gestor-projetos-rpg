@@ -12,7 +12,7 @@ async function semViolacoes(pagina: Page, tela: string): Promise<void> {
   expect(resumo, `violações de acessibilidade em ${tela}`).toEqual([]);
 }
 
-/** Preenche o cadastro de uma Missão Geral com tags e links, sem enviar. */
+/** Preenche o cadastro de um Projeto Geral com tags e links, sem enviar. */
 async function preencherGeral(
   pagina: Page,
   { nome, tags, links }: { nome: string; tags: string[]; links: { url: string; titulo?: string }[] },
@@ -43,7 +43,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
   // Movimento reduzido: o axe mede contraste no estado final, não no meio de uma animação de entrada.
   test.use({ reducedMotion: 'reduce' });
 
-  test('cadastra uma Missão Geral com tags e link, sem a parte técnica', async ({ page }) => {
+  test('cadastra um Projeto Geral com tags e link, sem a parte técnica', async ({ page }) => {
     const nome = nomeUnico('Revenda na Shopee');
     await preencherGeral(page, {
       nome,
@@ -58,7 +58,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
     await expect(page.getByRole('group', { name: 'Estilo arquitetural' })).toHaveCount(0);
     await semViolacoes(page, 'cadastro Geral com link');
 
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
     await expect(page).toHaveURL(/\/missoes\/[0-9a-f-]{36}$/);
     await expect(page.getByText('Geral · Backlog')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Cálculo do Rank' })).toHaveCount(0);
@@ -81,7 +81,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
       .getByRole('listitem')
       .filter({ has: page.getByRole('link', { name: new RegExp(nome) }) });
     await expect(cartao).toContainText('Geral');
-    await expect(cartao.getByRole('img', { name: /Rank de Missão/ }), 'Geral não tem Rank').toHaveCount(0);
+    await expect(cartao.getByRole('img', { name: /Rank do Projeto/ }), 'Geral não tem Rank').toHaveCount(0);
 
     await page.goto(urlMissao);
     await excluirMissaoAberta(page);
@@ -90,7 +90,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
   test('recusa link que não é https e não grava nada (RN-17)', async ({ page }) => {
     const nome = nomeUnico('Link perigoso');
     await preencherGeral(page, { nome, tags: [], links: [{ url: 'javascript:alert(1)' }] });
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
 
     await expect(
       page.getByText('Link 1: o endereço precisa começar com https:// e ser válido.'),
@@ -107,7 +107,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
   test('trocar de Desenvolvimento para Geral pede confirmação e apaga a parte técnica (RN-16)', async ({
     page,
   }) => {
-    const nome = nomeUnico('Missão que vira Geral');
+    const nome = nomeUnico('Projeto que vira Geral');
     await cadastrarMissao(page, { nome, stacks: 'Python,' });
     const urlMissao = page.url();
 
@@ -115,7 +115,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
     await page.getByRole('radio', { name: /^Geral/ }).check();
     await expect(
       page.getByText(
-        'Ao salvar como Geral, o estilo, as capacidades e a arquitetura desta missão serão apagados.',
+        'Ao salvar como Geral, o estilo, as capacidades e a arquitetura deste projeto serão apagados.',
       ),
     ).toBeVisible();
     const salvar = page.getByRole('button', { name: 'Salvar alterações' });
@@ -146,7 +146,7 @@ test.describe('Tipos de projeto, tags e links (RF-23 a RF-26)', () => {
       links: [{ url: `https://drive.google.com/file/d/${'x'.repeat(120)}`, titulo: 'Roteiro no Drive' }],
     });
     expect(await semRolagemHorizontal(), 'cadastro').toBe(true);
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
     await expect(page).toHaveURL(/\/missoes\/[0-9a-f-]{36}$/);
     expect(await semRolagemHorizontal(), 'ficha').toBe(true);
 

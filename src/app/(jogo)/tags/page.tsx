@@ -49,7 +49,7 @@ async function ConteudoTags() {
  */
 export default function PaginaTags() {
   return (
-    <JanelaMissao rotulo="[ SISTEMA ] · TAGS" titulo="Tags" voltarPara="/" textoVoltar="Quadro de Missões">
+    <JanelaMissao rotulo="[ SISTEMA ] · TAGS" titulo="Tags" voltarPara="/" textoVoltar="Quadro de Projetos">
       <Suspense fallback={<CarregandoMissao />}>
         <ConteudoTags />
       </Suspense>

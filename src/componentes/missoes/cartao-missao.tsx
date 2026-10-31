@@ -58,7 +58,7 @@ export function CartaoMissao({
         {missao.tipo === 'dev' ? (
           <EmblemaRank
             rank={missao.rank}
-            rotulo={`Rank de Missão ${missao.rank}`}
+            rotulo={`Rank do Projeto ${missao.rank}`}
             className="h-12 w-11 shrink-0"
           />
         ) : (

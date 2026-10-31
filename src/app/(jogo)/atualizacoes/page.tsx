@@ -109,7 +109,7 @@ async function ConteudoAtualizacoes({
         </div>
         <div className="flex min-w-0 flex-col gap-1.5">
           <label htmlFor="filtro-missao" className={CLASSES_ROTULO}>
-            Missão
+            Projeto
           </label>
           <select
             id="filtro-missao"
@@ -156,7 +156,7 @@ async function ConteudoAtualizacoes({
         <p className="rounded-md border border-dashed border-borda-campo px-6 py-8 text-center text-texto">
           {filtrado
             ? 'Nenhuma atualização com esses filtros.'
-            : 'Nenhuma atualização registrada ainda. Elas são registradas na ficha de cada missão.'}
+            : 'Nenhuma atualização registrada ainda. Elas são registradas na ficha de cada projeto.'}
         </p>
       )}
 
@@ -207,7 +207,7 @@ export default function PaginaAtualizacoes({ searchParams }: PageProps<'/atualiz
       rotulo="[ SISTEMA ] · ATUALIZAÇÕES"
       titulo="Atualizações"
       voltarPara="/"
-      textoVoltar="Quadro de Missões"
+      textoVoltar="Quadro de Projetos"
     >
       <Suspense fallback={<CarregandoMissao />}>
         <ConteudoAtualizacoes searchParams={searchParams} />

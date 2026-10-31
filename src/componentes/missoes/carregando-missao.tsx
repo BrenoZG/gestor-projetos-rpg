@@ -4,7 +4,7 @@
  */
 export function CarregandoMissao() {
   return (
-    <div role="status" className="flex flex-col gap-5" aria-label="Carregando a missão">
+    <div role="status" className="flex flex-col gap-5" aria-label="Carregando o projeto">
       {[0, 1, 2, 3].map((linha) => (
         <div
           key={linha}

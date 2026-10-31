@@ -19,7 +19,7 @@ const MENSAGENS = {
   titulo: `O título precisa ter de ${titulo.minimo} a ${titulo.maximo} caracteres.`,
   descricaoVazia: 'Descreva o que foi feito.',
   descricaoLonga: 'A descrição aceita até 5.000 caracteres.',
-  missao: 'Escolha uma das suas missões.',
+  missao: 'Escolha um dos seus projetos.',
 } as const;
 
 /** Campo ausente no formulário chega como `null`/`undefined`; vira texto vazio. */

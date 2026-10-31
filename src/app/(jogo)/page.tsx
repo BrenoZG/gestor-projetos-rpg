@@ -34,7 +34,7 @@ function Estatisticas({ missoes }: { missoes: readonly Missao[] }) {
   const concluidas = missoes.filter((missao) => missao.status === 'concluido').length;
   // XP e medalhas chegam com o ledger (M3); até lá, zero é o valor real.
   const itens = [
-    { rotulo: 'Missões ativas', valor: String(missoes.length - concluidas) },
+    { rotulo: 'Projetos ativos', valor: String(missoes.length - concluidas) },
     { rotulo: 'Concluídas', valor: String(concluidas) },
     { rotulo: 'XP total', valor: '0' },
     { rotulo: 'Medalhas', valor: '0 / 10' },
@@ -68,7 +68,7 @@ async function ConteudoQuadro() {
 
 function QuadroCarregando() {
   return (
-    <div role="status" aria-label="Carregando as missões" className="grid flex-1 gap-5 lg:grid-cols-3">
+    <div role="status" aria-label="Carregando os projetos" className="grid flex-1 gap-5 lg:grid-cols-3">
       {COLUNAS.map((coluna) => (
         <div
           key={coluna.id}
@@ -94,17 +94,17 @@ export default function PaginaQuadro() {
             [ SISTEMA ] · QUADRO DE MISSÕES
           </span>
           <h1 className="titulo-jogo font-display text-[clamp(2rem,5vw,3.5rem)] leading-none font-extrabold">
-            Quadro de Missões
+            Quadro de Projetos
           </h1>
           <p className="max-w-2xl text-base leading-relaxed text-texto-suave sm:text-lg">
-            Suas missões, do backlog à conclusão. Cada etapa vencida aproxima o próximo nível.
+            Seus projetos, do backlog à conclusão. Cada etapa vencida aproxima o próximo nível.
           </p>
         </div>
         <Link
           href="/missoes/nova"
           className={`${CLASSES_ACAO_PRINCIPAL} entrada-suave [animation-delay:120ms] gap-2`}
         >
-          <span aria-hidden="true">+</span> Nova missão
+          <span aria-hidden="true">+</span> Novo projeto
         </Link>
       </div>
 

@@ -25,7 +25,7 @@ const MATERIAL_POR_RANK: Readonly<Record<RankAventureiro, string>> = {
  */
 export function EmblemaRank({
   rank,
-  rotulo = `Rank ${rank} do Caçador`,
+  rotulo = `Rank ${rank} do Aventureiro`,
   className = '',
 }: {
   rank: RankAventureiro;

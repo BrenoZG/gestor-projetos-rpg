@@ -7,19 +7,19 @@ export const COLUNAS: readonly ColunaQuadro[] = [
   {
     id: 'backlog',
     titulo: 'Backlog',
-    vazio: 'Nenhuma missão no backlog.',
+    vazio: 'Nenhum projeto no backlog.',
     detalhe: 'Registre uma ideia para ela não ficar só na cabeça.',
   },
   {
     id: 'desenvolvimento',
     titulo: 'Em desenvolvimento',
-    vazio: 'Nenhuma missão em andamento.',
-    detalhe: 'Arraste uma missão para cá ou use o botão Mover.',
+    vazio: 'Nenhum projeto em andamento.',
+    detalhe: 'Arraste um projeto para cá ou use o botão Mover.',
   },
   {
     id: 'concluido',
     titulo: 'Concluídas',
-    vazio: 'Nenhuma missão concluída ainda.',
+    vazio: 'Nenhum projeto concluído ainda.',
     detalhe: 'Cada conclusão vai render XP ao personagem.',
   },
 ];
