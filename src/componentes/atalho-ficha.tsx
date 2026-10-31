@@ -44,6 +44,7 @@ export function AtalhoFicha() {
           repeat: evento.repeat,
           defaultPrevented: evento.defaultPrevented,
           emCampoDeTexto: alvoEhCampo(evento.target),
+          emFormulario: evento.target instanceof Element && evento.target.closest('form') !== null,
           janelaAberta: document.querySelector('dialog[open]') !== null,
         },
         caminho: atual.current,

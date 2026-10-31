@@ -18,6 +18,7 @@ const TECLA_C: TeclaPressionada = {
   repeat: false,
   defaultPrevented: false,
   emCampoDeTexto: false,
+  emFormulario: false,
   janelaAberta: false,
 };
 
@@ -88,6 +89,7 @@ describe('deveAbrirFicha', () => {
     ['tecla segurada', { repeat: true }],
     ['evento já tratado', { defaultPrevented: true }],
     ['foco em campo de texto', { emCampoDeTexto: true }],
+    ['foco num rádio ou checkbox de formulário (perderia o que foi preenchido)', { emFormulario: true }],
     ['janela aberta', { janelaAberta: true }],
   ])('não abre com %s (RN-12)', (_caso, mudanca) => {
     expect(deveAbrirFicha({ ...TECLA_C, ...mudanca })).toBe(false);
@@ -105,6 +107,7 @@ describe('deveFecharFicha', () => {
     ['janela aberta (o Esc é dela)', { janelaAberta: true }],
     ['evento já tratado (menu fechou)', { defaultPrevented: true }],
     ['foco em campo de texto', { emCampoDeTexto: true }],
+    ['foco em formulário (troca de Classe)', { emFormulario: true }],
     ['outra tecla', { key: 'c' }],
   ])('não fecha com %s', (_caso, mudanca) => {
     expect(deveFecharFicha({ ...ESC, ...mudanca })).toBe(false);
