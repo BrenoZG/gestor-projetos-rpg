@@ -3,6 +3,7 @@
  * de uma tecla só pode atrapalhar quem digita ou usa comando de voz, por isso
  * é ignorado em campo de texto e pode ser desligado (cookie, por aparelho).
  */
+import { ROTA_PERSONAGEM } from '@/dominio/acesso/rotas';
 
 export const NOME_COOKIE_ATALHO = 'atalho-ficha';
 
@@ -94,4 +95,32 @@ export function deveAbrirFicha(tecla: TeclaPressionada): boolean {
  */
 export function deveFecharFicha(tecla: TeclaPressionada): boolean {
   return tecla.key === 'Escape' && teclaLivre(tecla);
+}
+
+/** `abrir` a Ficha; `voltar` à tela anterior; ir ao `quadro` (Ficha aberta direto pelo endereço). */
+export type AcaoDoAtalho = 'abrir' | 'voltar' | 'quadro';
+
+/**
+ * O que fazer com a tecla. O `Esc` não depende do liga/desliga: o WCAG 2.1.4
+ * trata só de atalhos de caractere, e o `Esc` não digita nada.
+ *
+ * @param contexto - Tecla, rota atual, rota anterior dentro do app (`null` se
+ *   a Ficha foi a primeira tela) e a preferência do atalho `C`.
+ * @returns A ação, ou `null` para deixar a tecla seguir.
+ */
+export function acaoDoAtalho({
+  tecla,
+  caminho,
+  anterior,
+  ligado,
+}: {
+  tecla: TeclaPressionada;
+  caminho: string;
+  anterior: string | null;
+  ligado: boolean;
+}): AcaoDoAtalho | null {
+  const naFicha = caminho === ROTA_PERSONAGEM;
+  if (!naFicha) return ligado && deveAbrirFicha(tecla) ? 'abrir' : null;
+  if (!deveFecharFicha(tecla)) return null;
+  return anterior === null ? 'quadro' : 'voltar';
 }

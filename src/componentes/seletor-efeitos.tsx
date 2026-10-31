@@ -36,12 +36,14 @@ export function SeletorEfeitos({ inicial }: { inicial: PreferenciaEfeitos | null
   const menu = useRef<HTMLDetailsElement>(null);
   const rotuloAtual = OPCOES.find((opcao) => opcao.valor === escolha)?.rotulo ?? 'Automático';
 
-  // Esc fecha o menu e devolve o foco ao botão que o abriu.
+  // Esc fecha o menu e devolve o foco ao botão que o abriu. O preventDefault
+  // avisa o atalho da Ficha que o Esc já foi usado (não volta de tela).
   useEffect(() => {
     const elemento = menu.current;
     if (!elemento) return;
     const aoTeclar = (evento: KeyboardEvent) => {
       if (evento.key === 'Escape' && elemento.open) {
+        evento.preventDefault();
         elemento.open = false;
         elemento.querySelector('summary')?.focus();
       }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  acaoDoAtalho,
   atalhoLigado,
   deveAbrirFicha,
   deveFecharFicha,
@@ -107,5 +108,39 @@ describe('deveFecharFicha', () => {
     ['outra tecla', { key: 'c' }],
   ])('não fecha com %s', (_caso, mudanca) => {
     expect(deveFecharFicha({ ...ESC, ...mudanca })).toBe(false);
+  });
+});
+
+describe('acaoDoAtalho', () => {
+  const ESC = { ...TECLA_C, key: 'Escape' };
+
+  it('C fora da Ficha abre a Ficha', () => {
+    expect(acaoDoAtalho({ tecla: TECLA_C, caminho: '/', anterior: null, ligado: true })).toBe('abrir');
+  });
+
+  it('C com o atalho desligado não faz nada (RN-12)', () => {
+    expect(acaoDoAtalho({ tecla: TECLA_C, caminho: '/', anterior: null, ligado: false })).toBeNull();
+  });
+
+  it('C na própria Ficha não faz nada', () => {
+    expect(acaoDoAtalho({ tecla: TECLA_C, caminho: '/personagem', anterior: '/', ligado: true })).toBeNull();
+  });
+
+  it('Esc na Ficha volta para a tela anterior do app', () => {
+    expect(acaoDoAtalho({ tecla: ESC, caminho: '/personagem', anterior: '/tags', ligado: true })).toBe(
+      'voltar',
+    );
+  });
+
+  it('Esc na Ficha aberta direto pelo endereço vai para o Quadro', () => {
+    expect(acaoDoAtalho({ tecla: ESC, caminho: '/personagem', anterior: null, ligado: true })).toBe('quadro');
+  });
+
+  it('Esc vale mesmo com o atalho C desligado (não é tecla de caractere, WCAG 2.1.4)', () => {
+    expect(acaoDoAtalho({ tecla: ESC, caminho: '/personagem', anterior: '/', ligado: false })).toBe('voltar');
+  });
+
+  it('Esc fora da Ficha não faz nada', () => {
+    expect(acaoDoAtalho({ tecla: ESC, caminho: '/', anterior: null, ligado: true })).toBeNull();
   });
 });
