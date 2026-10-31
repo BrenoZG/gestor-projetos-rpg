@@ -11,6 +11,13 @@ for (const caminho of ['/', '/missoes/nova', '/missoes/00000000-0000-4000-8000-0
   });
 }
 
+test('sem sessão, o export JSON não devolve dados e manda para a entrada (RF-14)', async ({ request }) => {
+  const resposta = await request.get('/api/exportar', { maxRedirects: 0 });
+  expect(resposta.status()).toBe(307);
+  expect(resposta.headers()['location']).toMatch(/\/entrar$/);
+  expect(resposta.headers()['content-disposition']).toBeUndefined();
+});
+
 test('tela de entrada sem violações de acessibilidade (axe, WCAG 2.2 AA)', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/entrar?erro=acesso-negado');
