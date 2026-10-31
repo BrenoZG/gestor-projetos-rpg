@@ -69,12 +69,17 @@ export type TeclaPressionada = {
   repeat: boolean;
   defaultPrevented: boolean;
   emCampoDeTexto: boolean;
+  /**
+   * O foco está dentro de um `<form>` (rádio, checkbox, botão): sair da tela
+   * perderia o que já foi preenchido, que não tem rascunho salvo.
+   */
+  emFormulario: boolean;
   /** Há um `<dialog>` aberto (Janela do Sistema ou cinemática): a tecla é dela. */
   janelaAberta: boolean;
 };
 
 function teclaLivre(tecla: TeclaPressionada): boolean {
-  return !tecla.defaultPrevented && !tecla.emCampoDeTexto && !tecla.janelaAberta;
+  return !tecla.defaultPrevented && !tecla.emCampoDeTexto && !tecla.emFormulario && !tecla.janelaAberta;
 }
 
 /**

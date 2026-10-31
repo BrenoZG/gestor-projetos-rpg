@@ -67,7 +67,9 @@ test.describe('Ficha e atalho C (RF-19, RN-12)', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('em campo de texto, C digita; Ctrl+C não abre; desligado, C não abre', async ({ page }) => {
+  test('em campo de texto, C digita; Ctrl+C e foco em formulário não abrem; desligado, C não abre', async ({
+    page,
+  }) => {
     await page.goto('/');
     const busca = page.getByRole('searchbox');
     await busca.fill('');
@@ -75,6 +77,17 @@ test.describe('Ficha e atalho C (RF-19, RN-12)', () => {
     await expect(busca, 'a letra foi digitada no campo').toHaveValue('c');
     await busca.press('Control+c');
     await expect(page, 'nem a letra nem o Ctrl+C abrem a Ficha').toHaveURL(/\/(\?.*)?$/);
+
+    await page.goto('/missoes/nova');
+    const geral = page.getByRole('radio', { name: /^Geral/ });
+    await geral.check();
+    await page.getByRole('textbox', { name: 'Nome' }).fill('Rascunho que não pode sumir');
+    await geral.focus();
+    await page.keyboard.press('c');
+    // Asserção negativa: dá tempo para uma navegação que não deve acontecer.
+    await page.waitForTimeout(500);
+    await expect(page, 'com o foco num rádio do formulário, C não sai da tela').toHaveURL(/\/missoes\/nova$/);
+    await expect(page.getByRole('textbox', { name: 'Nome' })).toHaveValue('Rascunho que não pode sumir');
 
     await page.goto('/personagem');
     const caixa = page.getByRole('checkbox', { name: 'Atalho C abre a Ficha' });
