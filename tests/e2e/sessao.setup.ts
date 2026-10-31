@@ -6,10 +6,7 @@ import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 
 import { ARQUIVO_SESSAO, ARQUIVO_TOKEN } from './apoio/caminhos';
-import { lerSupabaseLocal } from './apoio/supabase-local';
-
-/** Usuário fictício do Supabase local; domínio reservado, nunca recebe e-mail. */
-const EMAIL_TESTE = 'e2e@exemplo.invalid';
+import { EMAIL_TESTE, lerSupabaseLocal } from './apoio/supabase-local';
 
 /**
  * Cria (se preciso) o usuário de teste no Supabase local, abre uma sessão pela

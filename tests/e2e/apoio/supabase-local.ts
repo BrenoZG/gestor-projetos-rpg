@@ -6,6 +6,9 @@ import { execSync } from 'node:child_process';
  */
 export type SupabaseLocal = { url: string; chavePublica: string; chaveSecreta: string };
 
+/** Usuário fictício do Supabase local; domínio reservado, nunca recebe e-mail. */
+export const EMAIL_TESTE = 'e2e@exemplo.invalid';
+
 /** Só estes hosts são aceitos: o E2E apaga dados do usuário de teste. */
 const HOSTS_LOCAIS = new Set(['127.0.0.1', 'localhost']);
 
