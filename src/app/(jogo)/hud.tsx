@@ -6,7 +6,7 @@ import { EmblemaRank } from '@/componentes/emblema-rank';
 import { NavegacaoPrincipal } from '@/componentes/navegacao-principal';
 import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
 import { nomeDaClasse } from '@/dominio/personagem/classes';
-import { progressoDoNivel, rankDoCacador, tituloDoNivel } from '@/dominio/progressao/progressao';
+import { progressoDoNivel, rankDoAventureiro, tituloDoNivel } from '@/dominio/progressao/progressao';
 import { obterPreferenciaEfeitos } from '@/lib/efeitos-servidor';
 import { registrarEvento } from '@/lib/log';
 import { criarClienteServidor } from '@/lib/supabase/servidor';
@@ -40,7 +40,7 @@ export async function Hud() {
   }
 
   const progresso = progressoDoNivel(XP_TOTAL_ANTES_DO_LEDGER);
-  const rank = rankDoCacador(progresso.nivel);
+  const rank = rankDoAventureiro(progresso.nivel);
   const classe = nomeDaClasse(personagem?.classe ?? null);
   const xpTexto =
     progresso.xpParaProximo === null
