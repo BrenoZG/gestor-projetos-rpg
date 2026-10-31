@@ -71,7 +71,7 @@ sequenceDiagram
     UI-->>U: Aviso (+XP, trava ou já recebido); o HUD soma o ledger de novo
 ```
 
-Criar Projeto ou Atualização segue o mesmo desenho (`salvar_missao_v4`, `criar_atualizacao`). Excluir revoga o XP de criação por trigger, inclusive na cascata (ADR-0011). Nível e medalhas do diagrama original ficam para o M5.
+Criar Projeto ou Atualização segue o mesmo desenho (`salvar_missao_v4`, `criar_atualizacao`). Excluir revoga o XP de criação por trigger, inclusive na cascata (ADR-0011). Depois de dar XP, a ação guarda o nível de Desenvolvedor em `personagem.nivel_maximo` pela `registrar_nivel_maximo` (M4), que só aumenta o valor; uma falha ali só vai para o log, porque a tela usa o maior entre o máximo e o nível atual. As animações de nível e medalha ficam para o M5.
 
 **Por que a função SQL:** o cliente Supabase não abre transação. Atualizar o status e gravar o XP em duas chamadas permite um estado inconsistente (missão concluída sem XP) se a segunda falhar (ADR-0003).
 

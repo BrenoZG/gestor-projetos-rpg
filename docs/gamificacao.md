@@ -88,7 +88,7 @@ nível = maior n em 1..100 tal que XP total ≥ limiar(n)
 | 90 | 16.792 | IX · Mítica | Mestre |
 | 100 | 19.701 | X · Lendária | Desenvolvedor Sênior (máximo) |
 
-O título vale do nível da medalha até o nível anterior à próxima. Medalhas são permanentes (RN-08).
+O título vale do nível da medalha até o nível anterior à próxima. Medalhas são permanentes (RN-08). A medalha conta pelo **maior nível já alcançado** (`personagem.nivel_maximo`, a partir do M4), não pelo atual: excluir um Projeto revoga o XP de criação e pode baixar o nível, nunca a medalha.
 
 **Calibração:** com ritmo estimado de ~1,5 Projeto e ~10 Atualizações concluídos por mês, o Nv 100 chega em cerca de 3 anos. A curva é côncava: o começo é rápido para motivar, e o fim é mais conquistado.
 
