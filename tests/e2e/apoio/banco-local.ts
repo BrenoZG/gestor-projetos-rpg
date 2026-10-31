@@ -51,26 +51,63 @@ export function retrocederDesenvolvimento(projetoId: string, horas: number): voi
   );
 }
 
+function exigirNivel(nivel: number): void {
+  if (!Number.isInteger(nivel) || nivel < 1 || nivel > 100) throw new Error('Nível inválido.');
+}
+
 /**
- * Estado do personagem do usuário de teste. O `nivel_maximo` só é gravado pela
- * função do banco, e a Classe nula simula o 1º acesso (RF-17).
+ * Estado do personagem do usuário de teste. O `nivel_maximo` e o `nivel_visto`
+ * só são gravados pelas funções do banco, e a Classe nula simula o 1º acesso
+ * (RF-17). O `nivelVisto` padrão (100) desliga a cinemática de level up (M5):
+ * só os testes dela pedem um valor menor.
  *
- * @param estado - Classe (ou `null`) e nível máximo de 1 a 100.
+ * @param estado - Classe (ou `null`), nível máximo e último nível exibido, de 1 a 100.
  */
 export function definirPersonagemDoUsuarioDeTeste({
   classe,
   nivelMaximo = 1,
+  nivelVisto = 100,
 }: {
   classe: string | null;
   nivelMaximo?: number;
+  nivelVisto?: number;
 }): void {
   if (classe !== null && !ehChaveClasse(classe)) throw new Error('Classe inválida.');
-  if (!Number.isInteger(nivelMaximo) || nivelMaximo < 1 || nivelMaximo > 100)
-    throw new Error('Nível inválido.');
+  exigirNivel(nivelMaximo);
+  exigirNivel(nivelVisto);
   const valorClasse = classe === null ? 'null' : `'${classe}'`;
   executarSql(
-    `insert into public.personagem (user_id, classe, nivel_maximo)
-     select id, ${valorClasse}, ${nivelMaximo} from auth.users where email = '${EMAIL_TESTE}'
-     on conflict (user_id) do update set classe = excluded.classe, nivel_maximo = excluded.nivel_maximo`,
+    `insert into public.personagem (user_id, classe, nivel_maximo, nivel_visto)
+     select id, ${valorClasse}, ${nivelMaximo}, ${nivelVisto} from auth.users where email = '${EMAIL_TESTE}'
+     on conflict (user_id) do update set classe = excluded.classe, nivel_maximo = excluded.nivel_maximo,
+       nivel_visto = excluded.nivel_visto`,
+  );
+}
+
+/** Stack ou ferramenta de teste: só letras, números, ponto e espaço (vai direto no SQL). */
+const NOME_STACK_SEGURO = /^[\p{L}\p{N}. ]{1,40}$/u;
+
+/**
+ * Grava no ledger uma conclusão de Projeto fictícia, para a Maestria (RN-10):
+ * mais rápido e exato que cumprir a trava de 24 h pela interface.
+ *
+ * @param conclusao - Trilha, XP (inteiro positivo) e stacks já normalizadas.
+ */
+export function inserirConclusaoDoUsuarioDeTeste({
+  trilha,
+  xp,
+  stacks,
+}: {
+  trilha: 'desenvolvedor' | 'produtividade';
+  xp: number;
+  stacks: string[];
+}): void {
+  if (!Number.isInteger(xp) || xp < 1) throw new Error('XP inválido.');
+  if (!stacks.every((stack) => NOME_STACK_SEGURO.test(stack))) throw new Error('Stack inválida.');
+  const lista = stacks.map((stack) => `'${stack}'`).join(', ');
+  executarSql(
+    `insert into public.eventos_xp (user_id, tipo, trilha, referencia_id, xp, nome_snapshot, stacks_snapshot)
+     select id, 'conclusao_projeto', '${trilha}', gen_random_uuid(), ${xp}, 'Projeto de teste', array[${lista}]::text[]
+     from auth.users where email = '${EMAIL_TESTE}'`,
   );
 }

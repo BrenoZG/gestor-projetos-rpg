@@ -65,15 +65,12 @@ test.describe('Classe (RF-17, RF-18, RN-11)', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
-  test('trocar pela página do Personagem é livre e não muda XP, nível nem Rank', async ({ page }) => {
+  test('trocar pela Ficha é livre e não muda XP, nível nem Rank', async ({ page }) => {
     zerarXpDoUsuarioDeTeste();
     const nome = nomeUnico('Troca de classe');
     await cadastrarMissao(page, { nome, stacks: 'TypeScript,' });
 
-    await page
-      .getByRole('navigation', { name: 'Principal' })
-      .getByRole('link', { name: 'Personagem' })
-      .click();
+    await page.getByRole('navigation', { name: 'Principal' }).getByRole('link', { name: 'Ficha' }).click();
     await expect(page).toHaveURL(/\/personagem$/);
     const progressoAntes = await hud(page).getByRole('progressbar').first().getAttribute('aria-valuenow');
     const rankAntes = await hud(page)
@@ -121,10 +118,10 @@ test.describe('Medalhas (RF-15, RN-08)', () => {
     await expect(page.getByRole('definition').filter({ hasText: '2 / 10' })).toBeVisible();
   });
 
-  test('no celular (360 px), Personagem e escolha da Classe não rolam na horizontal', async ({ page }) => {
+  test('no celular (360 px), Ficha e escolha da Classe não rolam na horizontal', async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.goto('/personagem');
-    await expect(page.getByRole('heading', { level: 1, name: 'Personagem' })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: 'Ficha' })).toBeVisible();
     expect(await semRolagemHorizontal(page), '/personagem').toBe(true);
 
     definirPersonagemDoUsuarioDeTeste({ classe: null });
