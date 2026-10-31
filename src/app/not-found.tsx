@@ -13,12 +13,12 @@ export default function NaoEncontrada() {
       titulo="Área desconhecida"
       acoes={
         <Link href="/" className={CLASSES_ACAO_PRINCIPAL}>
-          Voltar ao Quadro de Missões
+          Voltar ao Quadro de Projetos
         </Link>
       }
     >
       <p>
-        Este caminho não existe no mapa. Talvez a missão tenha sido movida ou o endereço esteja incompleto.
+        Este caminho não existe no mapa. Talvez o projeto tenha sido movido ou o endereço esteja incompleto.
       </p>
     </TelaSistema>
   );

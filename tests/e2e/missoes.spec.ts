@@ -8,12 +8,12 @@ import {
   test,
 } from './apoio/fixtures';
 
-test.describe('Missões', () => {
-  test('cadastra, muda o status e exclui uma missão (RF-01 a RF-04)', async ({ page }) => {
-    const nome = nomeUnico('Missão do fluxo');
+test.describe('Projetos', () => {
+  test('cadastra, muda o status e exclui um projeto (RF-01 a RF-04)', async ({ page }) => {
+    const nome = nomeUnico('Projeto do fluxo');
 
     await page.goto('/');
-    await page.getByRole('link', { name: /Nova missão/ }).click();
+    await page.getByRole('link', { name: /Novo projeto/ }).click();
     await page.getByRole('textbox', { name: 'Nome' }).fill(nome);
     await page.getByRole('textbox', { name: 'Descrição' }).fill('Prova do fluxo completo.');
     const stacks = page.getByRole('combobox', { name: 'Stacks' });
@@ -31,13 +31,13 @@ test.describe('Missões', () => {
     for (const capacidade of ['Autenticação', 'Banco de dados', 'CI/CD e deploy']) {
       await page.getByRole('checkbox', { name: capacidade }).check();
     }
-    await expect(page.getByText(/Rank de Missão\s*C · 31 pontos/), 'prévia do Rank (RN-14)').toBeVisible();
+    await expect(page.getByText(/Rank do Projeto\s*C · 31 pontos/), 'prévia do Rank (RN-14)').toBeVisible();
     await expect(page.getByText('Estilo +12 · Capacidades +15 · Stacks +4 (até 10 pontuam)')).toBeVisible();
     await page
       .getByRole('textbox', { name: 'Estrutura e arquitetura' })
       .fill('Camadas: domínio, dados e telas.');
 
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
     await expect(page).toHaveURL(/\/missoes\/[0-9a-f-]{36}$/);
     const urlMissao = page.url();
     await expect(page.getByRole('heading', { level: 2, name: nome })).toBeVisible();
@@ -90,7 +90,7 @@ test.describe('Missões', () => {
 
   test('mostra os erros por campo e leva o foco ao primeiro', async ({ page }) => {
     await page.goto('/missoes/nova');
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
 
     const campoNome = page.getByRole('textbox', { name: 'Nome' });
     await expect(page.getByText('O nome precisa ter de 3 a 80 caracteres.')).toBeVisible();
@@ -99,15 +99,15 @@ test.describe('Missões', () => {
     for (const mensagem of [
       'A descrição é obrigatória.',
       'Adicione de 1 a 20 stacks.',
-      'Escolha o estilo arquitetural da missão.',
-      'Descreva a estrutura e a arquitetura da missão.',
+      'Escolha o estilo arquitetural do projeto.',
+      'Descreva a estrutura e a arquitetura do projeto.',
     ]) {
       await expect(page.getByText(mensagem)).toBeVisible();
     }
   });
 
   test('barra nome repetido sem perder o que foi digitado', async ({ page }) => {
-    const nome = nomeUnico('Missão original');
+    const nome = nomeUnico('Projeto original');
     await cadastrarMissao(page, { nome, stacks: 'Go,' });
     const urlOriginal = page.url();
 
@@ -117,9 +117,9 @@ test.describe('Missões', () => {
     await page.getByRole('combobox', { name: 'Stacks' }).fill('Go');
     await opcaoDeEstilo(page, 'Script ou automação').check();
     await page.getByRole('textbox', { name: 'Estrutura e arquitetura' }).fill('Um script.');
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
 
-    await expect(page.getByText('Já existe uma missão com esse nome. Escolha outro.')).toBeVisible();
+    await expect(page.getByText('Já existe um projeto com esse nome. Escolha outro.')).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Descrição' })).toHaveValue('Duplicada.');
 
     await page.goto(urlOriginal);
@@ -137,7 +137,7 @@ test.describe('Missões', () => {
   });
 
   test('stack digitada sem Enter vai no envio, sem a vírgula', async ({ page }) => {
-    await cadastrarMissao(page, { nome: nomeUnico('Missão com rascunho'), stacks: 'Rascunho pendente' });
+    await cadastrarMissao(page, { nome: nomeUnico('Projeto com rascunho'), stacks: 'Rascunho pendente' });
     await expect(page.getByText('Rascunho pendente', { exact: true })).toBeVisible();
     await excluirMissaoAberta(page);
   });
@@ -155,7 +155,7 @@ test.describe('Missões', () => {
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
 
     await cadastrarMissao(page, {
-      nome: nomeUnico('Missão com um nome bem comprido para o celular'),
+      nome: nomeUnico('Projeto com um nome bem comprido para o celular'),
       stacks: 'Uma stack com nome bem comprido,Outra,',
     });
     expect(await semRolagemHorizontal(), 'detalhe').toBe(true);

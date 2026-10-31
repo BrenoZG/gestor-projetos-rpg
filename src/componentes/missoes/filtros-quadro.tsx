@@ -53,7 +53,7 @@ export function FiltrosQuadro({
       <div className="flex flex-wrap items-end gap-3">
         <form
           role="search"
-          aria-label="Filtrar missões"
+          aria-label="Filtrar projetos"
           onSubmit={(evento) => evento.preventDefault()}
           className="grid flex-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))]"
         >
@@ -178,8 +178,8 @@ export function FiltrosQuadro({
       <div className="flex min-h-8 flex-wrap items-center gap-3">
         <p role="status" className="font-mono text-xs text-texto-suave">
           {ativo
-            ? `Mostrando ${exibidas} de ${total} missões`
-            : `${total} ${total === 1 ? 'missão' : 'missões'}`}
+            ? `Mostrando ${exibidas} de ${total} projetos`
+            : `${total} ${total === 1 ? 'projeto' : 'projetos'}`}
         </p>
         {ativo && (
           <button

@@ -20,7 +20,7 @@ import { registrarEvento } from '@/lib/log';
 /** SQLSTATEs que são erro de uso (a tela explica), não falha a investigar. */
 const ERROS_ESPERADOS = new Set(['23505', 'P0002']);
 
-const MISSAO_INEXISTENTE: EstadoFormularioMissao = { erros: {}, mensagem: 'Esta missão não existe mais.' };
+const MISSAO_INEXISTENTE: EstadoFormularioMissao = { erros: {}, mensagem: 'Este projeto não existe mais.' };
 
 function lerFormulario(formulario: FormData): Record<string, unknown> {
   return {
@@ -117,7 +117,7 @@ export async function excluirMissao(id: string): Promise<never> {
   redirect(ROTA_INICIAL);
 }
 
-const MOVIMENTO_INVALIDO: ResultadoMovimento = { ok: false, mensagem: 'Esta missão não existe mais.' };
+const MOVIMENTO_INVALIDO: ResultadoMovimento = { ok: false, mensagem: 'Este projeto não existe mais.' };
 const MOVIMENTO_FALHOU: ResultadoMovimento = {
   ok: false,
   mensagem: 'Não foi possível mover agora. Tente de novo em instantes.',

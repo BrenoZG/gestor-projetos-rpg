@@ -84,9 +84,9 @@ async function arrastarPorToque(pagina: Page, origem: Locator, destino: Locator)
   await cdp.detach();
 }
 
-test.describe('Quadro de Missões', () => {
+test.describe('Quadro de Projetos', () => {
   test('arrasta um cartão com o mouse para outra coluna (RF-20)', async ({ page }) => {
-    const nome = nomeUnico('Missão arrastada');
+    const nome = nomeUnico('Projeto arrastado');
     await cadastrarMissao(page, { nome, stacks: 'Go,' });
     const urlMissao = page.url();
 
@@ -110,7 +110,7 @@ test.describe('Quadro de Missões', () => {
   });
 
   test('clicar no cartão continua abrindo o detalhe', async ({ page }) => {
-    const nome = nomeUnico('Missão clicada');
+    const nome = nomeUnico('Projeto clicado');
     await cadastrarMissao(page, { nome, stacks: 'Go,' });
 
     await page.goto('/');
@@ -120,7 +120,7 @@ test.describe('Quadro de Missões', () => {
   });
 
   test('move pelo botão, só com o teclado (WCAG 2.5.7 e 2.1.1)', async ({ page }) => {
-    const nome = nomeUnico('Missão pelo teclado');
+    const nome = nomeUnico('Projeto pelo teclado');
     await cadastrarMissao(page, { nome, stacks: 'Go,' });
     const urlMissao = page.url();
 
@@ -157,7 +157,7 @@ test.describe('Quadro de Missões', () => {
     test.use({ errosEsperados: [/Failed to load resource|Failed to fetch|ERR_FAILED/] });
 
     test('o cartão volta para a coluna de origem e o erro aparece', async ({ page }) => {
-      const nome = nomeUnico('Missão sem rede');
+      const nome = nomeUnico('Projeto sem rede');
       await cadastrarMissao(page, { nome, stacks: 'Go,' });
       const urlMissao = page.url();
 
@@ -196,7 +196,7 @@ test.describe('Quadro de Missões', () => {
     await busca.fill(`GESTÕR FILTRÁVEL ${sufixo}`);
     await expect(cartao(page, 'Backlog', gestor), 'sem diferenciar maiúsculas nem acentos').toBeVisible();
     await expect(cartao(page, 'Backlog', agenda)).toHaveCount(0);
-    await expect(page.getByRole('status').filter({ hasText: /Mostrando 1 de \d+ missões/ })).toBeAttached();
+    await expect(page.getByRole('status').filter({ hasText: /Mostrando 1 de \d+ projetos/ })).toBeAttached();
     await expect(page).toHaveURL(/busca=/);
 
     await page.reload();
@@ -212,7 +212,7 @@ test.describe('Quadro de Missões', () => {
     await expect(cartao(page, 'Backlog', gestor)).toHaveCount(0);
 
     await page.getByRole('combobox', { name: 'Rank' }).selectOption('S');
-    await expect(page.getByText('Nenhuma missão com esses filtros.')).toBeVisible();
+    await expect(page.getByText('Nenhum projeto com esses filtros.')).toBeVisible();
     await page.getByRole('button', { name: 'Limpar filtros' }).click();
     await expect(page).toHaveURL(/\/$/);
 
@@ -233,7 +233,7 @@ test.describe('Quadro de Missões', () => {
     await page.getByRole('textbox', { name: 'Descrição' }).fill(`Descrição de ${geral}.`);
     await page.getByRole('combobox', { name: /Tags/ }).fill(tag);
     await page.getByRole('combobox', { name: /Tags/ }).press('Enter');
-    await page.getByRole('button', { name: 'Registrar missão' }).click();
+    await page.getByRole('button', { name: 'Registrar projeto' }).click();
     await page.waitForURL(/\/missoes\/[0-9a-f-]{36}$/);
     const urlGeral = page.url();
     await cadastrarMissao(page, { nome: dev, stacks: 'Next.js,' });
@@ -256,7 +256,7 @@ test.describe('Quadro de Missões', () => {
     await campoTipo.selectOption('geral');
     await expect(page).toHaveURL(/tipo=geral/);
     await expect(cartao(page, 'Backlog', geral)).toBeVisible();
-    await expect(cartao(page, 'Backlog', dev), 'o tipo Geral esconde as Missões DEV').toHaveCount(0);
+    await expect(cartao(page, 'Backlog', dev), 'o tipo Geral esconde os Projetos DEV').toHaveCount(0);
 
     await campoTag.selectOption(tag);
     const niveis = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -279,8 +279,8 @@ test.describe('Quadro de Missões', () => {
     await excluirMissaoAberta(page);
   });
 
-  test('a vista Lista resume todas as Missões numa tabela (RF-22)', async ({ page }) => {
-    const nome = nomeUnico('Missão na lista');
+  test('a vista Lista resume todos os Projetos numa tabela (RF-22)', async ({ page }) => {
+    const nome = nomeUnico('Projeto na lista');
     await cadastrarMissao(page, { nome, stacks: 'Go,Rust,' });
     const urlMissao = page.url();
 
@@ -291,7 +291,7 @@ test.describe('Quadro de Missões', () => {
       'true',
     );
     await expect(page).toHaveURL(/vista=lista/);
-    const tabela = page.getByRole('table', { name: /Missões/ });
+    const tabela = page.getByRole('table', { name: /Projetos/ });
     const linha = tabela.getByRole('row').filter({ hasText: nome });
     await expect(linha).toContainText('Backlog');
     await expect(linha).toContainText('Go, Rust');
@@ -301,14 +301,14 @@ test.describe('Quadro de Missões', () => {
     );
 
     await page.reload();
-    await expect(page.getByRole('table', { name: /Missões/ }), 'a vista volta da URL').toBeVisible();
+    await expect(page.getByRole('table', { name: /Projetos/ }), 'a vista volta da URL').toBeVisible();
 
     await page.goto(urlMissao);
     await excluirMissaoAberta(page);
   });
 
   test('Quadro com o menu aberto e a Lista sem violações de acessibilidade (axe)', async ({ page }) => {
-    const nome = nomeUnico('Missão auditada');
+    const nome = nomeUnico('Projeto auditado');
     await cadastrarMissao(page, { nome, stacks: 'Go,' });
     const urlMissao = page.url();
     const niveis = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -323,7 +323,7 @@ test.describe('Quadro de Missões', () => {
     expect(await violacoes(), 'Quadro com o menu aberto').toEqual([]);
 
     await page.goto('/?vista=lista');
-    await expect(page.getByRole('table', { name: /Missões/ })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Projetos/ })).toBeVisible();
     expect(await violacoes(), 'Lista').toEqual([]);
 
     await page.goto(urlMissao);
@@ -341,7 +341,7 @@ test.describe('no celular', () => {
     test.describe.configure({ retries: 1 });
 
     test('arrasta um cartão com o dedo (toque longo)', async ({ page }) => {
-      const nome = nomeUnico('Missão no dedo');
+      const nome = nomeUnico('Projeto no dedo');
       await cadastrarMissao(page, { nome, stacks: 'Go,' });
       const urlMissao = page.url();
 
@@ -360,7 +360,7 @@ test.describe('no celular', () => {
     const semRolagemHorizontal = () =>
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
     await cadastrarMissao(page, {
-      nome: nomeUnico('Missão estreita com um nome bem comprido'),
+      nome: nomeUnico('Projeto estreito com um nome bem comprido'),
       stacks: 'Go,',
     });
     const urlMissao = page.url();
@@ -368,7 +368,7 @@ test.describe('no celular', () => {
     await expect(page.getByRole('searchbox', { name: 'Buscar' })).toBeVisible();
     expect(await semRolagemHorizontal(), 'Quadro com filtros').toBe(true);
     await page.goto('/?vista=lista');
-    await expect(page.getByRole('table', { name: /Missões/ })).toBeVisible();
+    await expect(page.getByRole('table', { name: /Projetos/ })).toBeVisible();
     expect(await semRolagemHorizontal(), 'Lista').toBe(true);
 
     await page.goto(urlMissao);

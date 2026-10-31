@@ -14,7 +14,7 @@ import type { Missao } from '@/dados/missoes';
 import { carregarSugestoes } from '../../carregar-sugestoes';
 import { carregarMissaoDaUrl } from '../carregar-missao';
 
-export const metadata: Metadata = { title: 'Editar missão' };
+export const metadata: Metadata = { title: 'Editar projeto' };
 
 /** Valores do formulário a partir da Missão gravada; numa Geral, a parte técnica começa vazia. */
 function valoresDaMissao(missao: Missao): ValoresMissao {
@@ -70,9 +70,9 @@ export default function PaginaEditarMissao({ params }: PageProps<'/missoes/[id]/
   return (
     <JanelaMissao
       rotulo="[ SISTEMA ] · EDITAR MISSÃO"
-      titulo="Editar missão"
+      titulo="Editar projeto"
       voltarPara="/"
-      textoVoltar="Quadro de Missões"
+      textoVoltar="Quadro de Projetos"
     >
       <Suspense fallback={<CarregandoMissao />}>
         <FormularioEdicao params={params} />

@@ -8,7 +8,7 @@ import { JanelaMissao } from '@/componentes/missoes/janela-missao';
 
 import { carregarSugestoes } from '../carregar-sugestoes';
 
-export const metadata: Metadata = { title: 'Nova missão' };
+export const metadata: Metadata = { title: 'Novo projeto' };
 
 async function FormularioNovaMissao() {
   const sugestoes = await carregarSugestoes();
@@ -19,7 +19,7 @@ async function FormularioNovaMissao() {
       inicial={VALORES_NOVA_MISSAO}
       sugestoesStacks={sugestoes.stacks}
       sugestoesTags={sugestoes.tags}
-      rotuloEnviar="Registrar missão"
+      rotuloEnviar="Registrar projeto"
       rotuloEnviando="Registrando…"
       hrefCancelar="/"
     />
@@ -35,9 +35,9 @@ export default function PaginaNovaMissao() {
   return (
     <JanelaMissao
       rotulo="[ SISTEMA ] · NOVA MISSÃO"
-      titulo="Registrar missão"
+      titulo="Registrar projeto"
       voltarPara="/"
-      textoVoltar="Quadro de Missões"
+      textoVoltar="Quadro de Projetos"
     >
       <Suspense fallback={<CarregandoMissao />}>
         <FormularioNovaMissao />

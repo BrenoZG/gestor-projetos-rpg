@@ -20,7 +20,7 @@ export function ListaMissoes({ missoes, total }: { missoes: readonly Missao[]; t
   if (total === 0) {
     return (
       <p className="rounded-md border border-dashed border-borda-campo px-6 py-10 text-center text-texto">
-        Nenhuma missão cadastrada ainda. Use “Nova missão” para registrar a primeira.
+        Nenhum projeto cadastrado ainda. Use “Novo projeto” para registrar o primeiro.
       </p>
     );
   }
@@ -30,18 +30,18 @@ export function ListaMissoes({ missoes, total }: { missoes: readonly Missao[]; t
   return (
     <div
       role="region"
-      aria-label="Tabela de missões (rola na horizontal em telas estreitas)"
+      aria-label="Tabela de projetos (rola na horizontal em telas estreitas)"
       tabIndex={0}
       className="overflow-x-auto rounded-md border border-borda-forte bg-superficie/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
     >
       <table className="w-full min-w-[44rem] border-collapse text-sm">
         <caption className="px-3 pt-3 pb-1 text-left font-display text-base font-bold">
-          Missões · {missoes.length === total ? total : `${missoes.length} de ${total}`}
+          Projetos · {missoes.length === total ? total : `${missoes.length} de ${total}`}
         </caption>
         <thead className="border-b border-borda">
           <tr>
             <th scope="col" className={CLASSES_CABECALHO}>
-              Missão
+              Projeto
             </th>
             <th scope="col" className={CLASSES_CABECALHO}>
               Status
@@ -78,7 +78,7 @@ export function ListaMissoes({ missoes, total }: { missoes: readonly Missao[]; t
                     <span className="inline-flex items-center gap-2">
                       <EmblemaRank
                         rank={missao.rank}
-                        rotulo={`Rank de Missão ${missao.rank}`}
+                        rotulo={`Rank do Projeto ${missao.rank}`}
                         className="h-7 w-6"
                       />
                     </span>

@@ -21,7 +21,7 @@ import { formatarDataHora } from '@/lib/datas';
 import { carregarHistoricoDaMissao } from './carregar-atualizacoes';
 import { carregarMissaoDaUrl } from './carregar-missao';
 
-export const metadata: Metadata = { title: 'Missão' };
+export const metadata: Metadata = { title: 'Projeto' };
 
 function Dado({ rotulo, children }: { rotulo: string; children: ReactNode }) {
   return (
@@ -38,7 +38,7 @@ function detalheDaExclusao(quantidadeAtualizacoes: number): string {
     quantidadeAtualizacoes === 0
       ? ''
       : ` e ${quantidadeAtualizacoes} ${quantidadeAtualizacoes === 1 ? 'atualização' : 'atualizações'}`;
-  return `A missão, os vínculos com stacks e tags, os links${atualizacoes} serão apagados. Esta ação não pode ser desfeita.`;
+  return `O projeto, os vínculos com stacks e tags, os links${atualizacoes} serão apagados. Esta ação não pode ser desfeita.`;
 }
 
 function ListaDeChips({ id, titulo, itens }: { id: string; titulo: string; itens: readonly string[] }) {
@@ -108,7 +108,7 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
         {desenvolvimento ? (
           <EmblemaRank
             rank={missao.rank}
-            rotulo={`Rank de Missão ${missao.rank}`}
+            rotulo={`Rank do Projeto ${missao.rank}`}
             className="h-16 w-14 shrink-0"
           />
         ) : (
@@ -166,12 +166,12 @@ async function DetalheMissao({ params }: { params: Promise<{ id: string }> }) {
 
       <div className="flex flex-wrap gap-3 border-t border-borda pt-6">
         <Link href={`/missoes/${missao.id}/editar`} className={CLASSES_ACAO_PRINCIPAL}>
-          Editar missão
+          Editar projeto
         </Link>
         <ConfirmarExclusao
-          pergunta={`Excluir a missão “${missao.nome}”?`}
+          pergunta={`Excluir o projeto “${missao.nome}”?`}
           detalhe={detalheDaExclusao(historico.atualizacoes.length)}
-          rotuloConfirmar="Excluir missão"
+          rotuloConfirmar="Excluir projeto"
           acao={excluirMissao.bind(null, missao.id)}
         />
       </div>
@@ -190,9 +190,9 @@ export default function PaginaMissao({ params }: PageProps<'/missoes/[id]'>) {
   return (
     <JanelaMissao
       rotulo="[ SISTEMA ] · MISSÃO"
-      titulo="Ficha da missão"
+      titulo="Ficha do projeto"
       voltarPara="/"
-      textoVoltar="Quadro de Missões"
+      textoVoltar="Quadro de Projetos"
     >
       <Suspense fallback={<CarregandoMissao />}>
         <DetalheMissao params={params} />

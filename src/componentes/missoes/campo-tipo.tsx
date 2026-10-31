@@ -34,7 +34,7 @@ export function CampoTipo({
       aria-invalid={erro ? true : undefined}
       aria-describedby={erro ? id('tipo-erro') : undefined}
     >
-      <legend className={`${CLASSES_ROTULO} mb-2`}>Tipo da missão</legend>
+      <legend className={`${CLASSES_ROTULO} mb-2`}>Tipo do projeto</legend>
       <div className="grid gap-2 sm:grid-cols-2">
         {TIPOS_PROJETO.map((opcao) => (
           <label

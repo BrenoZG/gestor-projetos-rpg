@@ -62,13 +62,13 @@ export async function cadastrarMissao(
   await pagina.getByRole('combobox', { name: 'Stacks' }).fill(stacks);
   await opcaoDeEstilo(pagina, estilo).check();
   await pagina.getByRole('textbox', { name: 'Estrutura e arquitetura' }).fill(`Arquitetura de ${nome}.`);
-  await pagina.getByRole('button', { name: 'Registrar missão' }).click();
+  await pagina.getByRole('button', { name: 'Registrar projeto' }).click();
   await pagina.waitForURL(/\/missoes\/[0-9a-f-]{36}$/);
 }
 
 /** Exclui a Missão aberta no detalhe, confirmando no diálogo. */
 export async function excluirMissaoAberta(pagina: Page): Promise<void> {
   await pagina.getByRole('button', { name: 'Excluir', exact: true }).click();
-  await pagina.getByRole('dialog').getByRole('button', { name: 'Excluir missão' }).click();
+  await pagina.getByRole('dialog').getByRole('button', { name: 'Excluir projeto' }).click();
   await pagina.waitForURL('/');
 }

@@ -42,7 +42,7 @@ export function ItemAtualizacao({
         <h4 className="font-display text-base leading-snug font-bold break-words">{atualizacao.titulo}</h4>
         {mostrarMissao && (
           <p className="text-sm text-texto-suave">
-            Missão:{' '}
+            Projeto:{' '}
             <Link
               href={`/missoes/${atualizacao.projetoId}`}
               className="break-words text-texto underline underline-offset-4 hover:text-acento-titulo focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
@@ -95,7 +95,7 @@ export function ItemAtualizacao({
                 compacto
                 rotuloGatilho={`Excluir ${atualizacao.titulo}`}
                 pergunta={`Excluir a atualização “${atualizacao.titulo}”?`}
-                detalhe="A atualização sai do histórico da missão. Esta ação não pode ser desfeita."
+                detalhe="A atualização sai do histórico do projeto. Esta ação não pode ser desfeita."
                 rotuloConfirmar="Excluir atualização"
                 acao={async () => {
                   const resultado = await excluirAtualizacao(atualizacao.id);

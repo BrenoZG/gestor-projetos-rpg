@@ -15,8 +15,8 @@ async function semViolacoes(pagina: Page, tela: string): Promise<void> {
 // Movimento reduzido: o axe mede contraste no estado final, não no meio de uma animação de entrada.
 test.use({ reducedMotion: 'reduce' });
 
-test('telas das Missões sem violações de acessibilidade (axe, WCAG 2.2 AA)', async ({ page }) => {
-  await cadastrarMissao(page, { nome: nomeUnico('Missão acessível'), stacks: 'Next.js,Supabase,' });
+test('telas dos Projetos sem violações de acessibilidade (axe, WCAG 2.2 AA)', async ({ page }) => {
+  await cadastrarMissao(page, { nome: nomeUnico('Projeto acessível'), stacks: 'Next.js,Supabase,' });
   await expect(page.getByRole('heading', { level: 2 })).toBeVisible();
   await semViolacoes(page, 'detalhe');
   const urlMissao = page.url();
@@ -35,7 +35,7 @@ test('telas das Missões sem violações de acessibilidade (axe, WCAG 2.2 AA)', 
   await semViolacoes(page, 'Quadro');
 
   await page.goto('/missoes/nova');
-  await page.getByRole('button', { name: 'Registrar missão' }).click();
+  await page.getByRole('button', { name: 'Registrar projeto' }).click();
   await expect(page.getByText('A descrição é obrigatória.')).toBeVisible();
   await semViolacoes(page, 'cadastro com erros');
 

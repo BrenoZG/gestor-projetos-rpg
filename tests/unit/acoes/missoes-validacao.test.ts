@@ -97,11 +97,11 @@ describe('validarFormularioMissao', () => {
   });
 
   it.each(['', '   ', undefined])('recusa a estrutura vazia %j (RN-14)', (arquitetura) => {
-    expect(erroDe('arquitetura', arquitetura)).toBe('Descreva a estrutura e a arquitetura da missão.');
+    expect(erroDe('arquitetura', arquitetura)).toBe('Descreva a estrutura e a arquitetura do projeto.');
   });
 
   it.each(['monolitico', 'Monolito', '', undefined])('recusa o estilo %j', (estilo) => {
-    expect(erroDe('estilo', estilo)).toBe('Escolha o estilo arquitetural da missão.');
+    expect(erroDe('estilo', estilo)).toBe('Escolha o estilo arquitetural do projeto.');
   });
 
   it.each([[['blockchain']], [['ia', 'IA']]])('recusa as capacidades %j', (capacidades) => {
@@ -159,7 +159,7 @@ describe('validarFormularioMissao', () => {
   it('sem tipo, aponta o tipo e os campos comuns', () => {
     const resultado = validarFormularioMissao({}, 'criar');
     expect(resultado.ok ? {} : resultado.erros).toEqual({
-      tipo: 'Escolha o tipo da missão: Desenvolvimento ou Geral.',
+      tipo: 'Escolha o tipo do projeto: Desenvolvimento ou Geral.',
       nome: 'O nome precisa ter de 3 a 80 caracteres.',
       descricao: 'A descrição é obrigatória.',
       status: 'Escolha Backlog, Desenvolvimento ou Concluído.',
@@ -167,7 +167,7 @@ describe('validarFormularioMissao', () => {
   });
 
   it.each(['DEV', 'vendas', ''])('recusa o tipo %j', (tipo) => {
-    expect(erroDe('tipo', tipo)).toBe('Escolha o tipo da missão: Desenvolvimento ou Geral.');
+    expect(erroDe('tipo', tipo)).toBe('Escolha o tipo do projeto: Desenvolvimento ou Geral.');
   });
 });
 
@@ -320,14 +320,14 @@ describe('mensagemDoErroDoBanco', () => {
   it('nome repetido vira erro no campo nome', () => {
     expect(mensagemDoErroDoBanco('23505')).toEqual({
       campo: 'nome',
-      mensagem: 'Já existe uma missão com esse nome. Escolha outro.',
+      mensagem: 'Já existe um projeto com esse nome. Escolha outro.',
     });
   });
 
   it('Missão inexistente ou de outro usuário vira aviso geral', () => {
     expect(mensagemDoErroDoBanco('P0002')).toEqual({
       campo: null,
-      mensagem: 'Esta missão não existe mais.',
+      mensagem: 'Este projeto não existe mais.',
     });
   });
 

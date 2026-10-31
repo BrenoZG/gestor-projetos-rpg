@@ -34,13 +34,13 @@ const { nome, descricao, arquitetura, stacks, nomeStack, ferramentas, tags, nome
   LIMITES_MISSAO;
 
 const MENSAGENS = {
-  tipo: 'Escolha o tipo da missão: Desenvolvimento ou Geral.',
+  tipo: 'Escolha o tipo do projeto: Desenvolvimento ou Geral.',
   nome: `O nome precisa ter de ${nome.minimo} a ${nome.maximo} caracteres.`,
   descricaoVazia: 'A descrição é obrigatória.',
   descricaoLonga: 'A descrição aceita até 2.000 caracteres.',
-  arquiteturaVazia: 'Descreva a estrutura e a arquitetura da missão.',
+  arquiteturaVazia: 'Descreva a estrutura e a arquitetura do projeto.',
   arquiteturaLonga: 'A estrutura aceita até 20.000 caracteres.',
-  estilo: 'Escolha o estilo arquitetural da missão.',
+  estilo: 'Escolha o estilo arquitetural do projeto.',
   capacidades: 'Marque só capacidades da lista.',
   status: 'Escolha Backlog, Desenvolvimento ou Concluído.',
   quantidadeStacks: `Adicione de ${stacks.minimo} a ${stacks.maximo} stacks.`,
@@ -238,9 +238,9 @@ export type ErroDoBanco = { campo: CampoMissao | null; mensagem: string };
 export function mensagemDoErroDoBanco(codigo: string | undefined): ErroDoBanco {
   switch (codigo) {
     case '23505':
-      return { campo: 'nome', mensagem: 'Já existe uma missão com esse nome. Escolha outro.' };
+      return { campo: 'nome', mensagem: 'Já existe um projeto com esse nome. Escolha outro.' };
     case 'P0002':
-      return { campo: null, mensagem: 'Esta missão não existe mais.' };
+      return { campo: null, mensagem: 'Este projeto não existe mais.' };
     case '23514':
     case '22023':
       return { campo: null, mensagem: 'Algum campo está fora das regras. Revise e tente de novo.' };

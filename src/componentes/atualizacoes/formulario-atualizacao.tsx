@@ -132,7 +132,7 @@ export function FormularioAtualizacao({
       {missoes ? (
         <div className="flex flex-col gap-2">
           <label htmlFor={id('projetoId')} className={CLASSES_ROTULO}>
-            Missão
+            Projeto
           </label>
           <select
             id={id('projetoId')}
