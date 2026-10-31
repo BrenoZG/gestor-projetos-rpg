@@ -6,8 +6,7 @@ import { moverMissao } from '@/acoes/missoes';
 import type { ResultadoMovimento } from '@/acoes/missoes-estado';
 import { SeletorStatus } from '@/componentes/atualizacoes/seletor-status';
 import { AvisoErro } from '@/componentes/aviso-erro';
-import { anuncioDaRecompensa, AvisoRecompensa } from '@/componentes/aviso-recompensa';
-import type { Recompensa } from '@/dominio/gamificacao/recompensa';
+import { useSistema } from '@/componentes/sistema/provedor-sistema';
 import { ROTULOS_STATUS, type StatusMissao } from '@/dominio/missoes/campos';
 
 const FALHA_DE_REDE: ResultadoMovimento = {
@@ -18,7 +17,8 @@ const FALHA_DE_REDE: ResultadoMovimento = {
 /**
  * Status da Missão na ficha, com troca em um toque. Desde que a edição deixou
  * de mudar o status, ele muda por aqui ou pelo Quadro (RF-20). A troca aparece
- * na hora e volta atrás se o servidor recusar.
+ * na hora e volta atrás se o servidor recusar. Concluir abre a Janela do
+ * Sistema com o resultado do XP.
  *
  * @param props - Id e nome da Missão e o status gravado.
  */
@@ -27,11 +27,12 @@ export function StatusDaMissao({ id, nome, status }: { id: string; nome: string;
   const [, iniciarTransicao] = useTransition();
   const [anuncio, setAnuncio] = useState('');
   const [erro, setErro] = useState<string | null>(null);
-  const [recompensa, setRecompensa] = useState<Recompensa | null>(null);
+  const sistema = useSistema();
 
   function mudar(novo: StatusMissao): void {
     setErro(null);
-    setRecompensa(null);
+    // Fora da transição: a reserva vale antes de a resposta trazer a cinemática.
+    sistema.reservar();
     iniciarTransicao(async () => {
       aplicar(novo);
       let resultado: ResultadoMovimento;
@@ -40,11 +41,11 @@ export function StatusDaMissao({ id, nome, status }: { id: string; nome: string;
       } catch {
         resultado = FALHA_DE_REDE;
       }
-      if (resultado.ok) {
-        setRecompensa(resultado.recompensa ?? null);
-        const extra = resultado.recompensa ? ` ${anuncioDaRecompensa(resultado.recompensa, 'projeto')}` : '';
-        setAnuncio(`${nome}: ${ROTULOS_STATUS[novo]}.${extra}`);
-      } else setErro(resultado.mensagem);
+      const recompensa = resultado.ok ? resultado.recompensa : undefined;
+      sistema.mostrarConclusao(recompensa ? { nome, recompensa } : null);
+      // O resultado da conclusão é lido na Janela do Sistema; o anúncio diz só o status.
+      if (resultado.ok) setAnuncio(`${nome}: ${ROTULOS_STATUS[novo]}.`);
+      else setErro(resultado.mensagem);
     });
   }
 
@@ -55,7 +56,6 @@ export function StatusDaMissao({ id, nome, status }: { id: string; nome: string;
       </p>
       <SeletorStatus rotulo={`Status de ${nome}`} status={atual} aoMudar={mudar} />
       {erro && <AvisoErro titulo="O status não foi alterado.">{erro}</AvisoErro>}
-      {recompensa && <AvisoRecompensa recompensa={recompensa} item="projeto" />}
     </div>
   );
 }
