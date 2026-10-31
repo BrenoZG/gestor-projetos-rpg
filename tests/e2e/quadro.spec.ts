@@ -94,7 +94,7 @@ test.describe('Quadro de Projetos', () => {
     await arrastarComMouse(page, cartao(page, 'Backlog', nome), coluna(page, 'Em desenvolvimento'));
     await expect(cartao(page, 'Em desenvolvimento', nome)).toBeVisible();
     await expect(
-      page.getByRole('status').filter({ hasText: `${nome} movida para Em desenvolvimento` }),
+      page.getByRole('status').filter({ hasText: `${nome} movido para Em desenvolvimento` }),
     ).toBeAttached();
     await expect(page, 'soltar o cartão não abre o detalhe').toHaveURL(/\/$/);
 
@@ -141,7 +141,7 @@ test.describe('Quadro de Projetos', () => {
     await page.keyboard.press('Enter');
     await expect(cartao(page, 'Concluídas', nome)).toBeVisible();
     await expect(
-      page.getByRole('status').filter({ hasText: `${nome} movida para Concluídas` }),
+      page.getByRole('status').filter({ hasText: `${nome} movido para Concluídas` }),
     ).toBeAttached();
     await expect(
       cartao(page, 'Concluídas', nome).getByRole('button', { name: `Mover ${nome}` }),
