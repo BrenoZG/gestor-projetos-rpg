@@ -35,7 +35,7 @@ export function FormularioClasse({
         {CLASSES.map(({ chave, nome, area }, indice) => (
           <label
             key={chave}
-            className="group flex min-h-11 cursor-pointer flex-col items-center gap-2 rounded-md border border-borda-forte bg-superficie px-3 py-4 text-center transition-colors duration-200 hover:border-texto-suave has-checked:border-acento has-checked:bg-acento-suave has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-acento"
+            className="group relative flex min-h-11 cursor-pointer flex-col items-center gap-2 rounded-md border border-borda-forte bg-superficie px-3 py-4 text-center transition-colors duration-200 hover:border-texto-suave has-checked:border-acento has-checked:bg-acento-suave has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-acento"
           >
             <input
               type="radio"
