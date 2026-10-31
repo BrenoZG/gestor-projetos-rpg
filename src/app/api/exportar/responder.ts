@@ -9,6 +9,12 @@ type ClienteSupabase = Awaited<ReturnType<typeof criarClienteServidor>>;
 /** O arquivo traz todos os dados do usuário: nenhum cache guarda cópia. */
 const SEM_CACHE = { 'Cache-Control': 'no-store' } as const;
 
+/** Corpo máximo de resposta de uma Vercel Function; acima, ela devolve 413. */
+const LIMITE_RESPOSTA_BYTES = 4_500_000;
+
+/** A partir daqui o log avisa, antes de o export começar a falhar. */
+const AVISO_RESPOSTA_BYTES = 3_500_000;
+
 /**
  * Resposta do `GET /api/exportar` (RF-14), separada da rota para ser testada
  * com um cliente falso.
@@ -32,10 +38,11 @@ export async function responderExport(supabase: ClienteSupabase, agora: Date): P
     const dados = await obterDadosExportados(supabase);
     // Indentado: o arquivo é para o dono ler e guardar, não só para máquinas.
     const corpo = JSON.stringify(montarArquivoExport(dados, agora), null, 2);
-    registrarEvento('info', 'exportacao_dados', {
-      ...contarRegistros(dados),
-      bytes: new TextEncoder().encode(corpo).byteLength,
-    });
+    const bytes = new TextEncoder().encode(corpo).byteLength;
+    registrarEvento('info', 'exportacao_dados', { ...contarRegistros(dados), bytes });
+    if (bytes > AVISO_RESPOSTA_BYTES) {
+      registrarEvento('aviso', 'exportacao_perto_do_limite', { bytes, limite_bytes: LIMITE_RESPOSTA_BYTES });
+    }
     return new Response(corpo, {
       headers: {
         ...SEM_CACHE,

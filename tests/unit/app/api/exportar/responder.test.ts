@@ -75,6 +75,32 @@ describe('responderExport', () => {
     expect(linha).not.toContain('Projeto secreto');
   });
 
+  it('avisa no log quando o arquivo se aproxima do limite de resposta da Vercel (4,5 MB)', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const grande = { ...DADOS, projetos: [{ id: 'p1', arquitetura: 'x'.repeat(3_600_000) }] };
+    const { cliente } = clienteFalso({ resposta: { data: grande, error: null } });
+
+    const resposta = await responderExport(cliente, AGORA);
+
+    expect(resposta.status).toBe(200);
+    expect(aviso).toHaveBeenCalledOnce();
+    expect(JSON.parse(String(aviso.mock.calls[0]?.[0]))).toMatchObject({
+      evento: 'exportacao_perto_do_limite',
+      limite_bytes: 4_500_000,
+    });
+  });
+
+  it('não avisa com o arquivo pequeno', async () => {
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    const aviso = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { cliente } = clienteFalso();
+
+    await responderExport(cliente, AGORA);
+
+    expect(aviso).not.toHaveBeenCalled();
+  });
+
   it('sem sessão, responde 401 sem ler o banco', async () => {
     const { cliente, rpc } = clienteFalso({ logado: false });
 
