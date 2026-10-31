@@ -1,6 +1,8 @@
 # Especificação de Requisitos — Gestor de Projetos
 
-> Versão 1.9 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+> Versão 1.10 · baseline da v1. Mudanças de requisito atualizam este documento **e** a matriz de rastreabilidade no fim.
+>
+> **1.10 (2026-10-31, M6):** o export (RF-14) fica na seção Backup da Ficha e baixa `gestor-projetos-AAAA-MM-DD.json` (data de São Paulo) com as linhas do usuário de todas as tabelas, cada uma numa lista com os ids preservados, dentro de um envelope com a versão do formato. O arquivo não traz o e-mail nem o login do GitHub (minimização, LGPD), as colunas que o banco recalcula, os valores derivados (nível, Rank, totais) nem as preferências guardadas no navegador. Importar o arquivo de volta fica fora da v1. Critérios de aceite na §8. Origem: proposta do M6 aprovada pelo dono.
 >
 > **1.9 (2026-10-31, M5):** a página do Personagem vira a Ficha (RF-19; a rota continua `/personagem` e o menu diz "Ficha"), com a Maestria por stack e o Domínio por ferramenta (RN-10, RN-18). `C` abre a Ficha e `Esc` volta para a tela anterior, ou para o Quadro quando a Ficha foi a primeira tela; o atalho `C` é ignorado em campo de texto, com Ctrl/Alt/⌘, com tecla segurada e com uma janela aberta, e é desligado por aparelho (RN-12). O `Esc` não depende desse liga/desliga, porque não é tecla de caractere. A cinemática (RF-16) é só da trilha Desenvolvedor: vários níveis de uma vez viram uma cinemática só, com a medalha mais alta, e os níveis alcançados antes do M5 não tocam. A Janela do Sistema mostra o resultado da conclusão de **Projeto** e vem antes da cinemática; a conclusão de Atualização continua com o aviso do M3. Origem: proposta do M5 aprovada pelo dono.
 >
@@ -98,7 +100,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RF-11 | O sistema deve buscar Projetos por trecho do nome e por stack. | Should |
 | RF-12 | O sistema deve exibir XP total, nível, título, Rank do Aventureiro e progresso até o próximo nível e, quando a trilha Produtividade tiver XP, o nível e o progresso dela (RN-18). | Must |
 | RF-13 | O sistema deve permitir acesso apenas a contas GitHub presentes na allowlist. | Must |
-| RF-14 | O sistema deve exportar todos os dados do usuário em um arquivo JSON. | Must |
+| RF-14 | O sistema deve exportar todos os dados do usuário em um arquivo JSON, sem dados de identificação da conta GitHub (critérios na §8). | Must |
 | RF-15 | O sistema deve exibir as medalhas conquistadas e bloqueadas. | Must |
 | RF-16 | O sistema deve exibir a animação de conquista ao subir de nível e ao ganhar medalha, conforme RN-08. | Should |
 | RF-17 | O sistema deve exigir a escolha de uma Classe no primeiro acesso, antes de exibir o Quadro de Projetos. | Must |
@@ -339,9 +341,38 @@ Cenário: trocar o tipo não move o XP
   Então os 10 XP continuam na trilha Produtividade
 ```
 
+### RF-14 (export JSON)
+
+```gherkin
+Cenário: o arquivo traz todos os dados do usuário e só os dele
+  Dado um usuário logado com Projetos, Atualizações, tags, links e XP
+  E outro usuário com dados próprios
+  Quando ele aciona "Baixar JSON" na Ficha
+  Então recebe o arquivo "gestor-projetos-AAAA-MM-DD.json", com a data de São Paulo
+  E o arquivo é JSON válido, com o formato "gestor-projetos-rpg/export" na versão 1
+  E traz todas as linhas dele de cada tabela, e nenhuma do outro usuário
+  E não traz e-mail, login do GitHub nem o id da conta
+
+Cenário: o histórico de XP vem inteiro, mesmo grande
+  Dado um usuário com 1.500 eventos de XP
+  Quando ele exporta os dados
+  Então o arquivo traz os 1.500 eventos
+
+Cenário: sem sessão não há dados
+  Dado um visitante sem sessão
+  Quando ele pede o endereço do export
+  Então não recebe nenhum dado
+
+Cenário: falha ao gerar
+  Dado que o banco não responde
+  Quando o usuário aciona "Baixar JSON"
+  Então vê uma mensagem genérica de falha
+  E nenhum arquivo é baixado
+```
+
 ## 9. Fora de escopo (v1)
 
-Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe · excluir tag em uso · tags em Atualizações · pré-visualização de links (vídeo embutido ou leitura do título) · medalhas, títulos e Rank na trilha Produtividade.
+Importar (restaurar) o arquivo do export · Ideia como entidade própria · multiusuário e compartilhamento · reordenar cartões dentro da mesma coluna · conquistas além de medalhas · anexos e imagens · notificações · integração com GitHub (além do login) · uso offline · tema claro · bônus de Classe · excluir tag em uso · tags em Atualizações · pré-visualização de links (vídeo embutido ou leitura do título) · medalhas, títulos e Rank na trilha Produtividade.
 
 ## 10. Questões em aberto
 
@@ -364,5 +395,5 @@ Nenhuma no fechamento da baseline 1.0.
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
 | RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v4`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
-| RF-14, RNF-07 (export) | M6 | Integração |
+| RF-14, RNF-07 (export) | M6 | pgTAP (`exportar_dados`: isolamento, `anon`, 1.500 eventos) + unitário (envelope, nome do arquivo, rota) + E2E (download, conteúdo, falha, teclado, 360 px, axe) |
 | RNF-01..06 | Todos | CI + revisão |
