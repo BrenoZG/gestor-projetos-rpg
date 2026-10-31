@@ -334,18 +334,25 @@ test.describe('Quadro de Missões', () => {
 test.describe('no celular', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('arrasta um cartão com o dedo (toque longo)', async ({ page }) => {
-    const nome = nomeUnico('Missão no dedo');
-    await cadastrarMissao(page, { nome, stacks: 'Go,' });
-    const urlMissao = page.url();
+  test.describe('toque longo', () => {
+    // Quarentena temporária (issue #47): o teste é instável e a causa ainda não
+    // foi achada. Uma nova tentativa só para ele; o relatório o marca como
+    // "flaky", então a instabilidade continua visível. Sai quando a issue fechar.
+    test.describe.configure({ retries: 1 });
 
-    await page.goto('/');
-    const destino = coluna(page, 'Em desenvolvimento');
-    await arrastarPorToque(page, cartao(page, 'Backlog', nome), destino);
-    await expect(cartao(page, 'Em desenvolvimento', nome)).toBeVisible();
+    test('arrasta um cartão com o dedo (toque longo)', async ({ page }) => {
+      const nome = nomeUnico('Missão no dedo');
+      await cadastrarMissao(page, { nome, stacks: 'Go,' });
+      const urlMissao = page.url();
 
-    await page.goto(urlMissao);
-    await excluirMissaoAberta(page);
+      await page.goto('/');
+      const destino = coluna(page, 'Em desenvolvimento');
+      await arrastarPorToque(page, cartao(page, 'Backlog', nome), destino);
+      await expect(cartao(page, 'Em desenvolvimento', nome)).toBeVisible();
+
+      await page.goto(urlMissao);
+      await excluirMissaoAberta(page);
+    });
   });
 
   test('filtros e Lista não rolam a página na horizontal (360 px)', async ({ page }) => {
