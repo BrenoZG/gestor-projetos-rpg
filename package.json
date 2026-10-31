@@ -23,7 +23,8 @@
     "db:reset": "supabase db reset",
     "db:test": "supabase test db",
     "db:advisors": "supabase db advisors --local --type all --level info --fail-on warn",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:completo": "npm run build && playwright test"
   },
   "dependencies": {
     "@dnd-kit/dom": "0.5.1",
