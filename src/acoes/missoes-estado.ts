@@ -1,3 +1,5 @@
+import type { Recompensa } from '@/dominio/gamificacao/recompensa';
+
 /**
  * Formato do estado do formulário de Missão, compartilhado entre as Server
  * Actions e o componente de cliente. Fica separado da validação para que o
@@ -23,5 +25,8 @@ export type EstadoFormularioMissao = { erros: ErrosMissao; mensagem: string | nu
 
 export const ESTADO_INICIAL_FORMULARIO: EstadoFormularioMissao = { erros: {}, mensagem: null };
 
-/** Resposta de mover uma Missão no Quadro; a mensagem já vem pronta para a tela. */
-export type ResultadoMovimento = { ok: true } | { ok: false; mensagem: string };
+/**
+ * Resposta de mover uma Missão ou Atualização; a mensagem de erro já vem
+ * pronta para a tela. `recompensa` só vem quando o item foi concluído agora.
+ */
+export type ResultadoMovimento = { ok: true; recompensa?: Recompensa } | { ok: false; mensagem: string };

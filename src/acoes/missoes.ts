@@ -6,8 +6,10 @@ import { redirect } from 'next/navigation';
 import type { EstadoFormularioMissao, ResultadoMovimento } from '@/acoes/missoes-estado';
 import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-validacao';
 import { clienteComSessao, ehIdValido } from '@/acoes/checagens';
+import { prepararConclusaoDaMissao } from '@/acoes/conclusao';
 import { apagarMissao, ErroDeMissao, mudarStatusDaMissao, salvarMissao } from '@/dados/missoes';
 import { ROTA_INICIAL } from '@/dominio/acesso/rotas';
+import { recompensaDaConclusao, type Recompensa } from '@/dominio/gamificacao/recompensa';
 import { ehStatusMissao } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
 
@@ -125,19 +127,32 @@ const MOVIMENTO_FALHOU: ResultadoMovimento = {
 
 /**
  * Move uma Missão para outra coluna do Quadro (RF-20), sem abrir a edição.
- * Mover para a coluna em que ela já está não muda nada.
+ * Mover para a coluna em que ela já está não muda nada. Ao concluir, o XP é
+ * calculado aqui e gravado junto com o status (RN-06, ADR-0003).
  *
  * @param id - Missão a mover (vem do cliente; validado aqui).
  * @param status - Coluna de destino (vem do cliente; só os 3 status valem).
- * @returns `ok`, ou a mensagem para a tela; sem sessão, redireciona para a entrada.
+ * @returns `ok` (com a recompensa, se concluiu agora), ou a mensagem para a
+ *   tela; sem sessão, redireciona para a entrada.
  */
 export async function moverMissao(id: string, status: string): Promise<ResultadoMovimento> {
   const supabase = await clienteComSessao();
   if (!ehIdValido(id) || typeof status !== 'string' || !ehStatusMissao(status)) return MOVIMENTO_INVALIDO;
 
+  let recompensa: Recompensa | undefined;
   try {
-    const resultado = await mudarStatusDaMissao(supabase, id, status);
-    if (resultado === 'inexistente') return MOVIMENTO_INVALIDO;
+    const preparo = status === 'concluido' ? await prepararConclusaoDaMissao(supabase, id) : null;
+    if (status === 'concluido' && !preparo) return MOVIMENTO_INVALIDO;
+    const { situacao, xpGanho } = await mudarStatusDaMissao(
+      supabase,
+      id,
+      status,
+      preparo?.recompensa ?? null,
+    );
+    if (situacao === 'inexistente') return MOVIMENTO_INVALIDO;
+    if (situacao === 'movida' && preparo) {
+      recompensa = recompensaDaConclusao(preparo.avaliacao, xpGanho, preparo.trilha);
+    }
   } catch (erro) {
     if (!(erro instanceof ErroDeMissao)) throw erro;
     registrarEvento('erro', 'supabase_falhou', {
@@ -147,5 +162,5 @@ export async function moverMissao(id: string, status: string): Promise<Resultado
     return MOVIMENTO_FALHOU;
   }
   revalidatePath(ROTA_INICIAL, 'layout');
-  return { ok: true };
+  return recompensa ? { ok: true, recompensa } : { ok: true };
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import type { EstadoFormularioAtualizacao } from '@/acoes/atualizacoes-estado';
 import { mensagemDoErroDaAtualizacao, validarFormularioAtualizacao } from '@/acoes/atualizacoes-validacao';
 import { clienteComSessao, ehIdValido } from '@/acoes/checagens';
+import { prepararConclusaoDaAtualizacao } from '@/acoes/conclusao';
 import type { ResultadoMovimento } from '@/acoes/missoes-estado';
 import {
   apagarAtualizacao,
@@ -14,6 +15,7 @@ import {
 } from '@/dados/atualizacoes';
 import { ErroDeMissao, type ResultadoGravacao } from '@/dados/missoes';
 import { ROTA_INICIAL } from '@/dominio/acesso/rotas';
+import { recompensaDaConclusao, type Recompensa } from '@/dominio/gamificacao/recompensa';
 import { ehStatusMissao } from '@/dominio/missoes/campos';
 import { registrarEvento } from '@/lib/log';
 
@@ -116,20 +118,31 @@ export async function editarAtualizacao(
 }
 
 /**
- * Muda o status de uma Atualização sem abrir a edição. Repetir o status atual não muda nada.
+ * Muda o status de uma Atualização sem abrir a edição. Repetir o status atual
+ * não muda nada. Ao concluir, o XP é gravado junto com o status (RN-06).
  *
  * @param id - Atualização (vem do cliente; validado aqui).
  * @param status - Novo status (só os 3 valores valem).
- * @returns `ok`, ou a mensagem para a tela.
+ * @returns `ok` (com a recompensa, se concluiu agora), ou a mensagem para a tela.
  */
 export async function mudarStatusDaAtualizacao(id: string, status: string): Promise<ResultadoMovimento> {
   const supabase = await clienteComSessao();
   if (!ehIdValido(id) || typeof status !== 'string' || !ehStatusMissao(status)) {
     return { ok: false, mensagem: ATUALIZACAO_INEXISTENTE };
   }
+  let recompensa: Recompensa | undefined;
   try {
-    if ((await gravarStatusDaAtualizacao(supabase, id, status)) === 'inexistente') {
-      return { ok: false, mensagem: ATUALIZACAO_INEXISTENTE };
+    const preparo = status === 'concluido' ? await prepararConclusaoDaAtualizacao(supabase, id) : null;
+    if (status === 'concluido' && !preparo) return { ok: false, mensagem: ATUALIZACAO_INEXISTENTE };
+    const { situacao, xpGanho } = await gravarStatusDaAtualizacao(
+      supabase,
+      id,
+      status,
+      preparo?.recompensa ?? null,
+    );
+    if (situacao === 'inexistente') return { ok: false, mensagem: ATUALIZACAO_INEXISTENTE };
+    if (situacao === 'movida' && preparo) {
+      recompensa = recompensaDaConclusao(preparo.avaliacao, xpGanho, preparo.trilha);
     }
   } catch (erro) {
     if (!(erro instanceof ErroDeMissao)) throw erro;
@@ -137,7 +150,7 @@ export async function mudarStatusDaAtualizacao(id: string, status: string): Prom
     return FALHA_AO_GRAVAR;
   }
   revalidarTelas();
-  return { ok: true };
+  return recompensa ? { ok: true, recompensa } : { ok: true };
 }
 
 /**

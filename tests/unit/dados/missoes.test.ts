@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { mapearMissao, salvarMissao } from '@/dados/missoes';
+import { mapearMissao, mudarStatusDaMissao, salvarMissao } from '@/dados/missoes';
 import type { DadosMissao } from '@/dominio/missoes/campos';
 
 const LINHA = {
@@ -150,10 +150,10 @@ describe('salvarMissao', () => {
     return { cliente: { rpc } as unknown as Parameters<typeof salvarMissao>[0], rpc };
   }
 
-  it('grava pela salvar_missao_v3 com tipo, estilo, capacidades, tags e links', async () => {
+  it('cria pela salvar_missao_v4 com tipo, estilo, capacidades, tags, links e o XP de criação', async () => {
     const { cliente, rpc } = clienteFalso({ data: 'id-novo', error: null });
     await expect(salvarMissao(cliente, null, DADOS)).resolves.toEqual({ ok: true, id: 'id-novo' });
-    expect(rpc).toHaveBeenCalledWith('salvar_missao_v3', {
+    expect(rpc).toHaveBeenCalledWith('salvar_missao_v4', {
       p_id: null,
       p_tipo: 'dev',
       p_nome: 'Gestor',
@@ -165,10 +165,11 @@ describe('salvarMissao', () => {
       p_stacks: ['Next.js'],
       p_tags: ['IA'],
       p_links: [{ url: 'https://exemplo.com/', titulo: null }],
+      p_xp_criacao: 10,
     });
   });
 
-  it('grava a Missão Geral sem os campos técnicos e, na edição, sem status', async () => {
+  it('grava a Missão Geral sem os campos técnicos e, na edição, sem status nem XP', async () => {
     const { cliente, rpc } = clienteFalso({ data: 'id', error: null });
     const geral: DadosMissao = {
       tipo: 'geral',
@@ -180,7 +181,7 @@ describe('salvarMissao', () => {
       links: [],
     };
     await salvarMissao(cliente, 'id', geral);
-    expect(rpc).toHaveBeenCalledWith('salvar_missao_v3', {
+    expect(rpc).toHaveBeenCalledWith('salvar_missao_v4', {
       p_id: 'id',
       p_tipo: 'geral',
       p_nome: 'Revenda',
@@ -192,11 +193,65 @@ describe('salvarMissao', () => {
       p_stacks: [],
       p_tags: [],
       p_links: [],
+      p_xp_criacao: null,
     });
   });
 
   it('devolve o código do erro do banco para a tela traduzir', async () => {
     const { cliente } = clienteFalso({ data: null, error: { code: '23505' } });
     await expect(salvarMissao(cliente, 'id', DADOS)).resolves.toEqual({ ok: false, codigo: '23505' });
+  });
+});
+
+describe('mudarStatusDaMissao', () => {
+  function clienteFalso(resposta: { data: unknown; error: { code: string } | null }) {
+    const rpc = vi.fn().mockResolvedValue(resposta);
+    return { cliente: { rpc } as unknown as Parameters<typeof mudarStatusDaMissao>[0], rpc };
+  }
+
+  it('conclui pela mudar_status_missao com o XP e o Rank e devolve o XP gravado', async () => {
+    const { cliente, rpc } = clienteFalso({ data: [{ situacao: 'movida', xp_ganho: 157 }], error: null });
+    await expect(mudarStatusDaMissao(cliente, 'id', 'concluido', { xp: 157, rank: 'B' })).resolves.toEqual({
+      situacao: 'movida',
+      xpGanho: 157,
+    });
+    expect(rpc).toHaveBeenCalledWith('mudar_status_missao', {
+      p_id: 'id',
+      p_status: 'concluido',
+      p_xp: 157,
+      p_rank: 'B',
+    });
+  });
+
+  it('move sem XP quando não há recompensa', async () => {
+    const { cliente, rpc } = clienteFalso({
+      data: [{ situacao: 'sem_mudanca', xp_ganho: null }],
+      error: null,
+    });
+    await expect(mudarStatusDaMissao(cliente, 'id', 'backlog', null)).resolves.toEqual({
+      situacao: 'sem_mudanca',
+      xpGanho: null,
+    });
+    expect(rpc).toHaveBeenCalledWith('mudar_status_missao', {
+      p_id: 'id',
+      p_status: 'backlog',
+      p_xp: null,
+      p_rank: null,
+    });
+  });
+
+  it('lança ErroDeMissao, só com o código, quando o banco falha', async () => {
+    const { cliente } = clienteFalso({ data: null, error: { code: '23514' } });
+    await expect(mudarStatusDaMissao(cliente, 'id', 'concluido', null)).rejects.toMatchObject({
+      name: 'ErroDeMissao',
+      codigo: '23514',
+    });
+  });
+
+  it('recusa situação desconhecida vinda do banco', async () => {
+    const { cliente } = clienteFalso({ data: [{ situacao: 'outra', xp_ganho: null }], error: null });
+    await expect(mudarStatusDaMissao(cliente, 'id', 'concluido', null)).rejects.toThrow(
+      'Situação desconhecida',
+    );
   });
 });

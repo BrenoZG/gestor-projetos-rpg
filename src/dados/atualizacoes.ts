@@ -1,9 +1,16 @@
 import type { DadosAtualizacao } from '@/dominio/atualizacoes/campos';
 import { intervaloDaPagina, type FiltrosAtualizacoes } from '@/dominio/atualizacoes/filtros';
+import { XP_CRIACAO_ATUALIZACAO } from '@/dominio/gamificacao/xp';
 import { ehStatusMissao, type StatusMissao } from '@/dominio/missoes/campos';
 import type { criarClienteServidor } from '@/lib/supabase/servidor';
 
-import { ErroDeMissao, type ResultadoGravacao, type ResultadoMudancaStatus } from './missoes';
+import {
+  ErroDeMissao,
+  lerResultadoMudancaStatus,
+  type RecompensaDaConclusao,
+  type ResultadoGravacao,
+  type ResultadoMudancaStatus,
+} from './missoes';
 
 /**
  * Acesso às Atualizações no Postgres, sempre com a sessão do usuário: o RLS
@@ -114,7 +121,8 @@ export async function listarAtualizacoes(
 }
 
 /**
- * Cria uma Atualização. O status nasce em Backlog (padrão do banco).
+ * Cria uma Atualização e grava o XP de criação na mesma transação
+ * (`criar_atualizacao`, RN-06). O status nasce em Backlog (padrão do banco).
  *
  * @returns O id gravado, ou o código do erro do banco para a tela traduzir.
  */
@@ -122,13 +130,14 @@ export async function criarAtualizacao(
   supabase: ClienteSupabase,
   dados: DadosAtualizacao,
 ): Promise<ResultadoGravacao> {
-  const { data, error } = await supabase
-    .from('atualizacoes')
-    .insert({ projeto_id: dados.projetoId, titulo: dados.titulo, descricao: dados.descricao })
-    .select('id')
-    .single();
+  const { data, error } = await supabase.rpc('criar_atualizacao', {
+    p_projeto_id: dados.projetoId,
+    p_titulo: dados.titulo,
+    p_descricao: dados.descricao,
+    p_xp_criacao: XP_CRIACAO_ATUALIZACAO,
+  });
   if (error) return { ok: false, codigo: error.code };
-  return { ok: true, id: data.id as string };
+  return { ok: true, id: data as string };
 }
 
 /**
@@ -151,32 +160,61 @@ export async function editarAtualizacao(
 }
 
 /**
- * Muda só o status. Mover para o status atual não grava nada (idempotente),
- * para não mexer na "última edição". O trigger grava a data de conclusão.
+ * Muda só o status e, ao concluir com recompensa, grava o XP na mesma
+ * transação (`mudar_status_atualizacao`). Mover para o status atual não grava
+ * nada (idempotente). O trigger grava a data de conclusão.
  *
+ * @param recompensa - XP e Rank do Projeto na conclusão, ou `null` sem XP a gravar.
+ * @returns Situação e o XP gravado.
  * @throws {ErroDeMissao} Se o banco falhar.
  */
 export async function mudarStatusDaAtualizacao(
   supabase: ClienteSupabase,
   id: string,
   status: StatusMissao,
+  recompensa: RecompensaDaConclusao | null,
 ): Promise<ResultadoMudancaStatus> {
-  const { data, error } = await supabase
-    .from('atualizacoes')
-    .update({ status })
-    .eq('id', id)
-    .neq('status', status)
-    .select('id');
+  const { data, error } = await supabase.rpc('mudar_status_atualizacao', {
+    p_id: id,
+    p_status: status,
+    p_xp: recompensa?.xp ?? null,
+    p_rank: recompensa?.rank ?? null,
+  });
   if (error) throw new ErroDeMissao('mudar_status_atualizacao', error.code);
-  if (data.length > 0) return 'movida';
+  return lerResultadoMudancaStatus(data);
+}
 
-  const { data: existente, error: erroLeitura } = await supabase
+/**
+ * Projeto vinculado a uma Atualização, para o Rank e a trilha da conclusão.
+ *
+ * @returns O id do Projeto, ou `null` se a Atualização não existe ou é de outro usuário.
+ * @throws {ErroDeMissao} Se a leitura falhar.
+ */
+export async function obterProjetoDaAtualizacao(
+  supabase: ClienteSupabase,
+  id: string,
+): Promise<string | null> {
+  const { data, error } = await supabase.from('atualizacoes').select('projeto_id').eq('id', id).maybeSingle();
+  if (error) throw new ErroDeMissao('ler_atualizacao', error.code);
+  return data ? (data.projeto_id as string) : null;
+}
+
+/**
+ * Atualizações concluídas de um Projeto, para o bônus da conclusão (RN-06).
+ *
+ * @throws {ErroDeMissao} Se a contagem falhar.
+ */
+export async function contarAtualizacoesConcluidas(
+  supabase: ClienteSupabase,
+  projetoId: string,
+): Promise<number> {
+  const { count, error } = await supabase
     .from('atualizacoes')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle();
-  if (erroLeitura) throw new ErroDeMissao('mudar_status_atualizacao', erroLeitura.code);
-  return existente ? 'sem_mudanca' : 'inexistente';
+    .select('id', { count: 'exact', head: true })
+    .eq('projeto_id', projetoId)
+    .eq('status', 'concluido');
+  if (error) throw new ErroDeMissao('contar_atualizacoes_concluidas', error.code);
+  return count ?? 0;
 }
 
 /**

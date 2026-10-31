@@ -8,6 +8,7 @@ import {
   type LinkReferencia,
   type StatusMissao,
 } from '@/dominio/missoes/campos';
+import { XP_CRIACAO_PROJETO } from '@/dominio/gamificacao/xp';
 import {
   pontuacaoDaMissao,
   rankPorPontos,
@@ -219,7 +220,8 @@ export type ResultadoGravacao = { ok: true; id: string } | { ok: false; codigo: 
 
 /**
  * Cria (sem `id`) ou altera uma Missão com stacks ou ferramentas, tags e links,
- * numa transação (`salvar_missao_v3`). Na edição, o banco não altera o status.
+ * numa transação (`salvar_missao_v4`). Na criação, grava junto o XP de criação
+ * (RN-06); na edição, o banco não altera o status.
  *
  * @param id - Missão a alterar, ou `null` para criar.
  * @returns O id gravado, ou o código do erro do banco para a tela traduzir.
@@ -233,7 +235,7 @@ export async function salvarMissao(
     dados.tipo === 'dev'
       ? { p_arquitetura: dados.arquitetura, p_estilo: dados.estilo, p_capacidades: dados.capacidades }
       : { p_arquitetura: null, p_estilo: null, p_capacidades: null };
-  const { data, error } = await supabase.rpc('salvar_missao_v3', {
+  const { data, error } = await supabase.rpc('salvar_missao_v4', {
     p_id: id,
     p_tipo: dados.tipo,
     p_nome: dados.nome,
@@ -243,42 +245,61 @@ export async function salvarMissao(
     p_stacks: dados.stacks,
     p_tags: dados.tags,
     p_links: dados.links,
+    p_xp_criacao: id === null ? XP_CRIACAO_PROJETO : null,
   });
   if (error) return { ok: false, codigo: error.code };
   return { ok: true, id: data as string };
 }
 
-export type ResultadoMudancaStatus = 'movida' | 'sem_mudanca' | 'inexistente';
+export type SituacaoMudancaStatus = 'movida' | 'sem_mudanca' | 'inexistente';
+
+/** Situação da mudança e o XP que o banco gravou (`null` se não houve XP novo). */
+export type ResultadoMudancaStatus = { situacao: SituacaoMudancaStatus; xpGanho: number | null };
+
+/** XP e Rank da conclusão, já calculados pelo domínio (ADR-0003). */
+export type RecompensaDaConclusao = { xp: number; rank: RankMissao | null };
+
+const SITUACOES: readonly string[] = ['movida', 'sem_mudanca', 'inexistente'];
+
+type LinhaMudancaStatus = { situacao: string; xp_ganho: number | null };
 
 /**
- * Muda só o status de uma Missão do usuário (RF-20). O trigger grava as datas
- * (RN-02). Mover para o status atual não grava nada, para não mexer na
- * "última edição": repetir o pedido dá o mesmo resultado (idempotente).
+ * Converte a resposta das funções `mudar_status_*` (uma linha).
  *
- * @returns `movida`, `sem_mudanca` (já estava no status) ou `inexistente` (não existe ou é de outro usuário).
+ * @throws {Error} Se a situação vinda do banco for desconhecida.
+ */
+export function lerResultadoMudancaStatus(data: unknown): ResultadoMudancaStatus {
+  const [linha] = data as LinhaMudancaStatus[];
+  if (!linha || !SITUACOES.includes(linha.situacao)) {
+    throw new Error(`Situação desconhecida: ${linha?.situacao}`);
+  }
+  return { situacao: linha.situacao as SituacaoMudancaStatus, xpGanho: linha.xp_ganho };
+}
+
+/**
+ * Muda só o status de uma Missão do usuário (RF-20) e, ao concluir com
+ * recompensa, grava o XP no ledger na mesma transação (`mudar_status_missao`).
+ * O trigger grava as datas (RN-02). Mover para o status atual não grava nada,
+ * para não mexer na "última edição": repetir o pedido dá o mesmo resultado.
+ *
+ * @param recompensa - XP e Rank da conclusão, ou `null` quando não há XP a gravar.
+ * @returns Situação (`movida`, `sem_mudanca` ou `inexistente`) e o XP gravado.
  * @throws {ErroDeMissao} Se o banco falhar.
  */
 export async function mudarStatusDaMissao(
   supabase: ClienteSupabase,
   id: string,
   status: StatusMissao,
+  recompensa: RecompensaDaConclusao | null,
 ): Promise<ResultadoMudancaStatus> {
-  const { data, error } = await supabase
-    .from('projetos')
-    .update({ status })
-    .eq('id', id)
-    .neq('status', status)
-    .select('id');
+  const { data, error } = await supabase.rpc('mudar_status_missao', {
+    p_id: id,
+    p_status: status,
+    p_xp: recompensa?.xp ?? null,
+    p_rank: recompensa?.rank ?? null,
+  });
   if (error) throw new ErroDeMissao('mover_missao', error.code);
-  if (data.length > 0) return 'movida';
-
-  const { data: existente, error: erroLeitura } = await supabase
-    .from('projetos')
-    .select('id')
-    .eq('id', id)
-    .maybeSingle();
-  if (erroLeitura) throw new ErroDeMissao('mover_missao', erroLeitura.code);
-  return existente ? 'sem_mudanca' : 'inexistente';
+  return lerResultadoMudancaStatus(data);
 }
 
 /**
