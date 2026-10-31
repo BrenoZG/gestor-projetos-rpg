@@ -6,6 +6,7 @@ import type { EstadoFormularioAtualizacao } from '@/acoes/atualizacoes-estado';
 import { mensagemDoErroDaAtualizacao, validarFormularioAtualizacao } from '@/acoes/atualizacoes-validacao';
 import { clienteComSessao, ehIdValido } from '@/acoes/checagens';
 import { prepararConclusaoDaAtualizacao } from '@/acoes/conclusao';
+import { sincronizarNivelMaximo } from '@/acoes/nivel';
 import type { ResultadoMovimento } from '@/acoes/missoes-estado';
 import {
   apagarAtualizacao,
@@ -86,11 +87,9 @@ export async function criarAtualizacao(
   const supabase = await clienteComSessao();
   const validacao = validarFormularioAtualizacao(lerFormulario(formulario));
   if (!validacao.ok) return { ...estadoAnterior, erros: validacao.erros, mensagem: null };
-  return respostaDaGravacao(
-    estadoAnterior,
-    await gravarAtualizacaoNova(supabase, validacao.dados),
-    'criar_atualizacao',
-  );
+  const resultado = await gravarAtualizacaoNova(supabase, validacao.dados);
+  if (resultado.ok) await sincronizarNivelMaximo(supabase);
+  return respostaDaGravacao(estadoAnterior, resultado, 'criar_atualizacao');
 }
 
 /**
@@ -149,6 +148,7 @@ export async function mudarStatusDaAtualizacao(id: string, status: string): Prom
     registrarFalha(erro.operacao, erro.codigo);
     return FALHA_AO_GRAVAR;
   }
+  if (recompensa?.tipo === 'xp') await sincronizarNivelMaximo(supabase);
   revalidarTelas();
   return recompensa ? { ok: true, recompensa } : { ok: true };
 }

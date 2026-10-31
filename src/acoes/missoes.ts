@@ -7,6 +7,7 @@ import type { EstadoFormularioMissao, ResultadoMovimento } from '@/acoes/missoes
 import { mensagemDoErroDoBanco, validarFormularioMissao } from '@/acoes/missoes-validacao';
 import { clienteComSessao, ehIdValido } from '@/acoes/checagens';
 import { prepararConclusaoDaMissao } from '@/acoes/conclusao';
+import { sincronizarNivelMaximo } from '@/acoes/nivel';
 import { apagarMissao, ErroDeMissao, mudarStatusDaMissao, salvarMissao } from '@/dados/missoes';
 import { ROTA_INICIAL } from '@/dominio/acesso/rotas';
 import { recompensaDaConclusao, type Recompensa } from '@/dominio/gamificacao/recompensa';
@@ -57,6 +58,8 @@ async function gravar(id: string | null, formulario: FormData): Promise<EstadoFo
     return campo ? { erros: { [campo]: mensagem }, mensagem: null } : { erros: {}, mensagem };
   }
 
+  // Só a criação dá XP (RN-06); a edição não muda o nível.
+  if (id === null) await sincronizarNivelMaximo(supabase);
   revalidatePath(ROTA_INICIAL, 'layout');
   redirect(`/missoes/${resultado.id}`);
 }
@@ -161,6 +164,7 @@ export async function moverMissao(id: string, status: string): Promise<Resultado
     });
     return MOVIMENTO_FALHOU;
   }
+  if (recompensa?.tipo === 'xp') await sincronizarNivelMaximo(supabase);
   revalidatePath(ROTA_INICIAL, 'layout');
   return recompensa ? { ok: true, recompensa } : { ok: true };
 }
