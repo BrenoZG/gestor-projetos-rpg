@@ -1,10 +1,10 @@
 -- Testes da RN-14 no banco (pgTAP): colunas estilo_arquitetural e capacidades,
 -- arquitetura obrigatória (função salvar_missao_v4 e CHECK por tipo) e o estado
 -- depois das etapas contrair (sem dificuldade, sem a salvar_missao antiga, sem
--- a salvar_missao_v2 e sem o padrão do estilo).
+-- a salvar_missao_v2, sem o padrão do estilo e sem a salvar_missao_v3).
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
-select plan(21);
+select plan(22);
 
 insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000000a'),
@@ -29,6 +29,9 @@ select ok(
 select hasnt_function('public', 'salvar_missao_v2',
   array['uuid', 'text', 'text', 'text', 'text', 'text[]', 'text', 'text[]'],
   'a salvar_missao_v2 saiu (contrair dos tipos)');
+select hasnt_function('public', 'salvar_missao_v3',
+  array['uuid', 'text', 'text', 'text', 'text', 'text', 'text[]', 'text', 'text[]', 'text[]', 'jsonb'],
+  'a salvar_missao_v3 saiu (contrair do XP)');
 
 -- B cadastra uma Missão; o id dela fica guardado para o teste de isolamento.
 set local role authenticated;
