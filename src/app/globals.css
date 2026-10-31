@@ -469,7 +469,11 @@ body {
     .particulas > span,
     .cursor-piscante,
     .prompt-pulsante,
-    .brilho-emblema
+    .brilho-emblema,
+    .aura-medalha,
+    .orbita-medalha,
+    .cintila-medalha,
+    .chama-medalha
   ) {
   animation: none !important;
 }
@@ -555,6 +559,45 @@ body {
     animation: brilhar-emblema 7s ease-in-out 1s infinite;
   }
 
+  /* Medalhas (design-system §5). Facetas da estrela: relevo claro e escuro. */
+  .faceta-clara {
+    fill: var(--cor-texto);
+    opacity: 0.22;
+  }
+
+  .faceta-escura {
+    fill: var(--cor-fundo);
+    opacity: 0.2;
+  }
+
+  /* Bloqueada: em ferro e apagada; o texto ao lado também diz "bloqueada". */
+  .medalha-bloqueada {
+    opacity: 0.55;
+  }
+
+  /* Camadas de ambiente das medalhas altas (loop lento, só opacity e transform). */
+  .aura-medalha {
+    animation: respirar 4s ease-in-out infinite;
+  }
+
+  .orbita-medalha {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: girar 14s linear infinite;
+  }
+
+  .cintila-medalha {
+    animation: piscar 2.4s ease-in-out infinite;
+  }
+
+  .cintila-medalha:nth-child(2n) {
+    animation-delay: 1.2s;
+  }
+
+  .chama-medalha {
+    animation: respirar 1.8s ease-in-out infinite;
+  }
+
   /* Brasas calmas para telas de trabalho. */
   .particulas.lentas > span {
     animation-name: subir-suave;
@@ -579,6 +622,7 @@ body {
   }
   .texto-ferro {
     fill: var(--metal-ferro-3);
+    color: var(--metal-ferro-3);
   }
   .parada-bronze-0 {
     stop-color: var(--metal-bronze-0);
@@ -598,6 +642,7 @@ body {
   }
   .texto-bronze {
     fill: var(--metal-bronze-3);
+    color: var(--metal-bronze-3);
   }
   .parada-prata-0 {
     stop-color: var(--metal-prata-0);
@@ -617,6 +662,7 @@ body {
   }
   .texto-prata {
     fill: var(--metal-prata-3);
+    color: var(--metal-prata-3);
   }
   .parada-ouro-0 {
     stop-color: var(--metal-ouro-0);
@@ -636,6 +682,7 @@ body {
   }
   .texto-ouro {
     fill: var(--metal-ouro-3);
+    color: var(--metal-ouro-3);
   }
   .parada-platina-0 {
     stop-color: var(--metal-platina-0);
@@ -655,6 +702,7 @@ body {
   }
   .texto-platina {
     fill: var(--metal-platina-3);
+    color: var(--metal-platina-3);
   }
   .parada-esmeralda-0 {
     stop-color: var(--metal-esmeralda-0);
@@ -674,6 +722,7 @@ body {
   }
   .texto-esmeralda {
     fill: var(--metal-esmeralda-3);
+    color: var(--metal-esmeralda-3);
   }
   .parada-safira-0 {
     stop-color: var(--metal-safira-0);
@@ -693,6 +742,7 @@ body {
   }
   .texto-safira {
     fill: var(--metal-safira-3);
+    color: var(--metal-safira-3);
   }
   .parada-rubi-0 {
     stop-color: var(--metal-rubi-0);
@@ -712,6 +762,7 @@ body {
   }
   .texto-rubi {
     fill: var(--metal-rubi-3);
+    color: var(--metal-rubi-3);
   }
   .parada-diamante-0 {
     stop-color: var(--metal-diamante-0);
@@ -731,6 +782,7 @@ body {
   }
   .texto-diamante {
     fill: var(--metal-diamante-3);
+    color: var(--metal-diamante-3);
   }
   .parada-mitica-0 {
     stop-color: var(--metal-mitica-0);
@@ -750,6 +802,7 @@ body {
   }
   .texto-mitica {
     fill: var(--metal-mitica-3);
+    color: var(--metal-mitica-3);
   }
   .parada-lendaria-0 {
     stop-color: var(--metal-lendaria-0);
@@ -769,6 +822,7 @@ body {
   }
   .texto-lendaria {
     fill: var(--metal-lendaria-3);
+    color: var(--metal-lendaria-3);
   }
 }
 
