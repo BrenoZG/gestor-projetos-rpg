@@ -16,9 +16,8 @@ import {
 import { moverMissao } from '@/acoes/missoes';
 import type { ResultadoMovimento } from '@/acoes/missoes-estado';
 import { AvisoErro } from '@/componentes/aviso-erro';
-import { anuncioDaRecompensa, AvisoRecompensa } from '@/componentes/aviso-recompensa';
+import { useSistema } from '@/componentes/sistema/provedor-sistema';
 import type { Missao } from '@/dados/missoes';
-import type { Recompensa } from '@/dominio/gamificacao/recompensa';
 import { ehStatusMissao, type StatusMissao } from '@/dominio/missoes/campos';
 import {
   escreverParametros,
@@ -81,7 +80,7 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
   const [pendente, iniciarTransicao] = useTransition();
   const [anuncio, setAnuncio] = useState('');
   const [erro, setErro] = useState<string | null>(null);
-  const [recompensa, setRecompensa] = useState<Recompensa | null>(null);
+  const sistema = useSistema();
   /** Missão movida pelo botão: o foco volta ao botão dela, na coluna nova (ou na antiga, se falhar). */
   const focoPendente = useRef<string | null>(null);
 
@@ -112,7 +111,8 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
     if (!missao || missao.status === status) return;
     if (peloBotao) focoPendente.current = id;
     setErro(null);
-    setRecompensa(null);
+    // Fora da transição: a reserva vale antes de a resposta trazer a cinemática.
+    sistema.reservar();
     iniciarTransicao(async () => {
       aplicarMovimento({ id, status });
       let resultado: ResultadoMovimento;
@@ -121,11 +121,15 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
       } catch {
         resultado = FALHA_DE_REDE;
       }
-      if (resultado.ok) {
-        setRecompensa(resultado.recompensa ?? null);
-        const extra = resultado.recompensa ? ` ${anuncioDaRecompensa(resultado.recompensa, 'projeto')}` : '';
-        setAnuncio(`${missao.nome} movido para ${TITULOS_COLUNA[status]}.${extra}`);
-      } else setErro(resultado.mensagem);
+      const recompensa = resultado.ok ? resultado.recompensa : undefined;
+      sistema.mostrarConclusao(
+        recompensa
+          ? { nome: missao.nome, recompensa, idRetorno: peloBotao ? idBotaoMover(id) : undefined }
+          : null,
+      );
+      // O resultado da conclusão é lido na Janela do Sistema; o anúncio diz só o movimento.
+      if (resultado.ok) setAnuncio(`${missao.nome} movido para ${TITULOS_COLUNA[status]}.`);
+      else setErro(resultado.mensagem);
     });
   }
 
@@ -157,7 +161,6 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
         {anuncio}
       </p>
       {erro && <AvisoErro titulo="O projeto não foi movido.">{erro}</AvisoErro>}
-      {recompensa && <AvisoRecompensa recompensa={recompensa} item="projeto" />}
 
       {filtroAtivo && filtradas.length === 0 && (
         <p className="rounded-md border border-dashed border-borda-campo px-6 py-6 text-center text-texto">
