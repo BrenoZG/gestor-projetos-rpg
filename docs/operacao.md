@@ -31,6 +31,7 @@ Para publicar de novo sem um commit novo (por exemplo, depois de trocar uma vari
 | CI vermelho | Nada foi publicado | Corrija no PR |
 | Falha no build | Nada foi publicado; banco intocado | Corrija e faça outro merge |
 | Falha nas migrations | App antigo no ar; a migration que falhou não foi registrada | Leia o log do passo, corrija a migration num PR novo |
+| Export JSON falha na Ficha | Nada; a falha é do pedido | Procure `exportacao_falhou` (código do banco) ou `exportacao_perto_do_limite` nos logs da Vercel. Acima de 4,5 MB a Vercel devolve 413: o export precisa mudar (ex.: streaming ou arquivo sem indentação) |
 | Falha no smoke test | Rollback automático para o deploy anterior | Investigue com `curl -i $APP_URL/api/saude` e os logs da Vercel; o app voltou, mas **as migrations novas continuam aplicadas** |
 
 **Rollback manual** (a versão nova está no ar, mas com defeito):
