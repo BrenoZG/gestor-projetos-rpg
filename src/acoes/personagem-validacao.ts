@@ -2,6 +2,7 @@ import 'server-only';
 import { z } from 'zod';
 
 import { CHAVES_CLASSE, type ChaveClasse } from '@/dominio/personagem/classes';
+import { NIVEL_MAXIMO } from '@/dominio/progressao/progressao';
 
 /**
  * Validação da Classe na fronteira (Server Actions). Só roda no servidor
@@ -23,4 +24,17 @@ export type ResultadoValidacaoClasse = { ok: true; classe: ChaveClasse } | { ok:
 export function validarClasse(valor: unknown): ResultadoValidacaoClasse {
   const resultado = esquemaClasse.safeParse(valor);
   return resultado.success ? { ok: true, classe: resultado.data } : { ok: false, mensagem: MENSAGEM_CLASSE };
+}
+
+const esquemaNivel = z.number().int().min(1).max(NIVEL_MAXIMO);
+
+/**
+ * Confere o nível da cinemática que o cliente diz ter exibido (RF-16).
+ *
+ * @param valor - Valor recebido do cliente (qualquer tipo, num POST direto).
+ * @returns O nível de 1 a 100, ou `null` se inválido.
+ */
+export function validarNivelVisto(valor: unknown): number | null {
+  const resultado = esquemaNivel.safeParse(valor);
+  return resultado.success ? resultado.data : null;
 }

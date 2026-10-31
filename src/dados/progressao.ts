@@ -30,6 +30,30 @@ export async function obterXpPorTrilha(supabase: ClienteSupabase): Promise<XpPor
   return xp;
 }
 
+/** XP de conclusão de Projetos de uma stack (ou ferramenta) numa trilha (RN-10, RN-18). */
+export type LinhaMaestria = { trilha: Trilha; nome: string; xp: number; projetos: number };
+
+type LinhaMaestriaBanco = { trilha: string; nome: string; xp: number; projetos: number };
+
+function ehTrilha(valor: string): valor is Trilha {
+  return valor === 'desenvolvedor' || valor === 'produtividade';
+}
+
+/**
+ * Maestria e Domínio do usuário, pela função `maestria`, que soma no banco
+ * (grão: trilha + stack; o XP de um Projeto conta inteiro para cada stack).
+ * A ordem vem do banco: trilha e depois o maior XP.
+ *
+ * @throws {ErroDeMissao} Se a consulta falhar.
+ */
+export async function obterMaestria(supabase: ClienteSupabase): Promise<LinhaMaestria[]> {
+  const { data, error } = await supabase.rpc('maestria');
+  if (error) throw new ErroDeMissao('maestria', error.code);
+  return (data as LinhaMaestriaBanco[]).flatMap(({ trilha, nome, xp, projetos }) =>
+    ehTrilha(trilha) ? [{ trilha, nome, xp, projetos }] : [],
+  );
+}
+
 /**
  * O Projeto já tem XP de conclusão no ledger (RN-06a)? Serve para a tela não
  * pedir as 24 h de um XP que não volta. A unicidade continua garantida pelo
