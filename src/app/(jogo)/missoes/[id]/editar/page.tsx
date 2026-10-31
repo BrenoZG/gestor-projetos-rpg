@@ -69,7 +69,7 @@ async function FormularioEdicao({ params }: { params: Promise<{ id: string }> })
 export default function PaginaEditarMissao({ params }: PageProps<'/missoes/[id]/editar'>) {
   return (
     <JanelaMissao
-      rotulo="[ SISTEMA ] · EDITAR MISSÃO"
+      rotulo="[ SISTEMA ] · EDITAR PROJETO"
       titulo="Editar projeto"
       voltarPara="/"
       textoVoltar="Quadro de Projetos"

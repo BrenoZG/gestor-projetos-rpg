@@ -130,7 +130,7 @@ export default async function PaginaEntrar({ searchParams }: PageProps<'/entrar'
             <div className="janela-sistema">
               <div className="janela-sistema-conteudo flex flex-col gap-7 p-5 sm:p-9">
                 <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-borda pb-4 font-mono text-xs tracking-[0.14em]">
-                  <span className="text-acento">[ SISTEMA ] · NOVA MISSÃO</span>
+                  <span className="text-acento">[ SISTEMA ] · NOVO AVENTUREIRO</span>
                   <span className="rounded-sm border border-borda-forte px-2 py-0.5 text-texto-suave">
                     RANK ?
                   </span>

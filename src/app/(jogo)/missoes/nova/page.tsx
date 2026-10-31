@@ -34,7 +34,7 @@ async function FormularioNovaMissao() {
 export default function PaginaNovaMissao() {
   return (
     <JanelaMissao
-      rotulo="[ SISTEMA ] · NOVA MISSÃO"
+      rotulo="[ SISTEMA ] · NOVO PROJETO"
       titulo="Registrar projeto"
       voltarPara="/"
       textoVoltar="Quadro de Projetos"
