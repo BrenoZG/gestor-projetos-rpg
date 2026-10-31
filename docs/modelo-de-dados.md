@@ -1,6 +1,6 @@
 # Modelo de dados
 
-> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`; a função `renomear_tag` e a exclusão de tag sem uso (requisitos 1.5, migration `renomear_tags`); `eventos_xp`, o trigger de revogação e as funções `salvar_missao_v4`, `criar_atualizacao`, `mudar_status_missao`, `mudar_status_atualizacao` e `resumo_xp` (M3, migration `criar_eventos_xp`). A `salvar_missao_v3` saiu na migration `contrair_salvar_missao_v3`.
+> **Estado:** migrations versionadas em `supabase/migrations/`. Implementado: `personagem` (M1a), `projetos`, `stacks`, `projeto_stacks`, o trigger de datas (M1b); `estilo_arquitetural`, `capacidades` e a função `salvar_missao_v2` (M1c). A `dificuldade` e a `salvar_missao` do M1b saíram na migration `contrair_dificuldade`; `atualizacoes` (M2); `projetos.tipo`, `tags`, `projeto_tags`, `projeto_links` e a função `salvar_missao_v3` (requisitos 1.4, migration `tipos_tags_links`); a `salvar_missao_v2` e o padrão de `estilo_arquitetural` saíram na migration `contrair_tipos`; a função `renomear_tag` e a exclusão de tag sem uso (requisitos 1.5, migration `renomear_tags`); `eventos_xp`, o trigger de revogação e as funções `salvar_missao_v4`, `criar_atualizacao`, `mudar_status_missao`, `mudar_status_atualizacao` e `resumo_xp` (M3, migration `criar_eventos_xp`). A `salvar_missao_v3` saiu na migration `contrair_salvar_missao_v3`. A função `exportar_dados` (M6, migration `exportar_dados`).
 >
 > Modelo **transacional normalizado (3FN)**: o sistema grava e consulta registros individuais; não há camada analítica separada.
 
@@ -171,6 +171,9 @@ Cria (`p_id` nulo) ou altera uma Missão com tipo, stacks ou ferramentas, tags e
 ### Função `renomear_tag`
 Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). Se o nome novo já é de outra tag do usuário (comparação da RN-05), devolve o conflito sem mudar nada; com `p_juntar`, **numa transação**, passa os vínculos para a tag existente (`on conflict do nothing` descarta o vínculo repetido), dá a ela a grafia digitada e exclui a tag renomeada (RN-19). Devolve uma linha `(resultado, projetos, destino)`: `resultado` é `renomeada`, `conflito` ou `juntada`; `projetos`, quantas Missões tinham a tag; `destino`, a grafia final (no conflito, a da tag existente). Trava as duas tags com `for update`. `SECURITY INVOKER`, sob o RLS. Erros: `P0002` tag inexistente ou de outro usuário · `23514` nome fora da regra (CHECK da tabela).
 
+### Função `exportar_dados`
+Devolve todos os dados do usuário logado num único `jsonb` (RF-14): `personagem` (objeto ou nulo) e uma lista por tabela (`projetos`, `stacks`, `projeto_stacks`, `tags`, `projeto_tags`, `projeto_links`, `atualizacoes`, `eventos_xp`), em ordem de criação. Cada linha sai inteira, menos `user_id` e `nome_normalizado` (gerada). Um valor só, e não uma consulta por tabela, porque a Data API corta cada consulta em `max_rows` (1.000), e porque um único comando lê uma foto consistente. `SECURITY INVOKER`, `search_path` vazio, executável só por `authenticated`; o filtro por `auth.uid()` repete o RLS. O pgTAP (`exportar_dados.test.sql`) prende as chaves de cada tabela: coluna nova muda o formato do arquivo (`versao_formato`) e precisa de decisão.
+
 ### `atualizacoes` — grão: 1 linha por Atualização
 | Coluna | Tipo | Regra |
 |---|---|---|
@@ -216,6 +219,7 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | Nível, título, Rank do Aventureiro | XP total + domínio | Calculado, não armazenado (exceto `nivel_maximo`) |
 | Maestria e Domínio | `maestria()` (M5, `SECURITY INVOKER`, sob o RLS): `unnest` distinto de `stacks_snapshot` em eventos `conclusao_projeto`, agrupado por trilha e stack; nome exibido pelo `LEFT JOIN` com `stacks` (1:1 por `user_id` + `nome_normalizado`), ou a grafia do snapshot | Grão: trilha + stack. O XP de um Projeto é replicado para cada stack **por definição** (ver `gamificacao.md` §5). A soma entre stacks não é o XP total. O `distinct` impede que uma stack repetida no mesmo snapshot conte duas vezes |
 | Registro de Projetos | `eventos_xp` ordenado por `criado_em` | Usa os snapshots; continua legível após exclusões |
+| Export JSON (RF-14) | `exportar_dados()`: um `jsonb_agg` por tabela, sem JOIN entre elas | Grão de cada tabela preservado (1 linha = 1 item da lista); vínculos de stack, tag e link filtrados pelos Projetos do usuário |
 
 ## 5. Qualidade de dados (restrições no banco)
 
