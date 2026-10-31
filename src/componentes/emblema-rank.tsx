@@ -1,9 +1,9 @@
 import { useId } from 'react';
 
-import type { RankCacador } from '@/dominio/progressao/progressao';
+import type { RankAventureiro } from '@/dominio/progressao/progressao';
 
 /** Material de cada Rank (design-system.md §5): a exceção metálica da paleta. */
-const MATERIAL_POR_RANK: Readonly<Record<RankCacador, string>> = {
+const MATERIAL_POR_RANK: Readonly<Record<RankAventureiro, string>> = {
   E: 'ferro',
   D: 'bronze',
   C: 'prata',
@@ -13,7 +13,7 @@ const MATERIAL_POR_RANK: Readonly<Record<RankCacador, string>> = {
 };
 
 /**
- * Emblema de Rank (do Caçador ou de Missão): escudo metálico com a letra e um
+ * Emblema de Rank (do Aventureiro ou de Missão): escudo metálico com a letra e um
  * reflexo que atravessa de tempos em tempos (camada de ambiente).
  *
  * As cores vêm de classes `parada-<material>-<n>` (globals.css), porque
@@ -28,7 +28,7 @@ export function EmblemaRank({
   rotulo = `Rank ${rank} do Caçador`,
   className = '',
 }: {
-  rank: RankCacador;
+  rank: RankAventureiro;
   rotulo?: string;
   className?: string;
 }) {

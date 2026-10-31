@@ -9,10 +9,10 @@ export const NIVEL_MAXIMO = 100;
 const BASE_CURVA = 20;
 const EXPOENTE_CURVA = 1.5;
 
-export type RankCacador = 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
+export type RankAventureiro = 'E' | 'D' | 'C' | 'B' | 'A' | 'S';
 
 /** Nível mínimo de cada Rank, do maior para o menor. */
-const RANKS_POR_NIVEL: ReadonlyArray<readonly [number, RankCacador]> = [
+const RANKS_POR_NIVEL: ReadonlyArray<readonly [number, RankAventureiro]> = [
   [90, 'S'],
   [70, 'A'],
   [50, 'B'],
@@ -73,12 +73,12 @@ export function calcularNivel(xpTotal: number): number {
 }
 
 /**
- * Rank do Caçador pelo nível (gamificacao.md §4).
+ * Rank do Aventureiro pelo nível (gamificacao.md §4).
  *
  * @param nivel - Inteiro de 1 a 100.
  * @returns Letra do Rank.
  */
-export function rankDoCacador(nivel: number): RankCacador {
+export function rankDoAventureiro(nivel: number): RankAventureiro {
   exigirNivelValido(nivel);
   const faixa = RANKS_POR_NIVEL.find(([minimo]) => nivel >= minimo);
   return faixa ? faixa[1] : 'E';

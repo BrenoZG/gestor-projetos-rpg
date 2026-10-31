@@ -4,7 +4,7 @@ import {
   calcularNivel,
   limiarNivel,
   progressoDoNivel,
-  rankDoCacador,
+  rankDoAventureiro,
   tituloDoNivel,
 } from '@/dominio/progressao/progressao';
 
@@ -53,7 +53,7 @@ describe('calcularNivel', () => {
   });
 });
 
-describe('rankDoCacador', () => {
+describe('rankDoAventureiro', () => {
   it.each([
     [1, 'E'],
     [19, 'E'],
@@ -68,7 +68,7 @@ describe('rankDoCacador', () => {
     [90, 'S'],
     [100, 'S'],
   ])('nível %i é Rank %s', (nivel, rank) => {
-    expect(rankDoCacador(nivel)).toBe(rank);
+    expect(rankDoAventureiro(nivel)).toBe(rank);
   });
 });
 
