@@ -3,6 +3,8 @@ export const ROTA_INICIAL = '/';
 /** Escolha da Classe no 1º acesso (RF-17), fora do HUD. */
 export const ROTA_ESCOLHER_CLASSE = '/classe';
 export const ROTA_PERSONAGEM = '/personagem';
+/** Export JSON (RF-14): exige login, como toda rota fora de `ROTAS_PUBLICAS`. */
+export const ROTA_EXPORTAR = '/api/exportar';
 
 /** Abertas a quem não está logado. Comparação exata: `/entrarx` não é pública. */
 const ROTAS_PUBLICAS: ReadonlySet<string> = new Set([ROTA_ENTRAR, '/api/saude']);

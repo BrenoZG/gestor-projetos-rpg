@@ -4,6 +4,8 @@ import {
   contarRegistros,
   montarArquivoExport,
   nomeDoArquivoExport,
+  nomeDoArquivoNoCabecalho,
+  resumoDoArquivo,
   type DadosExportados,
 } from '@/dominio/exportacao/arquivo';
 
@@ -38,6 +40,32 @@ describe('nomeDoArquivoExport', () => {
 
   it('não vira o dia antes da meia-noite de São Paulo, mesmo já sendo outro dia em UTC', () => {
     expect(nomeDoArquivoExport(new Date('2026-11-01T02:30:00Z'))).toBe('gestor-projetos-2026-10-31.json');
+  });
+});
+
+describe('nomeDoArquivoNoCabecalho', () => {
+  it('lê o nome do Content-Disposition', () => {
+    expect(nomeDoArquivoNoCabecalho('attachment; filename="gestor-projetos-2026-10-31.json"')).toBe(
+      'gestor-projetos-2026-10-31.json',
+    );
+  });
+
+  it('sem cabeçalho ou sem nome, devolve null', () => {
+    expect(nomeDoArquivoNoCabecalho(null)).toBeNull();
+    expect(nomeDoArquivoNoCabecalho('attachment')).toBeNull();
+  });
+});
+
+describe('resumoDoArquivo', () => {
+  it('conta Projetos e Atualizações do texto baixado', () => {
+    const texto = JSON.stringify(montarArquivoExport(DADOS, new Date()));
+    expect(resumoDoArquivo(texto)).toEqual({ projetos: 2, atualizacoes: 3 });
+  });
+
+  it('texto que não é o arquivo do export devolve null, sem lançar', () => {
+    expect(resumoDoArquivo('<html>')).toBeNull();
+    expect(resumoDoArquivo('{"formato":"outro"}')).toBeNull();
+    expect(resumoDoArquivo(JSON.stringify({ formato: 'gestor-projetos-rpg/export', dados: {} }))).toBeNull();
   });
 });
 
