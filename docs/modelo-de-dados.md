@@ -23,6 +23,7 @@ erDiagram
         uuid user_id PK "= auth.users.id"
         text classe "nulo até a 1ª escolha"
         smallint nivel_maximo
+        smallint nivel_visto
         smallint medalha_vista
         timestamptz criado_em
     }
@@ -102,10 +103,11 @@ erDiagram
 | `user_id` | `uuid` PK | = `auth.users.id`, `ON DELETE CASCADE` |
 | `classe` | `text` | `CHECK` nas 8 chaves de `requisitos.md` §6; nulo até a escolha (RF-17) |
 | `nivel_maximo` | `smallint` | 1–100; nunca diminui (medalhas permanentes, RN-08) |
-| `medalha_vista` | `smallint` | 0–10; última medalha cuja animação já tocou |
+| `nivel_visto` | `smallint` | 1–100, padrão 1; último nível cuja cinemática já tocou (M5, RF-16). Só aumenta e não passa do `nivel_maximo`. Na migration, as linhas existentes começaram com o `nivel_maximo` (sem cinemática retroativa) |
+| `medalha_vista` | `smallint` | 0–10; última medalha cuja animação já tocou; acompanha o `nivel_visto` (`nivel_visto / 10`) |
 | `criado_em` | `timestamptz` | `default now()` |
 
-**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: só a função `registrar_nivel_maximo` (M4, `SECURITY DEFINER`, `search_path` vazio, filtro `auth.uid()`) grava esse campo, e grava `greatest(atual, novo)`, então ninguém baixa o próprio nível pela API. Risco aceito, como o `p_xp` (ADR-0003): o dono pode subi-lo chamando a função. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
+**Privilégios** (migration `criar_personagem`): `authenticated` lê a linha, cria só com `user_id` (o resto vem dos defaults) e altera só `classe` e `medalha_vista`. `nivel_maximo` fica fora do `UPDATE`: só a função `registrar_nivel_maximo` (M4, `SECURITY DEFINER`, `search_path` vazio, filtro `auth.uid()`) grava esse campo, e grava `greatest(atual, novo)`, então ninguém baixa o próprio nível pela API. Risco aceito, como o `p_xp` (ADR-0003): o dono pode subi-lo chamando a função. `nivel_visto` segue o mesmo desenho (M5): fica fora do `UPDATE` e só a `marcar_conquista_vista(p_nivel)` (`SECURITY DEFINER`, `search_path` vazio, filtro `auth.uid()`) o grava, com `greatest(atual, least(p_nivel, nivel_maximo))`, junto com a `medalha_vista`. Com `UPDATE` na coluna, o usuário também baixaria o valor e a cinemática repetiria. Não há `DELETE`: a linha sai com o usuário (`ON DELETE CASCADE`). `anon` não tem nenhum privilégio.
 
 ### `projetos` — grão: 1 linha por Projeto
 | Coluna | Tipo | Regra |
@@ -194,7 +196,7 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 | `xp` | `integer` | `CHECK (xp > 0)` |
 | `nome_snapshot` | `text` | nome do item no momento do evento (Registro de Projetos) |
 | `rank_snapshot` | `text` | Rank do Projeto na conclusão; nulo na trilha Produtividade e na criação |
-| `stacks_snapshot` | `text[]` | stacks ou ferramentas normalizadas, só na conclusão do Projeto (Maestria e Domínio, calculados no M5) |
+| `stacks_snapshot` | `text[]` | stacks ou ferramentas normalizadas, só na conclusão do Projeto (base da Maestria e do Domínio, função `maestria()`) |
 | — | | `UNIQUE (user_id, referencia_id, tipo)`: garante RN-06a no banco; o dono na chave impede que um usuário ocupe o par de outro |
 
 **Append-only** (ADR-0011): o RLS deixa o dono ler; inserir só para item próprio; apagar só o evento de criação de item já excluído. Não há `UPDATE`. As funções gravam o item e o evento numa transação, com o XP calculado no domínio (ADR-0003). A única remoção é a revogação do XP de criação (RN-06c), feita pelo trigger `revogar_xp_de_criacao` (`AFTER DELETE` em `projetos` e `atualizacoes`), que vale também na cascata. Índice `(user_id, trilha) include (xp)` para a soma do HUD.
@@ -212,7 +214,7 @@ Renomeia uma tag do usuário (`p_id`) para `p_nome` (sem espaços nas pontas). S
 |---|---|---|
 | XP total por trilha | `resumo_xp()`: `SUM(xp)` em `eventos_xp` do usuário, por `trilha` | Grão do evento: sem JOIN, sem risco de duplicação |
 | Nível, título, Rank do Aventureiro | XP total + domínio | Calculado, não armazenado (exceto `nivel_maximo`) |
-| Maestria | `unnest(stacks_snapshot)` em eventos `conclusao_projeto`, agrupado por stack | O XP de um Projeto é replicado para cada stack **por definição** (ver `gamificacao.md` §5). A soma entre stacks não é o XP total |
+| Maestria e Domínio | `maestria()` (M5, `SECURITY INVOKER`, sob o RLS): `unnest` distinto de `stacks_snapshot` em eventos `conclusao_projeto`, agrupado por trilha e stack; nome exibido pelo `LEFT JOIN` com `stacks` (1:1 por `user_id` + `nome_normalizado`), ou a grafia do snapshot | Grão: trilha + stack. O XP de um Projeto é replicado para cada stack **por definição** (ver `gamificacao.md` §5). A soma entre stacks não é o XP total. O `distinct` impede que uma stack repetida no mesmo snapshot conte duas vezes |
 | Registro de Projetos | `eventos_xp` ordenado por `criado_em` | Usa os snapshots; continua legível após exclusões |
 
 ## 5. Qualidade de dados (restrições no banco)

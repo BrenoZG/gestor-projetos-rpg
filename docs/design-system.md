@@ -84,7 +84,7 @@ Regras:
 1. **Toda animação contínua nova entra na lista do modo Reduzido** em `globals.css`. Pseudo-elementos (`::after`) vão numa regra separada, porque não podem ficar dentro de `:is()`.
 2. **Base = estado final:** o CSS sem animação já mostra o estado final; a animação só parte de um estado inicial. Desligar efeitos nunca esconde conteúdo.
 3. **Só `transform` e `opacity`** (sem custo de layout).
-4. **Durações:** microinterações 150–300 ms; entrada de janela até 450 ms; ambiente lento (3–60 s); cinemática de level up ~5 s, sempre pulável (`Esc`).
+4. **Durações:** microinterações 150–300 ms; entrada de janela até 450 ms; ambiente lento (3–60 s); cinemática de level up ~5 s, sempre pulável (`Esc`). Animação com atraso (`[animation-delay:…]`) também precisa sair nos modos reduzidos com `animation: none`: o `animation-duration` curto da regra do sistema não zera o atraso, e o passo ficaria escondido até ele passar (ver `.cinematica-passo` em `globals.css`).
 5. **Conferência:** no Chrome, `document.getAnimations()` deve dar 0 animações rodando com Desligado e com Reduzido (após as entradas), e também com o sistema pedindo menos movimento no modo Automático.
 
 Comportamento conhecido: ao sair de "Desligado" para outra opção, as animações de entrada tocam uma vez de novo.
@@ -97,12 +97,12 @@ Comportamento conhecido: ao sair de "Desligado" para outra opção, as animaçõ
 | Emblema de Rank (SVG gerado) | E Ferro · D Bronze · C Prata · B Safira · A Rubi · S Lendário | M4 |
 | Brasão de Classe (SVG gerado) | 8 classes | M4 |
 | Tela "Escolha sua classe" | — | M4 |
-| Janela do Sistema | Projeto concluído, XP ganho, recompensa bloqueada pela trava (até lá, o aviso do M3) | M5 |
-| Cinemática de level up | Com ou sem medalha nova; com ou sem troca de Rank | M5 |
+| Janela do Sistema | `<dialog>` modal na conclusão de Projeto: XP ganho (borda acento), recompensa bloqueada pela trava (borda atenção, botão "Entendi") e XP já recebido (borda neutra). A Atualização continua com o aviso do M3 | M5 |
+| Cinemática de level up | `<dialog>` modal, ~4,5 s: de → para, medalha mais alta e troca de Rank quando houver; Continuar e Esc fecham a qualquer momento; vem depois da Janela do Sistema (fila no layout do jogo) | M5 |
 | Página do Personagem | Classe trocável e galeria de medalhas (conquistada · bloqueada em ferro, com cadeado e texto) | M4 |
-| Ficha do Personagem | Página completa (tecla `C`), a partir da página do Personagem | M5 |
+| Ficha do Personagem | Página `/personagem` (menu "Ficha", tecla `C`): resumo das trilhas e da próxima medalha, Maestria e Domínio, medalhas, Classe e o liga/desliga do atalho | M5 |
 
-Protótipo visual aprovado: medalhas, emblemas, Janela do Sistema, cinemática e Ficha (referência de design, não código de produção).
+O protótipo visual citado nas versões anteriores deste documento nunca foi versionado. As telas do M4 e do M5 foram desenhadas por esta seção e aprovadas pelo dono em mockups de baixa fidelidade antes da implementação.
 
 ## 6. Acessibilidade
 
