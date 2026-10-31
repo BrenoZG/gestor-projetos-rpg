@@ -54,8 +54,23 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Imagens Docker do Supabase guardadas entre execuções: o download levava
+      # ~90 s dos ~105 s de subida (medido no run 41142118857). A chave muda com
+      # a versão da CLI (lockfile) e com o config.toml: nunca usa imagem velha.
+      # Cada job guarda o próprio conjunto, porque os dois sobem serviços diferentes.
+      - name: Restaurar as imagens do Supabase
+        id: imagens
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/imagens-supabase.tar
+          key: imagens-supabase-banco-${{ runner.os }}-${{ hashFiles('package-lock.json', 'supabase/config.toml') }}
+      - if: steps.imagens.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/imagens-supabase.tar
       - name: Subir o banco e aplicar as migrations
         run: npx supabase start -x realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Preparar as imagens do Supabase para o cache
+        if: steps.imagens.outputs.cache-hit != 'true'
+        run: docker save $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'supabase/') -o /tmp/imagens-supabase.tar
       - run: npm run db:test
       - run: npm run db:advisors
 
@@ -73,8 +88,20 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
+      # Mesmo cache de imagens do job banco (ver o comentário lá), com chave própria.
+      - name: Restaurar as imagens do Supabase
+        id: imagens
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: /tmp/imagens-supabase.tar
+          key: imagens-supabase-e2e-${{ runner.os }}-${{ hashFiles('package-lock.json', 'supabase/config.toml') }}
+      - if: steps.imagens.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/imagens-supabase.tar
       - name: Subir o Supabase local (banco, Auth, API e gateway)
         run: npx supabase start -x realtime,storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+      - name: Preparar as imagens do Supabase para o cache
+        if: steps.imagens.outputs.cache-hit != 'true'
+        run: docker save $(docker images --format '{{.Repository}}:{{.Tag}}' | grep 'supabase/') -o /tmp/imagens-supabase.tar
       - name: Apontar o app para o Supabase local
         run: |
           npx supabase status -o json | node -e "
