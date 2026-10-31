@@ -1,5 +1,5 @@
 -- Testes da RN-14 no banco (pgTAP): colunas estilo_arquitetural e capacidades,
--- arquitetura obrigatória (função salvar_missao_v3 e CHECK por tipo) e o estado
+-- arquitetura obrigatória (função salvar_missao_v4 e CHECK por tipo) e o estado
 -- depois das etapas contrair (sem dificuldade, sem a salvar_missao antiga, sem
 -- a salvar_missao_v2 e sem o padrão do estilo).
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
@@ -33,8 +33,8 @@ select hasnt_function('public', 'salvar_missao_v2',
 -- B cadastra uma Missão; o id dela fica guardado para o teste de isolamento.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v3(null, 'dev', 'Missão de B', 'Descrição de B', 'Um script.', 'script', '{}', 'backlog',
-                               array['Python'], '{}', '[]');
+select public.salvar_missao_v4(null, 'dev', 'Missão de B', 'Descrição de B', 'Um script.', 'script', '{}', 'backlog',
+                               array['Python'], '{}', '[]', null);
 reset role;
 select set_config('teste.id_b', (select id::text from public.projetos where nome = 'Missão de B'), true);
 
@@ -43,8 +43,8 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
 
 select isnt(
-  public.salvar_missao_v3(null, 'dev', 'Gestor', 'Gestor de projetos', 'Next.js com Supabase.', 'monolito',
-                          array['ci_cd', 'autenticacao', 'ci_cd'], 'backlog', array['Next.js', 'Supabase'], '{}', '[]'),
+  public.salvar_missao_v4(null, 'dev', 'Gestor', 'Gestor de projetos', 'Next.js com Supabase.', 'monolito',
+                          array['ci_cd', 'autenticacao', 'ci_cd'], 'backlog', array['Next.js', 'Supabase'], '{}', '[]', null),
   null,
   'A cadastra uma Missão pela função e recebe o id'
 );
@@ -60,8 +60,8 @@ select results_eq(
   'liga as stacks da Missão'
 );
 
-select public.salvar_missao_v3(id, 'dev', 'Gestor', 'Gestor de projetos', 'Hexagonal agora.', 'hexagonal',
-                               array['ia'], null, array['Next.js'], '{}', '[]')
+select public.salvar_missao_v4(id, 'dev', 'Gestor', 'Gestor de projetos', 'Hexagonal agora.', 'hexagonal',
+                               array['ia'], null, array['Next.js'], '{}', '[]', null)
 from public.projetos where nome = 'Gestor';
 select results_eq(
   $$ select estilo_arquitetural, capacidades, status from public.projetos where nome = 'Gestor' $$,
@@ -71,34 +71,34 @@ select results_eq(
 
 -- Arquitetura obrigatória (RN-14)
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog',
-       array['Go'], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]', null) $$,
   '22023', null,
   'arquitetura só com espaços é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Sem arquitetura', 'x', null, 'monolito', '{}', 'backlog',
-       array['Go'], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Sem arquitetura', 'x', null, 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]', null) $$,
   '22023', null,
   'arquitetura nula é recusada'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog',
-       array['  '], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog',
+       array['  '], '{}', '[]', null) $$,
   '22023', null,
   'continua exigindo de 1 a 20 stacks'
 );
 
 -- Valores fora da lista: o CHECK barra mesmo quem grava direto na tabela.
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Estilo ruim', 'x', 'y', 'monolitico', '{}', 'backlog',
-       array['Go'], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Estilo ruim', 'x', 'y', 'monolitico', '{}', 'backlog',
+       array['Go'], '{}', '[]', null) $$,
   '23514', null,
   'estilo fora da lista é recusado'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Capacidade ruim', 'x', 'y', 'monolito', array['blockchain'],
-       'backlog', array['Go'], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Capacidade ruim', 'x', 'y', 'monolito', array['blockchain'],
+       'backlog', array['Go'], '{}', '[]', null) $$,
   '23514', null,
   'capacidade fora da lista é recusada'
 );
@@ -110,8 +110,8 @@ select throws_ok(
 
 -- Isolamento: A não altera a Missão de B pela função.
 select throws_ok(
-  format($$ select public.salvar_missao_v3(%L::uuid, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null,
-              array['Go'], '{}', '[]') $$,
+  format($$ select public.salvar_missao_v4(%L::uuid, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null,
+              array['Go'], '{}', '[]', null) $$,
          current_setting('teste.id_b')),
   'P0002', null,
   'A não altera a Missão de B'

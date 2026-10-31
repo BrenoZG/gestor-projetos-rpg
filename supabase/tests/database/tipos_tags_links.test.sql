@@ -1,9 +1,9 @@
 -- Testes dos tipos de projeto (RN-15), das tags (RF-24) e dos links (RF-26,
 -- RN-17) no banco (pgTAP): colunas e CHECKs, tabelas novas, RLS, privilégios
--- e a função salvar_missao_v3.
+-- e a função salvar_missao_v4 (o XP dela é testado em eventos_xp).
 -- Usuários fictícios: A é o dono testado, B é o "outro usuário".
 begin;
-select plan(34);
+select plan(33);
 
 insert into auth.users (id) values
   ('00000000-0000-4000-8000-00000000000a'),
@@ -27,11 +27,6 @@ select ok(
   'anon não tem nenhum privilégio nas tabelas novas'
 );
 select ok(
-  not has_function_privilege('anon', 'public.salvar_missao_v3(uuid, text, text, text, text, text, text[], text, text[], text[], jsonb)', 'execute')
-  and has_function_privilege('authenticated', 'public.salvar_missao_v3(uuid, text, text, text, text, text, text[], text, text[], text[], jsonb)', 'execute'),
-  'só o usuário logado executa salvar_missao_v3'
-);
-select ok(
   has_column_privilege('authenticated', 'public.projetos', 'tipo', 'insert, update'),
   'o usuário grava o tipo'
 );
@@ -43,8 +38,8 @@ select ok(
 -- B cadastra uma Missão com uma tag e um link; os ids ficam guardados.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v3(null, 'dev', 'Missão de B', 'x', 'y', 'script', '{}', 'backlog', array['Go'],
-  array['Secreta'], '[{"url":"https://exemplo.com/b","titulo":"Link de B"}]');
+select public.salvar_missao_v4(null, 'dev', 'Missão de B', 'x', 'y', 'script', '{}', 'backlog', array['Go'],
+  array['Secreta'], '[{"url":"https://exemplo.com/b","titulo":"Link de B"}]', null);
 reset role;
 select set_config('teste.missao_b', (select id::text from public.projetos where nome = 'Missão de B'), true);
 
@@ -53,9 +48,9 @@ set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
 
 select lives_ok(
-  $$ select public.salvar_missao_v3(null, 'geral', 'Revenda', 'Revender acessórios', null, null, null, 'backlog',
+  $$ select public.salvar_missao_v4(null, 'geral', 'Revenda', 'Revender acessórios', null, null, null, 'backlog',
        '{}', array['IA', 'ia'],
-       '[{"url":"https://exemplo.com/a","titulo":"A"},{"url":"https://youtu.be/x","titulo":null}]') $$,
+       '[{"url":"https://exemplo.com/a","titulo":"A"},{"url":"https://youtu.be/x","titulo":null}]', null) $$,
   'A cria uma Missão Geral sem ferramentas, sem estilo e sem arquitetura'
 );
 select results_eq(
@@ -83,41 +78,41 @@ select throws_ok(
   '23514', null, 'Missão Geral não aceita estilo arquitetural'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog',
-       array['Go'], '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Sem arquitetura', 'x', '   ', 'monolito', '{}', 'backlog',
+       array['Go'], '{}', '[]', null) $$,
   '22023', null, 'Desenvolvimento continua exigindo a arquitetura (RN-14)'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'dev', 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog',
-       '{}', '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'dev', 'Sem stacks', 'x', 'y', 'monolito', '{}', 'backlog',
+       '{}', '{}', '[]', null) $$,
   '22023', null, 'Desenvolvimento continua exigindo de 1 a 20 stacks'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v3(null, 'geral', 'Muitas ferramentas', 'x', null, null, null, 'backlog',
-       %L::text[], '{}', '[]') $$, (select array_agg('f' || i) from generate_series(1, 21) as i)),
+  format($$ select public.salvar_missao_v4(null, 'geral', 'Muitas ferramentas', 'x', null, null, null, 'backlog',
+       %L::text[], '{}', '[]', null) $$, (select array_agg('f' || i) from generate_series(1, 21) as i)),
   '22023', null, 'Missão Geral aceita no máximo 20 ferramentas'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v3(null, 'geral', 'Muitas tags', 'x', null, null, null, 'backlog',
-       '{}', %L::text[], '[]') $$, (select array_agg('t' || i) from generate_series(1, 11) as i)),
+  format($$ select public.salvar_missao_v4(null, 'geral', 'Muitas tags', 'x', null, null, null, 'backlog',
+       '{}', %L::text[], '[]', null) $$, (select array_agg('t' || i) from generate_series(1, 11) as i)),
   '22023', null, 'uma Missão aceita no máximo 10 tags'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v3(null, 'geral', 'Muitos links', 'x', null, null, null, 'backlog',
-       '{}', '{}', %L::jsonb) $$,
+  format($$ select public.salvar_missao_v4(null, 'geral', 'Muitos links', 'x', null, null, null, 'backlog',
+       '{}', '{}', %L::jsonb, null) $$,
     (select jsonb_agg(jsonb_build_object('url', 'https://exemplo.com/' || i)) from generate_series(1, 21) as i)),
   '22023', null, 'uma Missão aceita no máximo 20 links'
 );
 select throws_ok(
-  $$ select public.salvar_missao_v3(null, 'geral', 'Sem status', 'x', null, null, null, null, '{}', '{}', '[]') $$,
+  $$ select public.salvar_missao_v4(null, 'geral', 'Sem status', 'x', null, null, null, null, '{}', '{}', '[]', null) $$,
   '22023', null, 'o cadastro exige o status inicial'
 );
 
 -- Edição: troca de tipo (RN-16) e status intocado
-select public.salvar_missao_v3(null, 'dev', 'Painel', 'x', 'Camadas.', 'monolito', array['ia'], 'backlog',
-  array['Python'], '{}', '[]');
-select public.salvar_missao_v3((select id from public.projetos where nome = 'Painel'), 'geral', 'Painel', 'x',
-  'sobra', 'monolito', array['ia'], 'concluido', array['Python'], '{}', '[]');
+select public.salvar_missao_v4(null, 'dev', 'Painel', 'x', 'Camadas.', 'monolito', array['ia'], 'backlog',
+  array['Python'], '{}', '[]', null);
+select public.salvar_missao_v4((select id from public.projetos where nome = 'Painel'), 'geral', 'Painel', 'x',
+  'sobra', 'monolito', array['ia'], 'concluido', array['Python'], '{}', '[]', null);
 select results_eq(
   $$ select tipo, estilo_arquitetural is null, arquitetura is null, capacidades = '{}'
      from public.projetos where nome = 'Painel' $$,
@@ -137,12 +132,12 @@ select results_eq(
 );
 
 -- Remover o link do meio renumera a ordem sem buraco
-select public.salvar_missao_v3((select id from public.projetos where nome = 'Revenda'), 'geral', 'Revenda', 'x',
+select public.salvar_missao_v4((select id from public.projetos where nome = 'Revenda'), 'geral', 'Revenda', 'x',
   null, null, null, null, '{}', array['IA'],
-  '[{"url":"https://exemplo.com/1"},{"url":"https://exemplo.com/2"},{"url":"https://exemplo.com/3"}]');
-select public.salvar_missao_v3((select id from public.projetos where nome = 'Revenda'), 'geral', 'Revenda', 'x',
+  '[{"url":"https://exemplo.com/1"},{"url":"https://exemplo.com/2"},{"url":"https://exemplo.com/3"}]', null);
+select public.salvar_missao_v4((select id from public.projetos where nome = 'Revenda'), 'geral', 'Revenda', 'x',
   null, null, null, null, '{}', array['IA'],
-  '[{"url":"https://exemplo.com/1"},{"url":"https://exemplo.com/3"}]');
+  '[{"url":"https://exemplo.com/1"},{"url":"https://exemplo.com/3"}]', null);
 select results_eq(
   $$ select l.ordem::int, l.url from public.projeto_links l
      join public.projetos p on p.id = l.projeto_id where p.nome = 'Revenda' order by l.ordem $$,
@@ -168,7 +163,7 @@ select throws_ok(
 );
 
 -- Tag existente é reaproveitada com a grafia gravada
-select public.salvar_missao_v3(null, 'geral', 'Vídeos', 'x', null, null, null, 'backlog', '{}', array[' ia '], '[]');
+select public.salvar_missao_v4(null, 'geral', 'Vídeos', 'x', null, null, null, 'backlog', '{}', array[' ia '], '[]', null);
 select results_eq(
   $$ select count(*)::int, min(nome) from public.tags $$,
   $$ values (1, 'IA'::text) $$,
@@ -195,8 +190,8 @@ select throws_ok(
   '42501', null, 'A não pendura tag na Missão de B'
 );
 select throws_ok(
-  format($$ select public.salvar_missao_v3(%L, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null, array['Go'],
-       '{}', '[]') $$, current_setting('teste.missao_b')),
+  format($$ select public.salvar_missao_v4(%L, 'dev', 'Tomada', 'x', 'y', 'script', '{}', null, array['Go'],
+       '{}', '[]', null) $$, current_setting('teste.missao_b')),
   'P0002', null, 'A não edita a Missão de B pela v3'
 );
 
