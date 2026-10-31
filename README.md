@@ -2,15 +2,15 @@
 
 Gestão de projetos pessoais e de suas atualizações, com progressão estilo RPG: cada missão concluída rende XP, níveis, medalhas e Ranks, do Estagiário ao Desenvolvedor Sênior.
 
-> **Status:** em desenvolvimento. Entregues: **M0** (fundação), **M1a** (acesso), **M1b** (Missões), **M1c** (Quadro), **M2** (Atualizações), **0.6.0** (tipos de projeto, tags e links) e **0.7.0** (renomear e excluir tags). Próximo: **M3** (XP e níveis). Os dados exibidos em capturas e no seed são fictícios.
+> **Status:** em desenvolvimento. Entregues: **M0** (fundação), **M1a** (acesso), **M1b** (Projetos), **M1c** (Quadro), **M2** (Atualizações), **0.6.0** (tipos de projeto, tags e links) e **0.7.0** (renomear e excluir tags; a interface passa a dizer Projeto). Próximo: **M3** (XP e níveis). Os dados exibidos em capturas e no seed são fictícios.
 
 ## O que faz
 
-- **Missões (Projetos):** de dois tipos. **Desenvolvimento:** nome, descrição, arquitetura em Markdown, estilo arquitetural, capacidades, stacks e status (Backlog → Desenvolvimento → Concluído), com o Rank de Missão calculado pelo sistema (estilo + capacidades + stacks). **Geral:** ideias fora da programação (venda, conteúdo, serviço), com nome, descrição, ferramentas opcionais e status, sem Rank.
-- **Tags e links:** tags criadas por você em qualquer Missão (renomeie, junte as repetidas ou exclua as sem uso na página Tags), e links de referência (Google Drive, páginas, YouTube, Instagram) que abrem numa aba nova; o servidor nunca abre os links.
-- **Quadro:** mover as Missões entre as colunas arrastando (mouse ou dedo) ou pelo botão "Mover", filtros por texto, stack e Rank (guardados na URL) e a visão Lista.
-- **Atualizações:** melhorias, correções e implementações registradas na ficha de cada Missão, com histórico e status em um toque; a página "Atualizações" reúne todas, com filtros por status e por Missão.
-- **Progressão:** XP por criação e conclusão, 100 níveis, 10 medalhas com títulos, Rank de Missão e Rank do Caçador (E → S), Maestria por stack e 8 classes que misturam RPG e áreas de desenvolvimento.
+- **Projetos:** de dois tipos. **Desenvolvimento:** nome, descrição, arquitetura em Markdown, estilo arquitetural, capacidades, stacks e status (Backlog → Desenvolvimento → Concluído), com o Rank do Projeto calculado pelo sistema (estilo + capacidades + stacks). **Geral:** ideias fora da programação (venda, conteúdo, serviço), com nome, descrição, ferramentas opcionais e status, sem Rank.
+- **Tags e links:** tags criadas por você em qualquer Projeto (renomeie, junte as repetidas ou exclua as sem uso na página Tags), e links de referência (Google Drive, páginas, YouTube, Instagram) que abrem numa aba nova; o servidor nunca abre os links.
+- **Quadro:** mover os Projetos entre as colunas arrastando (mouse ou dedo) ou pelo botão "Mover", filtros por texto, stack e Rank (guardados na URL) e a visão Lista.
+- **Atualizações:** melhorias, correções e implementações registradas na ficha de cada Projeto, com histórico e status em um toque; a página "Atualizações" reúne todas, com filtros por status e por Projeto.
+- **Progressão:** XP por criação e conclusão, 100 níveis, 10 medalhas com títulos, Rank do Projeto e Rank do Aventureiro (E → S), Maestria por stack e 8 classes que misturam RPG e áreas de desenvolvimento.
 
 Regras completas em [`docs/requisitos.md`](docs/requisitos.md) e [`docs/gamificacao.md`](docs/gamificacao.md).
 
