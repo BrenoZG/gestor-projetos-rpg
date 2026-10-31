@@ -145,6 +145,12 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+
+  /* A cinemática tem atrasos de segundos: sem isto, cada passo esperaria o
+     atraso escondido. Com menos movimento, o estado final aparece direto (RNF-02). */
+  :root:not([data-efeitos]) :is(.cinematica-passo, .cinematica-destaque) {
+    animation: none !important;
+  }
 }
 
 /* ==========================================================================
@@ -219,6 +225,27 @@ body {
 
   .janela-sistema-conteudo {
     background: linear-gradient(180deg, var(--cor-superficie-alta), var(--cor-superficie) 60%);
+  }
+
+  /* Cinemática de level up (RF-16, design-system §4): cada passo entra com um
+     atraso (`[animation-delay:…]`); a base é o estado final, então Reduzido,
+     Desligado e o sistema com menos movimento mostram tudo pronto. */
+  .cinematica {
+    background:
+      radial-gradient(
+        circle at 50% 30%,
+        color-mix(in oklab, var(--cor-acento-forte) 35%, transparent),
+        transparent 65%
+      ),
+      var(--cor-fundo);
+  }
+
+  .cinematica-passo {
+    animation: surgir 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .cinematica-destaque {
+    animation: surgir-destaque 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   /* A janela "abre" ao carregar. Base = estado final: sem animação (ou com
@@ -444,6 +471,18 @@ body {
   }
 }
 
+/* Cinemática de level up (RF-16): ~4,5 s, só transform e opacity. */
+@keyframes surgir-destaque {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
 @keyframes abrir-janela {
   from {
     opacity: 0;
@@ -473,7 +512,9 @@ body {
     .aura-medalha,
     .orbita-medalha,
     .cintila-medalha,
-    .chama-medalha
+    .chama-medalha,
+    .cinematica-passo,
+    .cinematica-destaque
   ) {
   animation: none !important;
 }

@@ -3,7 +3,10 @@ import { BarraXp } from '@/componentes/barra-xp';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { NavegacaoPrincipal } from '@/componentes/navegacao-principal';
 import { SeletorEfeitos } from '@/componentes/seletor-efeitos';
+import { CinematicaNivel } from '@/componentes/sistema/cinematica-nivel';
 import { nomeDaClasse } from '@/dominio/personagem/classes';
+import { conquistaPendente } from '@/dominio/progressao/conquista';
+import { nivelConquistado } from '@/dominio/progressao/medalhas';
 import {
   progressoDoNivel,
   rankDoAventureiro,
@@ -23,12 +26,14 @@ function textoDoXp({ xpNoNivel, xpParaProximo }: ProgressoNivel): string {
  * (RF-12). O XP é a soma do ledger por trilha; a trilha Produtividade (RN-18)
  * só aparece quando tem XP, sem medalha, título nem Rank. Os dados vêm do
  * usuário logado (RLS: só as próprias linhas); sem Classe, o carregador manda
- * para a escolha (RF-17).
+ * para a escolha (RF-17). Também traz a cinemática de level up, quando há um
+ * nível ainda não exibido (RF-16): o HUD já tem o nível e é renderizado de novo
+ * depois de toda ação que dá XP.
  *
  * @throws {Error} Se o personagem ou o XP não puderem ser lidos; a tela de erro assume.
  */
 export async function Hud() {
-  const [{ classe: chaveClasse, xp }, efeitos] = await Promise.all([
+  const [{ classe: chaveClasse, xp, nivelMaximo, nivelVisto }, efeitos] = await Promise.all([
     carregarPersonagem(),
     obterPreferenciaEfeitos(),
   ]);
@@ -37,6 +42,7 @@ export async function Hud() {
   const produtividade = xp.produtividade > 0 ? progressoDoNivel(xp.produtividade) : null;
   const rank = rankDoAventureiro(progresso.nivel);
   const classe = nomeDaClasse(chaveClasse);
+  const conquista = conquistaPendente(nivelVisto, nivelConquistado(nivelMaximo, progresso.nivel));
 
   return (
     <header className="hud-sistema entrada-hud sticky top-0 z-30">
@@ -95,6 +101,8 @@ export async function Hud() {
           </form>
         </div>
       </div>
+      {/* A key recria o componente a cada conquista nova (estado "fechada" zerado). */}
+      {conquista && <CinematicaNivel key={`${conquista.de}-${conquista.para}`} conquista={conquista} />}
     </header>
   );
 }
