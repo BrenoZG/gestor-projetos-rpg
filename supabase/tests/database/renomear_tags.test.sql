@@ -32,8 +32,8 @@ select ok(
 -- B tem uma Missão com a tag "Secreta"; o id fica guardado.
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000b","role":"authenticated"}', true);
-select public.salvar_missao_v3(null, 'geral', 'Missão de B', 'x', null, null, null, 'backlog', '{}',
-  array['Secreta'], '[]');
+select public.salvar_missao_v4(null, 'geral', 'Missão de B', 'x', null, null, null, 'backlog', '{}',
+  array['Secreta'], '[]', null);
 reset role;
 select set_config('teste.tag_b', (select id::text from public.tags
   where nome = 'Secreta' and user_id = '00000000-0000-4000-8000-00000000000b'), true);
@@ -42,11 +42,11 @@ select set_config('teste.tag_b', (select id::text from public.tags
 set local role authenticated;
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-4000-8000-00000000000a","role":"authenticated"}', true);
 
-select public.salvar_missao_v3(null, 'geral', 'Missão M1', 'x', null, null, null, 'backlog', '{}', array['Revnda'], '[]');
-select public.salvar_missao_v3(null, 'geral', 'Missão M2', 'x', null, null, null, 'backlog', '{}',
-  array['Revnda', 'Revenda'], '[]');
-select public.salvar_missao_v3(null, 'geral', 'Missão M3', 'x', null, null, null, 'backlog', '{}', array['Vidos'], '[]');
-select public.salvar_missao_v3(null, 'geral', 'Missão M4', 'x', null, null, null, 'backlog', '{}', array['Sobra'], '[]');
+select public.salvar_missao_v4(null, 'geral', 'Missão M1', 'x', null, null, null, 'backlog', '{}', array['Revnda'], '[]', null);
+select public.salvar_missao_v4(null, 'geral', 'Missão M2', 'x', null, null, null, 'backlog', '{}',
+  array['Revnda', 'Revenda'], '[]', null);
+select public.salvar_missao_v4(null, 'geral', 'Missão M3', 'x', null, null, null, 'backlog', '{}', array['Vidos'], '[]', null);
+select public.salvar_missao_v4(null, 'geral', 'Missão M4', 'x', null, null, null, 'backlog', '{}', array['Sobra'], '[]', null);
 delete from public.projetos where nome = 'Missão M4';
 select set_config('teste.revnda', (select id::text from public.tags where nome = 'Revnda'), true);
 select set_config('teste.revenda', (select id::text from public.tags where nome = 'Revenda'), true);
