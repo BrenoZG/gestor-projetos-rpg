@@ -27,7 +27,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 
 | Termo | Significado |
 |---|---|
-| **Projeto** | O que o dono cadastra e acompanha no Quadro, de dois tipos (abaixo). É o nome usado na interface. No código e no banco continua **Missão** (tabela `missoes`, rota `/missoes`, `salvar_missao_v3`). |
+| **Projeto** | O que o dono cadastra e acompanha no Quadro, de dois tipos (abaixo). É o nome usado na interface. No código e no banco continua **Missão** (tabela `missoes`, rota `/missoes`, `salvar_missao_v4`). |
 | **Tipo de Projeto** | **Desenvolvimento**: o resultado principal é código que o dono escreve e mantém (site, SaaS, app, automação, pipeline). **Geral**: o resultado principal é outra coisa (venda, conteúdo, serviço, aprendizado); código, se houver, é ferramenta de apoio. |
 | **Ferramenta** | O que um Projeto Geral usa para ser feito (ex.: Canva, CapCut). Mesmo cadastro das stacks; muda o rótulo. |
 | **Tag** | Etiqueta livre, criada pelo dono, para organizar e filtrar Projetos de qualquer tipo (ex.: Revenda, IA). Não muda regra nenhuma. |
@@ -351,14 +351,14 @@ Nenhuma no fechamento da baseline 1.0.
 | RF-01..04, RN-02, RN-04 (sem Atualizações), RN-05 | M1b | E2E (Playwright + axe) + pgTAP (RLS, trigger, função) |
 | RF-05..09, RF-10 (Atualizações por status e por Projeto), RN-01, RN-03, RN-04 (contagem de Atualizações) | M2 | pgTAP (RLS, trigger, cascata) + unitário (validação, filtros, paginação) + E2E (ficha, página geral, axe) |
 | RF-10 (Projetos por status), RF-11 | M1c | Colunas e filtros do Quadro (RF-21): E2E do M1c |
-| RF-23, RF-24, RF-26, RN-15, RN-16, RN-17, RF-03 (edição sem status) | 1.4, parte 1 | Unitário (domínio, validação, dados) + pgTAP (CHECKs, RLS e `salvar_missao_v3`) + E2E (cadastro Geral, link recusado, troca de tipo, 360 px, axe) |
+| RF-23, RF-24, RF-26, RN-15, RN-16, RN-17, RF-03 (edição sem status) | 1.4, parte 1 | Unitário (domínio, validação, dados) + pgTAP (CHECKs, RLS e `salvar_missao_v4`) + E2E (cadastro Geral, link recusado, troca de tipo, 360 px, axe) |
 | RF-25 | 1.4, parte 2 | Unitário (filtros) + E2E (URL, axe) |
 | RF-27, RF-28, RF-29, RN-19 | 1.5 | Unitário (validação, dados) + pgTAP (`renomear_tag`, policies de alterar e excluir) + E2E (juntar, teclado, nome inválido, excluir sem uso, 360 px, axe) |
 | RF-12, RN-06, RN-07, RN-09, RN-13, RN-18, RN-10 (snapshot) | M3 | Unitário (domínio) + pgTAP (RLS do ledger, trigger de revogação, funções atômicas) + E2E (HUD, trava, aviso, 360 px, axe) |
 | RF-15, RF-17, RF-18, RN-11 | M4 | E2E |
 | RF-16, RF-19, RN-08, RN-10 (cálculo e exibição), RN-12 | M5 | E2E + axe |
 | RNF-07 (keepalive) | M1b | Crons na Vercel + log de execução |
-| RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v3`) + E2E |
+| RN-14, campos do Projeto (estilo, capacidades, arquitetura obrigatória) | M1c | Unitário (domínio e validação) + pgTAP (CHECKs e `salvar_missao_v4`) + E2E |
 | RF-20, RF-21, RF-22 | M1c | Unitário (filtros) + E2E (mouse, toque emulado, teclado, falha do servidor, URL e axe) |
 | RF-14, RNF-07 (export) | M6 | Integração |
 | RNF-01..06 | Todos | CI + revisão |
