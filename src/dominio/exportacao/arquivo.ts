@@ -3,10 +3,10 @@
  * contagem por tabela. Regras puras, sem I/O; os dados vêm da `exportar_dados`.
  */
 
-export const FORMATO_EXPORT = 'gestor-projetos-rpg/export';
+const FORMATO_EXPORT = 'gestor-projetos-rpg/export';
 
 /** Sobe quando o formato muda (tabela ou coluna nova): um import futuro lê por ela. */
-export const VERSAO_FORMATO_EXPORT = 1;
+const VERSAO_FORMATO_EXPORT = 1;
 
 /** Tabelas que saem como lista; o personagem sai como um objeto só. */
 export const TABELAS_EM_LISTA = [
