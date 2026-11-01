@@ -1,10 +1,9 @@
 @import 'tailwindcss';
 
 /* ==========================================================================
-   TOKENS EM TRÊS CAMADAS (herdados do Portfolio, tema escuro)
-   1. PRIMITIVO (--vinho-700)   valor bruto, nunca usado em componente
-   2. SEMÂNTICO (--cor-acento)  significado
-   3. UTILITÁRIO (bg-acento)    o que o componente consome
+   TOKENS EM DUAS CAMADAS (herdados do Portfolio, tema escuro)
+   1. SEMÂNTICO (--cor-acento)  significado e valor
+   2. UTILITÁRIO (bg-acento)    o que o componente consome
    O sistema é só escuro na v1: brilho e aura do tema RPG dependem de
    fundo escuro. Tema claro está no backlog.
    ========================================================================== */
@@ -29,24 +28,9 @@
   --color-atencao: var(--cor-atencao);
   --color-negativo: var(--cor-negativo);
 
-  --color-vinho-50: #fbf3f5;
-  --color-vinho-100: #f6e4e9;
-  --color-vinho-200: #eec9d3;
-  --color-vinho-300: #dd9dae;
-  --color-vinho-400: #c66c86;
-  --color-vinho-500: #a94263;
-  --color-vinho-600: #8b2f4d;
-  --color-vinho-700: #6b1e35;
-  --color-vinho-800: #54182a;
-  --color-vinho-900: #3c1120;
-  --color-vinho-950: #240a13;
-
   --font-display: var(--fonte-display), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--fonte-corpo), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--fonte-mono), ui-monospace, 'Cascadia Code', monospace;
-
-  --ease-saida: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-suave: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 :root {
@@ -249,7 +233,7 @@ body {
   }
 
   /* A janela "abre" ao carregar. Base = estado final: sem animação (ou com
-     prefers-reduced-motion) ela já aparece pronta. Curva = --ease-saida. */
+     prefers-reduced-motion) ela já aparece pronta. */
   .entrada-janela {
     animation: abrir-janela 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }

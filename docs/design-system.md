@@ -2,12 +2,11 @@
 
 > Identidade herdada do Portfolio do autor (paleta e tipografia) aplicada a um tema RPG/anime de progressão. Implementação dos tokens: [`src/app/globals.css`](../src/app/globals.css).
 
-## 1. Tokens em três camadas
+## 1. Tokens em duas camadas
 
 | Camada | Exemplo | Uso |
 |---|---|---|
-| Primitivo | `--color-vinho-700: #6b1e35` | Valor bruto. Nunca usado direto em componente |
-| Semântico | `--cor-acento-solido` | Significado. É o que muda se o tema mudar |
+| Semântico | `--cor-acento-solido: #6b1e35` | Significado e valor. É o que muda se o tema mudar |
 | Utilitário | `bg-acento-solido` | O que o componente consome |
 
 Nenhum componente carrega hexadecimal, com uma única exceção: a camada metálica abaixo.
@@ -67,7 +66,7 @@ O título que não pode quebrar (ex.: "Identifique-se,") usa tamanho fluido (`cl
 |---|---|---|
 | 1. Ambiente | Contínuo e sutil, sem ação do usuário | Brasas (`.particulas`, `.lentas` nas telas de trabalho), anéis e núcleo do sigilo, reflexo do emblema de Rank, brilho no trilho da barra de XP e nos espaços vazios, cursor piscante |
 | 2. Transição | Ao abrir ou navegar | HUD descendo (`.entrada-hud`), janelas abrindo (`.entrada-janela`), conteúdo e cartões em cascata (`.entrada-suave` + `[animation-delay:…]`) |
-| 3. Recompensa | Resposta a ação ou conquista | Barra de XP enchendo (`.preenchimento-xp`), reflexo do botão principal; no futuro, "+XP" flutuando, contadores e level up |
+| 3. Recompensa | Resposta a ação ou conquista | Barra de XP enchendo (`.preenchimento-xp`), reflexo do botão principal, Janela do Sistema e cinemática de level up |
 
 **Efeitos visuais** (`componentes/seletor-efeitos.tsx`, cookie `efeitos`, atributo `data-efeitos` no `<html>`):
 
