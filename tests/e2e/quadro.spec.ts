@@ -23,10 +23,15 @@ async function caixaDe(alvo: Locator): Promise<{ x: number; y: number; width: nu
  * fora da área visível não chegam ao app. O cartão vai para o centro da tela;
  * a soltura é o ponto da coluna de destino mais próximo da altura do cartão
  * (colunas lado a lado no computador, empilhadas no celular).
+ *
+ * A partida é o emblema, não o centro do cartão: a biblioteca não arrasta a
+ * partir de um link, e no celular um toque a até 10 px do título vai para o
+ * link dele (medido na issue #47). O emblema fica longe do título em qualquer
+ * tamanho de nome.
  */
 async function pontosDoArrasto(pagina: Page, origem: Locator, destino: Locator): Promise<[Ponto, Ponto]> {
   await origem.evaluate((elemento) => elemento.scrollIntoView({ block: 'center' }));
-  const caixaOrigem = await caixaDe(origem);
+  const caixaOrigem = await caixaDe(origem.getByRole('img', { name: /^Rank do Projeto/ }));
   const caixaDestino = await caixaDe(destino);
   const altura = pagina.viewportSize()?.height ?? 720;
   const de = { x: caixaOrigem.x + caixaOrigem.width / 2, y: caixaOrigem.y + caixaOrigem.height / 2 };
@@ -339,25 +344,21 @@ test.describe('Quadro de Projetos', () => {
 test.describe('no celular', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test.describe('toque longo', () => {
-    // Quarentena temporária (issue #47): o teste é instável e a causa ainda não
-    // foi achada. Uma nova tentativa só para ele; o relatório o marca como
-    // "flaky", então a instabilidade continua visível. Sai quando a issue fechar.
-    test.describe.configure({ retries: 1 });
+  test('arrasta um cartão com o dedo (toque longo)', async ({ page }) => {
+    const nome = nomeUnico('Projeto no dedo');
+    await cadastrarMissao(page, { nome, stacks: 'Go,' });
+    const urlMissao = page.url();
 
-    test('arrasta um cartão com o dedo (toque longo)', async ({ page }) => {
-      const nome = nomeUnico('Projeto no dedo');
-      await cadastrarMissao(page, { nome, stacks: 'Go,' });
-      const urlMissao = page.url();
+    await page.goto('/');
+    const destino = coluna(page, 'Em desenvolvimento');
+    await arrastarPorToque(page, cartao(page, 'Backlog', nome), destino);
+    await expect(cartao(page, 'Em desenvolvimento', nome)).toBeVisible();
+    await expect(
+      page.getByRole('status').filter({ hasText: `${nome} movido para Em desenvolvimento` }),
+    ).toBeAttached();
 
-      await page.goto('/');
-      const destino = coluna(page, 'Em desenvolvimento');
-      await arrastarPorToque(page, cartao(page, 'Backlog', nome), destino);
-      await expect(cartao(page, 'Em desenvolvimento', nome)).toBeVisible();
-
-      await page.goto(urlMissao);
-      await excluirMissaoAberta(page);
-    });
+    await page.goto(urlMissao);
+    await excluirMissaoAberta(page);
   });
 
   test('filtros e Lista não rolam a página na horizontal (360 px)', async ({ page }) => {
