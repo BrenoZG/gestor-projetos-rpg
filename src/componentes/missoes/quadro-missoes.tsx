@@ -20,6 +20,7 @@ import { useSistema } from '@/componentes/sistema/provedor-sistema';
 import type { Missao } from '@/dados/missoes';
 import { ehStatusMissao, type StatusMissao } from '@/dominio/missoes/campos';
 import {
+  dicaSemResultado,
   escreverParametros,
   filtrarMissoes,
   haFiltroAtivo,
@@ -164,7 +165,7 @@ export function QuadroMissoes({ missoes, nonce }: { missoes: Missao[]; nonce: st
 
       {filtroAtivo && filtradas.length === 0 && (
         <p className="rounded-md border border-dashed border-borda-campo px-6 py-6 text-center text-texto">
-          Nenhum projeto com esses filtros.
+          {dicaSemResultado(filtros) ?? 'Nenhum projeto com esses filtros.'}
         </p>
       )}
 

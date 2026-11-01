@@ -7,6 +7,7 @@ import {
   FILTROS_VAZIOS,
   RANKS,
   VISTAS,
+  dicaSemResultado,
   haFiltroAtivo,
   opcoesDoFiltro,
   type FiltrosMissao,
@@ -47,6 +48,7 @@ export function FiltrosQuadro({
 }) {
   const base = useId();
   const ativo = haFiltroAtivo(filtros);
+  const dica = dicaSemResultado(filtros);
 
   return (
     <div className="flex flex-col gap-3">
@@ -180,6 +182,8 @@ export function FiltrosQuadro({
           {ativo
             ? `Mostrando ${exibidas} de ${total} projetos`
             : `${total} ${total === 1 ? 'projeto' : 'projetos'}`}
+          {/* A dica visível fica fora desta região: sem isto, o leitor de tela não ouviria o motivo. */}
+          {dica && <span className="sr-only"> {dica}</span>}
         </p>
         {ativo && (
           <button

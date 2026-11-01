@@ -232,6 +232,18 @@ test.describe('Quadro de Projetos', () => {
     await excluirMissaoAberta(page);
   });
 
+  test('Rank com tipo Geral explica por que nada aparece (RN-15)', async ({ page }) => {
+    const dica = 'Projetos Gerais não têm Rank. Tire o filtro de Rank para vê-los.';
+    await page.goto('/?tipo=geral&rank=S');
+
+    await expect(page.getByText(dica), 'uma visível e uma anunciada').toHaveCount(2);
+    await expect(page.getByRole('status').filter({ hasText: dica })).toBeAttached();
+    await expect(page.getByText('Nenhum projeto com esses filtros.')).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Limpar filtros' }).click();
+    await expect(page.getByText(dica)).toHaveCount(0);
+  });
+
   test('filtra por tipo e por tag, e o filtro fica na URL (RF-25)', async ({ page }) => {
     const sufixo = Date.now().toString(36);
     const geral = `Revenda filtrável ${sufixo}`;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   FILTROS_VAZIOS,
+  dicaSemResultado,
   escreverParametros,
   filtrarMissoes,
   haFiltroAtivo,
@@ -157,6 +158,23 @@ describe('haFiltroAtivo', () => {
     [{ ...FILTROS_VAZIOS, tag: 'IA' }, true],
   ])('%o → %s', (filtros, esperado) => {
     expect(haFiltroAtivo(filtros)).toBe(esperado);
+  });
+});
+
+describe('dicaSemResultado', () => {
+  it('Rank com tipo Geral explica que Gerais não têm Rank (RN-15)', () => {
+    expect(dicaSemResultado({ ...FILTROS_VAZIOS, tipo: 'geral', rank: 'S' })).toBe(
+      'Projetos Gerais não têm Rank. Tire o filtro de Rank para vê-los.',
+    );
+  });
+
+  it.each([
+    ['sem filtro', FILTROS_VAZIOS],
+    ['só o tipo Geral', { ...FILTROS_VAZIOS, tipo: 'geral' as const }],
+    ['só o Rank', { ...FILTROS_VAZIOS, rank: 'S' as const }],
+    ['Rank com tipo Desenvolvimento', { ...FILTROS_VAZIOS, tipo: 'dev' as const, rank: 'S' as const }],
+  ])('%s não tem dica', (_caso, filtros) => {
+    expect(dicaSemResultado(filtros)).toBeNull();
   });
 });
 
