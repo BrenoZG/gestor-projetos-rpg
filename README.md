@@ -2,7 +2,7 @@
 
 Gestão de projetos pessoais e de suas atualizações, com progressão estilo RPG: cada missão concluída rende XP, níveis, medalhas e Ranks, do Estagiário ao Desenvolvedor Sênior.
 
-> **Status:** v1 completa. Entregues: **M0** (fundação), **M1a** (acesso), **M1b** (Projetos), **M1c** (Quadro), **M2** (Atualizações), **0.6.0** (tipos de projeto, tags e links) **0.7.0** (renomear e excluir tags; a interface passa a dizer Projeto) **0.8.0 · M3** (XP e níveis: ledger de XP, HUD com XP real e a trilha Produtividade), **0.9.0 · M4** (Classe e medalhas), **0.10.0 · M5** (Ficha com Maestria e Domínio, atalho `C`, Janela do Sistema e cinemática de level up) e **1.0.0 · M6** (export de todos os dados em JSON, na seção Backup da Ficha), que fecha a v1. Os dados exibidos em capturas e no seed são fictícios.
+> **Status:** v1 completa e em produção. O histórico de versões fica nas [Releases](https://github.com/BrenoZG/gestor-projetos-rpg/releases).
 
 ## O que faz
 
@@ -22,7 +22,7 @@ Regras completas em [`docs/requisitos.md`](docs/requisitos.md) e [`docs/gamifica
 | Estilo | Tailwind CSS v4 · tokens próprios · SVG gerado para medalhas e emblemas |
 | Dados e auth | Supabase (Postgres 17 + Auth com GitHub OAuth) · RLS em todas as tabelas |
 | Validação | Zod |
-| Testes | Vitest (unitário) · Playwright (E2E, a partir do M1) |
+| Testes | Vitest (unitário) · Playwright + axe (E2E) · pgTAP (banco) |
 | Entrega | GitHub Actions · gitleaks · Dependabot · Vercel |
 
 ## Arquitetura em resumo
@@ -60,7 +60,7 @@ Studio do banco local: http://127.0.0.1:54323. Para liberar memória ao terminar
 | `npm run format` | Formata o código com Prettier |
 | `npm run typecheck` | Gera os tipos de rota do Next e roda o `tsc` |
 | `npm test` | Testes unitários |
-| `npm run test:e2e` | Testes de ponta a ponta (Playwright + axe) contra o build de produção e o Supabase local; rode `npm run build` antes |
+| `npm run test:e2e` | Testes de ponta a ponta (Playwright + axe) contra o build de produção e o Supabase local; rode `npm run build` antes, ou use `npm run test:e2e:completo`, que faz os dois |
 | `npm run db:start` / `db:stop` / `db:reset` | Supabase local |
 | `npm run db:test` | Testes do banco em pgTAP (RLS, privilégios e restrições), em `supabase/tests/` |
 | `npm run db:advisors` | Advisors de segurança e desempenho do Supabase no banco local; falha em achado `WARN` ou `ERROR` |
