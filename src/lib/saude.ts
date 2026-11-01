@@ -1,5 +1,5 @@
 /** Tempo máximo do health check: um banco travado não pode travar o smoke test. */
-export const LIMITE_SAUDE_MS = 3000;
+const LIMITE_SAUDE_MS = 3000;
 
 export type CausaIndisponibilidade = 'erro' | 'tempo-esgotado' | 'resposta-invalida';
 

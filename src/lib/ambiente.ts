@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /** Abaixo disso, o valor não é uma chave real do Supabase (provável placeholder). */
-export const TAMANHO_MINIMO_CHAVE_PUBLICA = 20;
+const TAMANHO_MINIMO_CHAVE_PUBLICA = 20;
 
 /**
  * Contrato das variáveis de ambiente, validado na fronteira.
