@@ -139,6 +139,20 @@ export function haFiltroAtivo(filtros: FiltrosMissao): boolean {
 }
 
 /**
+ * Explica uma lista vazia quando a causa é a própria combinação de filtros:
+ * Projeto Geral não tem Rank (RN-15), então Rank com tipo Geral nunca traz nada.
+ *
+ * @param filtros - Filtros atuais.
+ * @returns O texto da dica, ou `null` quando a combinação pode trazer resultado.
+ */
+export function dicaSemResultado(filtros: FiltrosMissao): string | null {
+  if (filtros.tipo === 'geral' && filtros.rank !== null) {
+    return 'Projetos Gerais não têm Rank. Tire o filtro de Rank para vê-los.';
+  }
+  return null;
+}
+
+/**
  * Opções de um select de filtro por nome (stack ou tag). Um valor que veio da
  * URL e não existe mais nas Missões entra na lista, para o select mostrar o
  * filtro que está valendo em vez de "Todas".
