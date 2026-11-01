@@ -82,6 +82,10 @@ test.describe('Página geral de Atualizações (RF-10)', () => {
         name: 'Desenvolvimento',
       }),
     ).toHaveAttribute('aria-pressed', 'true');
+    // O botão muda na hora (otimista); só o anúncio garante que o servidor gravou.
+    await expect(
+      page.getByRole('status').filter({ hasText: 'Status pela página geral: Desenvolvimento.' }),
+    ).toBeAttached();
 
     await page.goto(urlMissao);
     await expect(

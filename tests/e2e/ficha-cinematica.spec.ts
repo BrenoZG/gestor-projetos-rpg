@@ -26,6 +26,8 @@ async function mudarStatusNaFicha(pagina: Page, nome: string, status: string): P
   const grupo = pagina.getByRole('group', { name: `Status de ${nome}` });
   await grupo.getByRole('button', { name: status }).click();
   await expect(grupo.getByRole('button', { name: status })).toHaveAttribute('aria-pressed', 'true');
+  // O botão muda na hora (otimista); só o anúncio garante que o servidor gravou.
+  await expect(pagina.getByRole('status').filter({ hasText: `${nome}: ${status}.` })).toBeAttached();
 }
 
 function idDaUrl(pagina: Page): string {
