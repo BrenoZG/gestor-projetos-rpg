@@ -69,6 +69,32 @@ test.describe('Ficha e atalho C (RF-19, RN-12)', () => {
     await expect(page).toHaveURL(/\/$/);
   });
 
+  test('Esc fecha a troca de Classe antes de sair da Ficha', async ({ page }) => {
+    await page.goto('/tags');
+    await expect(page.getByRole('heading', { level: 1, name: 'Tags' })).toBeVisible();
+    await page.keyboard.press('c');
+    await expect(tituloFicha(page)).toBeVisible();
+    const painel = page.locator('details', { hasText: 'Fechar a troca de classe' });
+    const resumo = painel.locator('summary');
+
+    await resumo.click();
+    await expect(painel).toHaveAttribute('open');
+    await page.keyboard.press('Escape');
+    await expect(painel, 'com foco no botão').not.toHaveAttribute('open');
+    await expect(resumo).toBeFocused();
+    await expect(page).toHaveURL(/\/personagem$/);
+
+    await resumo.click();
+    await painel.getByRole('radio').first().focus();
+    await page.keyboard.press('Escape');
+    await expect(painel, 'com foco no formulário').not.toHaveAttribute('open');
+    await expect(resumo).toBeFocused();
+    await expect(page).toHaveURL(/\/personagem$/);
+
+    await page.keyboard.press('Escape');
+    await expect(page, 'com o painel fechado, o Esc volta de tela').toHaveURL(/\/tags$/);
+  });
+
   test('em campo de texto, C digita; Ctrl+C e foco em formulário não abrem; desligado, C não abre', async ({
     page,
   }) => {

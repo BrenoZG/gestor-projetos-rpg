@@ -6,10 +6,9 @@ import { ExportarDados } from '@/componentes/personagem/exportar-dados';
 import { BrasaoClasse } from '@/componentes/brasao-classe';
 import { EmblemaRank } from '@/componentes/emblema-rank';
 import { Medalha } from '@/componentes/medalha';
-import { FormularioClasse } from '@/componentes/personagem/formulario-classe';
 import { ListaMaestria } from '@/componentes/personagem/lista-maestria';
 import { PreferenciaAtalho } from '@/componentes/personagem/preferencia-atalho';
-import { CLASSES_ACAO_SECUNDARIA } from '@/componentes/tela-sistema';
+import { TrocaDeClasse } from '@/componentes/personagem/troca-de-classe';
 import { CLASSES } from '@/dominio/personagem/classes';
 import {
   medalhasDoPersonagem,
@@ -214,21 +213,7 @@ async function ConteudoFicha() {
             <span className="text-sm text-texto-suave">{classe.area}</span>
           </div>
         </div>
-        {/* <details> nativo: abre com Enter/Espaço e funciona sem JavaScript. */}
-        <details className="group flex flex-col gap-4">
-          <summary
-            className={`${CLASSES_ACAO_SECUNDARIA} w-fit list-none [&::-webkit-details-marker]:hidden`}
-          >
-            <span className="group-open:hidden">Trocar classe</span>
-            <span className="hidden group-open:inline">Fechar a troca de classe</span>
-          </summary>
-          <p className="pt-4 text-sm text-texto-suave">
-            A troca é livre e sem custo: XP, nível, Rank e medalhas continuam iguais.
-          </p>
-          <div className="pt-4">
-            <FormularioClasse modo="trocar" classeAtual={personagem.classe} />
-          </div>
-        </details>
+        <TrocaDeClasse classeAtual={personagem.classe} />
       </section>
 
       <PreferenciaAtalho inicial={atalhoLigado} />

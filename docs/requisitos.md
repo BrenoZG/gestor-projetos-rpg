@@ -132,7 +132,7 @@ Registrar todo projeto pessoal e toda atualização de projeto num lugar só, pa
 | RN-09 | Rank do Aventureiro por faixa de nível: E 1–19 · D 20–29 · C 30–49 · B 50–69 · A 70–89 · S 90–100. Independe do Rank do Projeto: um personagem de qualquer Rank pode cadastrar projeto de qualquer Rank. |
 | RN-10 | Maestria de uma stack = soma do XP de **conclusão de Projetos** cuja lista de stacks (no momento da conclusão) contém a stack. Nível pela mesma curva da RN-07, com **máximo no nível 50**. Atualizações não contam. |
 | RN-11 | A Classe é identidade visual. **Não** altera XP, nível, Rank ou Maestria. A troca é livre e sem custo. |
-| RN-12 | O atalho de teclado `C` abre a Ficha e `Esc` fecha. O atalho é ignorado com foco em campo de texto e pode ser desligado pelo usuário (WCAG 2.1.4). |
+| RN-12 | O atalho de teclado `C` abre a Ficha e `Esc` fecha. Com o foco num painel aberto da Ficha (menu de efeitos, troca de Classe), o `Esc` fecha o painel primeiro. O atalho é ignorado com foco em campo de texto e pode ser desligado pelo usuário (WCAG 2.1.4). |
 | RN-13 | Valores de XP são inteiros, arredondados ao inteiro mais próximo (meio para cima). |
 | RN-14 | Pontos do Projeto = pontos do estilo arquitetural + 5 por capacidade marcada + 2 por stack, contando só as 10 primeiras (0 a 80, valores em `docs/gamificacao.md` §1). Rank do Projeto pela faixa de pontos: E < 15 · D 15–29 · C 30–44 · B 45–59 · A 60–69 · S ≥ 70. O sistema calcula; o usuário não declara dificuldade. Só Projetos de Desenvolvimento têm Rank (RN-15). |
 | RN-15 | O tipo define os campos. Desenvolvimento exige estilo arquitetural, arquitetura e de 1 a 20 stacks e tem Rank (RN-14). Geral não tem estilo, capacidades, arquitetura nem Rank, e as ferramentas são opcionais (0 a 20). |
