@@ -9,6 +9,7 @@ import { Medalha } from '@/componentes/medalha';
 import { CLASSES_ACAO_PRINCIPAL, CLASSES_ACAO_SECUNDARIA } from '@/componentes/tela-sistema';
 import { ROTA_PERSONAGEM } from '@/dominio/acesso/rotas';
 import type { Conquista } from '@/dominio/progressao/conquista';
+import { registrarEvento } from '@/lib/log';
 
 import { useSistema } from './provedor-sistema';
 
@@ -51,7 +52,10 @@ export function CinematicaNivel({ conquista }: { conquista: Conquista }) {
 
   function aoFechar(): void {
     setFechada(true);
-    void marcarConquistaVista(para);
+    // Sem gravar, ela toca de novo na próxima visita: repetir é melhor que perder a conquista.
+    marcarConquistaVista(para).catch(() => {
+      registrarEvento('aviso', 'conquista_vista_falhou', { nivel: para });
+    });
   }
 
   return (

@@ -213,6 +213,32 @@ test.describe('Cinemática de level up (RF-16, RN-08)', () => {
     await expect(janela).toBeHidden();
   });
 
+  test.describe('sem conseguir gravar que foi vista', () => {
+    // O navegador registra a requisição derrubada no console; é a falha provocada aqui.
+    test.use({ errosEsperados: [/net::ERR_FAILED/] });
+
+    test('fecha sem erro solto na página e toca de novo na próxima visita', async ({ page }) => {
+      definirPersonagemDoUsuarioDeTeste({ classe: 'arquimago_dados', nivelMaximo: 4, nivelVisto: 3 });
+      await page.goto('/tags');
+      const janela = cinematica(page, 4);
+      await expect(janela).toBeVisible();
+
+      await page.route('**/*', (rota) =>
+        rota.request().method() === 'POST' ? rota.abort() : rota.continue(),
+      );
+      const falha = page.waitForEvent('requestfailed', (pedido) => pedido.method() === 'POST');
+      await janela.getByRole('button', { name: 'Continuar' }).click();
+      await expect(janela).toBeHidden();
+      await falha;
+      // A rejeição só vira `pageerror` depois do erro da requisição; dá a vez a ela.
+      await page.waitForTimeout(500);
+      await page.unrouteAll();
+
+      await page.reload();
+      await expect(cinematica(page, 4), 'nada foi gravado: a conquista não se perde').toBeVisible();
+    });
+  });
+
   test('a Janela do Sistema da conclusão vem antes da cinemática', async ({ page }) => {
     definirPersonagemDoUsuarioDeTeste({ classe: 'arquimago_dados', nivelMaximo: 1, nivelVisto: 1 });
     const nome = nomeUnico('Projeto que sobe de nível');
